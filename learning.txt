@@ -1,0 +1,60 @@
+Order book:
+
+For instance, a massive imbalance of buy orders versus sell orders may indicate a move higher in the stock due to buying pressure. Traders can also use the order book to help pinpoint a stock’s potential support and resistance levels. A cluster of large buy orders at a specific price may indicate a level of support, while an abundance of sell orders at or near one price may suggest an area of resistance.
+
+
+OHLC:
+
+An open-high-low-close chart (also OHLC) is a type of chart typically used to illustrate movements in the price of a financial instrument over time. Each vertical line on the chart shows the price range (the highest and lowest prices) over one unit of time, e.g., one day or one hour.
+
+Action: Can ask for this every 30 mins for each coin (we average the high and low price to get the approximate price for that time period). Grab the chart and then process and update data. May have to lock the bot while an update to the info takes place.
+
+
+1612745940, Timestamp
+'0.0711914', Open
+'0.0713352', High
+'0.0691000', Low
+'0.0695670', Close
+'0.0700133', VWap
+'11487368.94150667', Volume traded?
+735 count?
+
+VWAP:
+The volume weighted average price (VWAP) is a trading benchmark used by traders that gives the average price a security has traded at throughout the day
+ It is important because it provides traders with insight into both the trend and value of a security. (over one day, usually)
+
+ ROB: We should generally buy under the VWAP. It's not foolproof but it's a small indicator of when to purchase
+
+TICKER:
+XDGUSD: {
+    a: [ '0.070226800', '407760', '407760.000' ],
+    b: [ '0.070104000', '6324', '6324.000' ],
+    c: [ '0.070236000', '178.62902134' ],
+    v: [ '1158051478.96876472', '2732631809.58614602' ],
+    p: [ '0.072029946', '0.073234250' ],
+    t: [ 71187, 170813 ],
+    l: [ '0.062500000', '0.059700000' ],
+    h: [ '0.079222300', '0.088000000' ],
+    o: '0.078018100'
+  }
+
+    a = ask array(<price>, <whole lot volume>, <lot volume>),
+    b = bid array(<price>, <whole lot volume>, <lot volume>),
+    c = last trade closed array(<price>, <lot volume>),
+    v = volume array(<today>, <last 24 hours>),
+    p = volume weighted average price array(<today>, <last 24 hours>),
+    t = number of trades array(<today>, <last 24 hours>),
+    l = low array(<today>, <last 24 hours>),
+    h = high array(<today>, <last 24 hours>),
+    o = today's opening price
+
+XDGUSD: {
+    a: [ '0.071665400', '38030', '38030.000' ],
+    b: [ '0.071262100', '11749', '11749.000' ],
+    c: [ '0.071494000', '350.87528000' ],
+    v: [ '1165761016.55567205', '2740063912.52146646' ],
+    p: [ '0.072018730', '0.073227293' ],
+    t: [ 71493, 171089 ],
+    l: [ '0.062500000', '0.059700000' ],
+    h: [ '0.079222300', '0.088000000' ],
+    o: '0.0

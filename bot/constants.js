@@ -1,0 +1,21 @@
+/* HOLDING - Have bought, is not selling yet.
+   SEEKING_COIN - No coins, looking for a reliable coin trending upwards.
+   LOOKING_TO_BUY means we've found a coin and are waiting to purchase. There will be a limit on this before we go back to SEEKING_COIN. */
+const BOT_EVENT = [
+    "LOOKING_TO_BUY",
+    "HOLDING",
+    "LOOKING_TO_SELL", // For "CRASHING" - we just shortcut and sell at whatevr price
+    "IMMEDIATE_SELL",
+    "SEEKING_COIN",
+];
+
+/* These are per a coin, so we will have an array of each coin and the bot's current stance.
+
+RISK_AVERSE is very conservative plays - wait until a coin has drop low compared to its 24-hour and all-time low point (not too low as it may be crashing), then buy,
+and then sell at a more bottom heavy spread (+2% = sell 20%, and another 20% for each +2%).
+EAGER_TO_PLAY -
+*/
+
+const BOT_COIN_STANCE = ["RISK_AVERSE", "EAGER_TO_PLAY", "AVOID"];
+
+module.exports = [BOT_EVENT, BOT_COIN_STANCE];
