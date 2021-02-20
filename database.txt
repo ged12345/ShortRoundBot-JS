@@ -1,0 +1,3 @@
+
+bot_transaction
+per_profitloss = percentage of the float the bot is working with at the time. If the percentages are bigger, especially on a loss, we want to know about it.
