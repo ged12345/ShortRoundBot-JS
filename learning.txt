@@ -58,3 +58,67 @@ XDGUSD: {
     l: [ '0.062500000', '0.059700000' ],
     h: [ '0.079222300', '0.088000000' ],
     o: '0.0
+
+
+Volume
+Volume stands for the number of overall Bitcoins that have been traded in a given timeframe. Volume is used by traders to identify how significant a trend is; significant trends are usually accompanied by large trading volumes, while weak trends are accompanied by low volumes.
+For example, a healthy upward trend will be accompanied by high volumes when the price rises and low volumes when the price declines. <-- LIKE THE NUMBER OF ASKS OR BIDS IN THE ORDER BOOK, WE CAN USE VOLUME TO PREDICT A GOOD TREND
+https://api.kraken.com/0/private/TradeVolume
+
+
+Exponential Moving Average (EMA)
+The EMA’s greater sensitivity to recent price changes makes it better for the trader who wants a moving average to exhibit less lag to recent price movement.
+
+The disadvantage of using the EMA is that because it produces more trading signals, the likelihood of false or premature trading signals increases.
+
+
+Multiple Exit Orders: One for worst case scenario and one aimed to take profit.
+
+Upon entering a new position, it is often prudent to simultaneously submit two pending exit orders: one serves as a stop loss, while the other aims to take profit. <-- We then cancel whichever one doesn't work out, with less loss than we'd usually take, but if there's an brief upswing in price, we get a better ask.
+
+
+EMA may be for long term! Need scalper techniques for lots of small transactions. FOR LONG BOT
+
+
+SCALPING
+"On average, scalpers open positions approximately once every 5-10 minutes. While the M5 timeframe is considered the most preferable as it works with most strategies and is amenable to analysis, thereby increasing the predictability chance."
+
+
+Need to identify points of large support and resistance. If there aren't any, maybe move on to new coin (need volatility to make money).
+
+"Support and resistance refer to specific price points (areas in graphs) on trading charts that witness massive buying and selling activity. Support is a price level at which an asset’s price stops falling. Whereas resistance is a level at which the price of an asset stops rising."
+
+Support is a price level in the trading chart beyond which an asset will not decline or fall. These levels often witness high buying activity. It is assumed that support level is a price point at which buyers are more inclined to purchase, and sellers are hesitant to sell, thereby pushing demand higher and the asset price along with it.
+
+On the other hand, resistance is a price point that restricts any further upward movements in the price of an asset. Resistance levels often have access to supply and lower demand, which eventually pushes the price down.
+
+
+Once a trend breaches support or resistance levels, the market moves in a particular direction, and new levels are formed.
+
+While support is a price that restricts any downward movement of an asset, resistance is a price level that deters any upwards movements. Additionally, supply and demand behave differently at both these indicators. Support levels are marked with higher demand and lower asset supply, whereas resistance is marked with higher supply and lower demand levels.
+
+The Highs and Lows
+One of the frequent methods to find support and resistance indicators is by analyzing highs and lows within specific periods. The highs indicate that maximum price points hit during a rally. While the lows indicate the lowest price points are hit during a downward trend.
+
+If a particular asset observes the same lows and highs, these are often referred to as strong support and resistance levels, respectively.
+
+False breakouts: It is quite common for crypto prices to go slightly above the resistance or below the support level to retract to the support and resistance levels later. With that, it can create slight confusion for novice traders. Also, if a trader has a stop loss set right below the support price or a short-order set following the current resistance level, false breakouts can trigger substantial losses. New crypto traders must be cautious when using these indicators for trading. <-- IMPORTANT: Don't set order price at higher level. Try and make profits in between Support and Resistance levels. Always look at the volume of sales in order book when determining volume and current bids, asks combined with support/resistance (lots of asks in order book, plus high volume change, plus support level reached ~ within a certain percentage = probability of breakout trend occurring.)
+
+Challenging to find support and resistance levels: Identifying the support and resistance levels reflects a complex process. A beginner may find it difficult to determine the precision of the optimal levels. Trading with inaccurate indicators could quickly turn into significant losses or, worst, triggering asset liquidation.
+
+Moving Average (MA)
+The Moving Average indicator demonstrates the average value of the asset calculated over a specific period. As a result, a scalper gets an idea of where the asset price is moving. <-- May be useful to determine a trend (if something is slowly trending upward during a few hours). If we're trending upward, and there's little resitance/support, we but low and follow the trend (upwards) and look for high volume of asks + high volume sold,
+
+
+Market spread
+When executing a strategy that trades frequently, we must take into consideration the influence of the market spread to ensure our strategy is profitable. Unfortunately, many backtesting tools in the market fall into the trap of not considering the market spread when simulating trades. These inaccuracies lead to dramatic differences between the simulated data and reality.
+
+Let’s look at an example of how the market spread impacts trades.
+
+Say the current highest bid offer for Bitcoin is $7,500.00 and the lowest ask offer is $8,000.00. In this case, the spread would be exactly $500.00. Using our nifty percent spread equation, we would also see the percent spread is 6.25%. That’s pretty significant.
+
+If we were to buy Bitcoin at the $8,000.00 price (since it’s the lowest ask offer available), we wouldn’t be able to turn a profit when we sold Bitcoin until the best bid price increased to over $8,000.00 (not including trading fees). That would mean the bid price would need to rise substantially just to receive a profit. In the illustration to the right, we can see that even though the price of Bitcoin rose by $300 we still lost money in this trade because we bought Bitcoin for $8,000.00 and then had to sell it at $7,800.00 due to the large spread. 
+
+In another case, say the current highest bid offer for Bitcoin was $7,500.00 and the lowest ask offer was $7,501.00. The percent spread in this situation is only 0.013%. Not only is that a tight spread, but we would only need to have the bid price rise by $1 in order to turn a profit (ignoring the cost for trading fees). 
+
+Going back and forth over a large spread quickly can be costly. When making a trade, we must take into consideration the cost of the spread so we don’t lose money. Conceptually, it’s far easier to turn a profit on an asset with a small spread than one with a large spread since the asset performance needs to be higher when the spread is larger.  

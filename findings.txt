@@ -1,0 +1,35 @@
+We generally want coins with a decent level of volatility, even if they are trending upward or downward. (Spread = bids vs asks )
+
+1. Support and resistance (Order book API)
+If we can identify these trends we can buy on a support level and sell on a resistance level, looking for breakout trends via the order book (large amount of asks/bids depending on direction) and trade volume. (Bracket trading via API?)
+2. SMA/EMA (Need to work out how to calculate)
+Will give us a general idea of trends (the EMA is more volatile but this may also be useful). If a coin is trending slowly upwards, we know the likelyhood of it breaking through a resitance threshold is higher. Both the SMA and EMA can confirm this, with less importance given to the EMA because it can generate false sell/buy signals (more volatile). [May want SMA-10 and SMA-30, EMA-10 and EMA-30 so we can compare along multipe charts]
+3. Market spread (Kraken API)
+Need a small market spread because that means if the price rises we're likely to make profit (will have to work out average percentage over allowable time period to be okay - if there's a solid trend, it's a safe bet).
+
+We take all of these into account when we make our plays.
+
+Kraken incurs fees:
+
+1.0% to 0.26%. (If we're not making a profit higher than 0.26% on our play, we don't sell if we're spiking, caught in support/resistance cycle or upwards trending over short period)
+2. Orders that are cancelled before being executed (also known as "untouched" orders) do not incur any fees! (FOr example, setting a stop0loss at the same time we set a preferred buy, we can cancel stop-loss without incurring a fee)
+
+
+The coin bot wil mark coins with attractive plays depending on the current data? All the bots do is calculate what orders to make
+
+
+Concrete actions:
+1. Coin bot needs to calculate all necessary information including potential plays, cycles, trends, and possible profits so the bots just need to make the trades.
+a. We're focusing on smaller plays.
+
+2. Bots need to be able to connect to this central server bot.
+
+3. Once a bot is locked into a play, the coin bot needs to give it tailored advice which is locked to the current play. So if a bot is working on a support-resistance cycle, the coin bot has to inform the bot as to whether they will currently hold, cancel all trades and wait to supply new trade advice (if a coin looks to be spiking, which means perhaps we don't sell right now), sell at current price (if bot is logging out), sell gracefully (sell at best price, wait a little).
+
+The bot itself monitors its own trades and whether any of the current trades have completed. If they haven't, then it looks to coin bot. If they have, cancel the rest of the trades and inform coin bot.
+
+So let's look at a trade as an exchange. When the coin bot locks into a play with the coin bot, the coin bot gives it a generated token; when the trade bot is done with a play, it informs the coin bot by returning the token, who then uses the token to untether the bot from a coin.
+
+I think the best way to do this would be to have the coin bot and trade bot in direct communication, and for the trade bot to send stats to Central Station. Tradebot gets responses, but that's it.
+
+coin <-> trade <-> Central

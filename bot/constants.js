@@ -7,6 +7,7 @@ const BOT_EVENT = [
     "LOOKING_TO_SELL", // For "CRASHING" - we just shortcut and sell at whatevr price
     "IMMEDIATE_SELL",
     "SEEKING_COIN",
+    "WAITING_FOR_ORDER", // Waiting for an order to go through and finish.
 ];
 
 /* These are per a coin, so we will have an array of each coin and the bot's current stance.

@@ -1,0 +1,34 @@
+Crypto trend confirmation
+Support: entry trade
+A trader seeing the market near the bottom of the price range or at trend support (as in the chart below) typically waits until the market bounces off of the support level, before going long.
+
+A bounce up from the support increases the likelihood of the price returning to the top of its range (or resuming an uptrend). The order could either be a stop buy, limit buy or market buy, depending on the trader’s urgency of entering the position, his or her risk tolerance, and on where the price is currently within its range.
+
+
+Support: exit trade
+As the market begins bouncing off of support, short sellers should consider taking profits or cutting losses on existing positions.
+
+Resistance: entry trade
+A trader looking to profit within the price range may initiate a short position near the top of the price range after the market encounters resistance. The idea is to go short when resistance holds (price fails to break above the resistance level), with the expectation that the price will return toward the bottom of its range.
+
+The order could either be a stop sell, limit sell or market sell, depending on the trader’s urgency of entering the position, his or her risk tolerance, and on where the price is currently within its range.
+
+Resistance: exit trade
+When it is clear the price cannot break above resistance (by falling back toward support), those with long positions should consider taking profits or cutting losses.
+
+New call-to-action
+Breakout Trades
+Breakout above resistance: entry trade
+A long position can be initiated, with the expectation that prices will rise toward the next (higher) resistance level, or for an uptrend to form or steepen.
+
+
+Breakout above resistance: exit trade
+
+Short positions should be closed to either take profits or cut losses.
+
+Breakdown below support: entry trade
+A short position can be initiated, with the expectation that prices will fall toward the next (lower) support level, or for a downtrend to form or steepen.
+
+Breakdown below support: exit trade
+Long positions should be closed to either take profits or cut losses.
+
