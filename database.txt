@@ -1,3 +1,16 @@
 
 bot_transaction
 per_profitloss = percentage of the float the bot is working with at the time. If the percentages are bigger, especially on a loss, we want to know about it.
+
+coin_status
+status - what is the coin currently doing - trending up, trending down, spiking, falling, stable. This is from both short-term and long-term info
+advice - short support, short resistance, long support, long resistance (longs are 10-15 min plays), hold, none. (None is for a large range between bids and asks - spread. We wait until the sprea dis smaller to invest)
+resistance_price - top of a cycle
+support_price - bottom of a cycle
+stop_loss_price - price of acceptable loss (within an agreed percent).
+
+
+
+This way the bot can do a bracket trade. Buy the coin and then set the top resistance to sell at nd the support to buy at.
+
+What about for a coin that's spiking? Looks at volume and suggests, holding if in the middle of a play. But doesn't this depend on where the bot came in?
