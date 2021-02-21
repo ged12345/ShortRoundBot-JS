@@ -11,7 +11,7 @@
     "license": "ISC",
     "description": "",
     "dependencies": {
-        "forever": "^0.10.10",
+        "forever": "^3.0.4",
         "kraken-api-wrapper": "^0.2.0"
     }
 }
