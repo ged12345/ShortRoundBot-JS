@@ -19,7 +19,7 @@ Queue.prototype.isEmpty = function () {
 
 // get the element at the front of the queue
 Queue.prototype.peek = function () {
-    return !this.isEmpty() ? this.elements[0] : undefined;
+    return !this.isEmpty() ? this.elements[0] : null;
 };
 
 Queue.prototype.length = function () {

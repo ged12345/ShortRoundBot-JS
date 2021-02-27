@@ -24,3 +24,6 @@ How do we get 10 mins and 1 hour ago?
 https://api.kraken.com/0/public/Ticker
 /* The OHLC goes back 12 hours.  I can grab that once an hour to process. */
 /* Will need these calls time-stamped so we can do a comparison between now and then */
+
+
+/* If we're going to return general advice */

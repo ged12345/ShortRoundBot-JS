@@ -1,6 +1,7 @@
-const NETWORK = require("./config/network-config.js");
-//const coin = require("./coin/main_logic.js");
-const queue = require("./utils/queue.js");
+const NETWORK = require("../legacy/config/network-config.js");
+const MainLogic = require("./main_logic.js").MainLogic;
+const queue = require("../utils/queue.js");
+const network = require("../utils/network-calls.js");
 
 const kraken = require("kraken-api-wrapper")(
     NETWORK.config.apiKey,
@@ -8,36 +9,40 @@ const kraken = require("kraken-api-wrapper")(
 );
 kraken.setOtp(NETWORK.config.twoFactor);
 
-//const coinTracker = new coin();
-
-/*botQueue.enqueue(async () => {
-    kraken
-        .Time()
-        .then((result) => console.log(result))
-        .catch((err) => console.error(err));
+/* We need the bot config information to communicate with the exchange so it can do trades*/
+/* Then we need the bot ID */
+/* We also need the max fees for the exchange */
+network.apiGet("http://localhost:3000/api/assign_bot").then((res) => {
+    console.log(res);
+    tradeToken = res.config;
 });
 
-botQueue.enqueue(async () => {
-    kraken
-        .AssetPairs({ pair: "BTCUSD" })
-        .then((result) => console.log(result))
-        .catch((err) => console.error(err));
-});*/
+/* We pass bot id , api details, and exchange fees */
+const main = new MainLogic({
+    id: res.config.id,
+    api_config: res.config.api_config,
+    fees: res.config.fees,
+});
 
-//const botQueue = new queue();
-//botQueue.enqueue(async () => {
-kraken
-    .Depth({ pair: "USDTZUSD" })
-    .then((result) => console.log(result))
-    .catch((err) => console.error(err));
-//});
-
-/*
 let heartbeatId = setInterval(async () => {
-    if (Date.now() % 2) {
-        //botQueue.dequeue()();
-    } else {
-        coinTracker.process();
-        coinTracker.queue().dequeue()();
-    }
-}, 500);*/
+    main.processQueues();
+}, 100);
+
+/* Basic bot logic for now */
+/*let tradeToken = null;
+network
+    .apiGet("http://localhost:3000/api/lock_bot?botId=1&coinId=1")
+    .then((res) => {
+        console.log(res);
+        tradeToken = res.token;
+        console.log(res.token);
+        network
+            .apiPost(`http://localhost:3000/api/release_bot`, {
+                botId: 1,
+                token: tradeToken,
+            })
+            .then((res) => {
+                console.log(res);
+            });
+    });
+*/

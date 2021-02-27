@@ -1,33 +1,33 @@
-import NETWORK from "../config/network-config";
-import { encrypt512 } from "../utils/general";
+const fetch = require("../trade-bot/node_modules/node-fetch");
 
-const fetch = require("node-fetch");
-
-export const apiGet = async (url) => {
-    fetch(url, {
+const apiGet = async (url) => {
+    return fetch(url, {
         method: "get",
         headers: {
             "Content-Type": "application/json",
-            'User-Agent':NETWORK.config.userAgent,
-            "API-Key": NETWORK.config.apiKey,
-            "API-Sign": encrypt512()
         },
     })
         .then((res) => res.text())
-        .then((body) => console.log(body));
+        .then((body) => {
+            return JSON.parse(body);
+        });
 };
 
-export const apiPost = async (url) => {
-    fetch(url, {
+const apiPost = async (url, body) => {
+    return fetch(url, {
         method: "post",
         body: JSON.stringify(body),
         headers: {
             "Content-Type": "application/json",
-            'User-Agent':NETWORK.config.userAgent,
-            "API-Key": NETWORK.config.apiKey,
-            "API-Sign":
         },
     })
         .then((res) => res.text())
-        .then((body) => console.log(body));
+        .then((body) => {
+            return JSON.parse(body);
+        });
+};
+
+module.exports = {
+    apiGet,
+    apiPost,
 };
