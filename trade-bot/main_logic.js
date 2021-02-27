@@ -1,6 +1,7 @@
 const Queuer = require("../utils/queuer.js").Queuer;
 const Queue = require("../utils/queue.js");
 const networkCalls = require("../utils/network-calls.js");
+const API = require("../utils/network-calls.js");
 const eventConstants = require("./constants.js").BOT_EVENT;
 class MainLogic {
     // Need to "lock" bot when new info comes in.
@@ -16,12 +17,9 @@ class MainLogic {
     async getBotConfig() {
         /* We need the bot config information to communicate with the exchange so it can do trades*, the bot ID, and max fees for the exchange */
         let config = new Promise(async (resolve, reject) => {
-            networkCalls
-                .apiGet("http://localhost:1408/api/assign_bot")
-                .then((res) => {
-                    console.log(res);
-                    resolve(res);
-                });
+            API.assignBot(function (config) {
+                resolve(config);
+            });
         });
 
         await config.then(function (result) {
@@ -67,49 +65,39 @@ class MainLogic {
             this.lockToken === null &&
             this.state === eventConstants.SEEKING_COIN
         ) {
-            /* We start calling in the advice every half second */
-            this.coinAdviceQueue.enqueue(async () => {
-                networkCalls
-                    .apiGet(`http://localhost:1408/api/advice`)
-                    .then((res) => {
-                        console.log(res);
-                        /* Here we will calculate the best option from
-                        the advice supplied, including probability */
-                        this.lockCoinId = 1;
-                        this.state === eventConstants.SHAKING_HANDS;
-                    });
-            });
+            this.AdviceAPI();
         } else if (
             this.lockCoinId != 0 &&
             this.lockToken === null &&
             this.state === eventConstants.SHAKING_HANDS
         ) {
-            this.coinAdviceQueue.enqueue(async () => {
-                networkCalls
-                    .apiPost(`http://localhost:1408/api/lock_bot`, {
-                        botId: this.id,
-                        coinId: this.lockCoinId,
-                    })
-                    .then((res) => {
-                        console.log(res);
-                        this.lockToken = res.token;
-                    });
-            });
+            this.lockBot();
         }
     }
 
     setupTradeOrderQueue() {}
 
+    lockBot() {
+        API.lockBot(function (lockToken) {
+            this.lockToken = lockToken;
+        });
+    }
+
+    getAdvice() {
+        API.getAdvice(function (advice) {
+            this.advice = advice;
+            /* Here we will calculate the best option from
+            the advice supplied, including probability. Hard coded for testing. */
+            this.state = eventConstants.SHAKING_HANDS;
+            this.lockCoinId = 1;
+        });
+    }
+
     cleanup(cb) {
         if (this.id) {
-            networkCalls
-                .apiPost(`http://localhost:1408/api/unassign_bot`, {
-                    botId: this.id,
-                })
-                .then((res) => {
-                    cb(true);
-                    console.log(res);
-                });
+            API.unassignBot(this.id, function (didUnassigned) {
+                cb(didUnassigned);
+            });
         } else {
             console.log("Warning: Too many ids assigned.");
             cb(true);
