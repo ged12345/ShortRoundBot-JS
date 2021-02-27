@@ -43,41 +43,43 @@ const checkDebug = (argv, logger) => {
 /* Check for debug (logging) */
 checkDebug(process.argv, logger);
 
-//const coinTracker = new coin();
+async function init() {
+    //const coinTracker = new coin();
 
-/*botQueue.enqueue(async () => {
+    /*botQueue.enqueue(async () => {
+        kraken
+            .Time()
+            .then((result) => console.log(result))
+            .catch((err) => console.error(err));
+    });
+
+    botQueue.enqueue(async () => {
+        kraken
+            .AssetPairs({ pair: "BTCUSD" })
+            .then((result) => console.log(result))
+            .catch((err) => console.error(err));
+    });*/
+
+    //const botQueue = new queue();
+    //botQueue.enqueue(async () => {
     kraken
-        .Time()
+        .Depth({ pair: "USDTZUSD" })
         .then((result) => console.log(result))
         .catch((err) => console.error(err));
-});
+    //});
 
-botQueue.enqueue(async () => {
-    kraken
-        .AssetPairs({ pair: "BTCUSD" })
-        .then((result) => console.log(result))
-        .catch((err) => console.error(err));
-});*/
-
-//const botQueue = new queue();
-//botQueue.enqueue(async () => {
-kraken
-    .Depth({ pair: "USDTZUSD" })
-    .then((result) => console.log(result))
-    .catch((err) => console.error(err));
-//});
-
-/*let heartbeatId = setInterval(async () => {
-    if (Date.now() % 2) {
-        //botQueue.dequeue()();
-    } else {
-        coinTracker.process();
-        coinTracker.queue().dequeue()();
-    }
-}, 500);*/
+    /*let heartbeatId = setInterval(async () => {
+        if (Date.now() % 2) {
+            //botQueue.dequeue()();
+        } else {
+            coinTracker.process();
+            coinTracker.queue().dequeue()();
+        }
+    }, 500);*/
+}
 
 /* REST API Endpoints */
-app.listen(3000, () => {
+app.listen(1408, () => {
     console.log("Server running on port 3000");
 });
 
@@ -193,9 +195,19 @@ app.get("/api/assign_bot", async (req, res, next) => {
     });
 });
 
-app.get("/api/lock_bot", async (req, res, next) => {
-    let botId = req.query.botId;
-    let coinId = req.query.coinId;
+app.post("/api/unassign_bot", async (req, res, next) => {
+    let botId = req.body.botId;
+    /* Here we unassign the bot */
+    mysql.unassignBot(botId);
+
+    res.json({
+        response: 200,
+    });
+});
+
+app.post("/api/lock_bot", async (req, res, next) => {
+    let botId = req.body.botId;
+    let coinId = req.body.coinId;
     let tradeBotToken = generateRandomToken();
 
     if (botId === undefined || coinId === undefined) {

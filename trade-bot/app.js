@@ -1,7 +1,7 @@
 const NETWORK = require("../legacy/config/network-config.js");
 const MainLogic = require("./main_logic.js").MainLogic;
 const queue = require("../utils/queue.js");
-const network = require("../utils/network-calls.js");
+const sleep = require("../utils/general.js").sleep;
 
 const kraken = require("kraken-api-wrapper")(
     NETWORK.config.apiKey,
@@ -9,40 +9,63 @@ const kraken = require("kraken-api-wrapper")(
 );
 kraken.setOtp(NETWORK.config.twoFactor);
 
-/* We need the bot config information to communicate with the exchange so it can do trades*/
-/* Then we need the bot ID */
-/* We also need the max fees for the exchange */
-network.apiGet("http://localhost:3000/api/assign_bot").then((res) => {
-    console.log(res);
-    tradeToken = res.config;
-});
+const main = new MainLogic();
+let unassignedBot = false;
+init();
 
-/* We pass bot id , api details, and exchange fees */
-const main = new MainLogic({
-    id: res.config.id,
-    api_config: res.config.api_config,
-    fees: res.config.fees,
-});
+async function init() {
+    let heartbeatId = setInterval(async () => {
+        main.processQueues();
+    }, 100);
 
-let heartbeatId = setInterval(async () => {
-    main.processQueues();
-}, 100);
+    /* Basic bot logic for now */
+    /*let tradeToken = null;
+    network
+        .apiGet("http://localhost:1408/api/lock_bot?botId=1&coinId=1")
+        .then((res) => {
+            console.log(res);
+            tradeToken = res.token;
+            console.log(res.token);
+            network
+                .apiPost(`http://localhost:1408/api/release_bot`, {
+                    botId: 1,
+                    token: tradeToken,
+                })
+                .then((res) => {
+                    console.log(res);
+                });
+        });
+    */
+}
 
-/* Basic bot logic for now */
-/*let tradeToken = null;
-network
-    .apiGet("http://localhost:3000/api/lock_bot?botId=1&coinId=1")
-    .then((res) => {
-        console.log(res);
-        tradeToken = res.token;
-        console.log(res.token);
-        network
-            .apiPost(`http://localhost:3000/api/release_bot`, {
-                botId: 1,
-                token: tradeToken,
-            })
-            .then((res) => {
-                console.log(res);
+/* Run exit handler and cleanup */
+function exitHandler(options, exitCode) {
+    if (options.cleanup) {
+        console.log("Performed bot cleanup.");
+    }
+
+    if (exitCode || exitCode === 0) console.log(exitCode);
+    if (options.exit) {
+        if (unassignedBot === false) {
+            console.log(`Unassigning bot: ${main.id}`);
+            main.cleanup((success) => {
+                unassignedBot = success;
             });
-    });
-*/
+        } else {
+            process.exit();
+        }
+    }
+}
+
+//do something when app is closing
+process.on("exit", exitHandler.bind(null, { cleanup: true }));
+
+//catches ctrl+c event
+process.on("SIGINT", exitHandler.bind(null, { exit: true }));
+
+// catches "kill pid" (for example: nodemon restart)
+process.on("SIGUSR1", exitHandler.bind(null, { exit: true }));
+process.on("SIGUSR2", exitHandler.bind(null, { exit: true }));
+
+//catches uncaught exceptions
+process.on("uncaughtException", exitHandler.bind(null, { exit: true }));

@@ -10,4 +10,9 @@ function generateRandomToken() {
     return Math.random().toString(36).slice(2);
 }
 
-module.exports = { encrypt512, generateRandomToken };
+// sleep time expects milliseconds
+function sleep(time) {
+    return new Promise((resolve) => setTimeout(resolve, time));
+}
+
+module.exports = { encrypt512, generateRandomToken, sleep };

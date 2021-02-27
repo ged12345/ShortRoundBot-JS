@@ -1,3 +1,4 @@
+const { repeat } = require("lodash");
 const Queue = require("./queue.js");
 
 class Queuer {
@@ -8,9 +9,10 @@ class Queuer {
     }
 
     /* Queue up new queues, along with the interval of time they should be run at */
-    enqueueQueue(queue, interval) {
+    enqueueQueue(queue, interval, repeat = false) {
         this.queueArr[this.queueArr.length] = {
             queue: queue,
+            repeat: repeat,
             interval: interval,
         };
     }
@@ -20,8 +22,6 @@ class Queuer {
             .interval;
         if (this.hasQueueIntervalElapsed(currentQueueInterval)) {
             /* Here we process the queue, then move to the next queue for processing */
-            console.log("process: " + Date.now());
-            console.log(this.queueArr[this.currentQueueIndex].queue);
             this.processQueue(this.queueArr[this.currentQueueIndex].queue);
             this.incrementCurrentQueue();
         }
@@ -44,8 +44,14 @@ class Queuer {
     /* Process the queue and then dequeue the current item */
     processQueue(queue) {
         if (queue.peek() !== null) {
-            queue.peek()();
-            queue.dequeue();
+            if (queue.repeat === true) {
+                queue.peek()();
+                let repeatElement = queue.dequeue();
+                queue.enqueue(repeatElement);
+            } else {
+                queue.peek()();
+                queue.dequeue();
+            }
         }
 
         /* Update the current elapsed time since we've now processed the queue */

@@ -50,7 +50,7 @@ class Mysql {
         );
     }
 
-    unAssignBot(botId) {
+    unassignBot(botId) {
         if (botId !== null) {
             /* Update bot as assigned */
             this.connection.query(

@@ -1,14 +1,15 @@
 /* HOLDING - Have bought, is not selling yet.
    SEEKING_COIN - No coins, looking for a reliable coin trending upwards.
    LOOKING_TO_BUY means we've found a coin and are waiting to purchase. There will be a limit on this before we go back to SEEKING_COIN. */
-const BOT_EVENT = [
-    "LOOKING_TO_BUY",
-    "HOLDING",
-    "LOOKING_TO_SELL", // For "CRASHING" - we just shortcut and sell at whatevr price
-    "IMMEDIATE_SELL",
-    "SEEKING_COIN",
-    "WAITING_FOR_ORDER", // Waiting for an order to go through and finish.
-];
+const BOT_EVENT = {
+    SEEKING_COIN: "seeking_coin", // Looking for advice
+    SHAKING_HANDS: "shaking_hands", // Lock token exchange
+    LOOKING_TO_BUY: "looking_to_buy",
+    HOLDING: "holding",
+    LOOKING_TO_SELL: "looking_to_sell", // For "CRASHING" - we just shortcut and sell at whatevr price
+    IMMEDIATE_SELL: "immediate_sell",
+    WAITING_FOR_ORDER: "waiting_for_order", // Waiting for an order to go through and finish.
+};
 
 /* These are per a coin, so we will have an array of each coin and the bot's current stance.
 
