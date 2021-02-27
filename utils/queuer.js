@@ -18,11 +18,11 @@ class Queuer {
     }
 
     processQueues() {
-        const currentQueueInterval = this.queueArr[this.currentQueueIndex]
-            .interval;
+        const currentQueue = this.queueArr[this.currentQueueIndex];
+        const currentQueueInterval = currentQueue.interval;
         if (this.hasQueueIntervalElapsed(currentQueueInterval)) {
             /* Here we process the queue, then move to the next queue for processing */
-            this.processQueue(this.queueArr[this.currentQueueIndex].queue);
+            this.processQueue(currentQueue.queue, currentQueue.repeat);
             this.incrementCurrentQueue();
         }
     }
@@ -42,9 +42,9 @@ class Queuer {
     }
 
     /* Process the queue and then dequeue the current item */
-    processQueue(queue) {
+    processQueue(queue, repeat) {
         if (queue.peek() !== null) {
-            if (queue.repeat === true) {
+            if (repeat === true) {
                 queue.peek()();
                 let repeatElement = queue.dequeue();
                 queue.enqueue(repeatElement);

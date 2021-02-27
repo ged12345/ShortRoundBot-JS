@@ -1,4 +1,4 @@
-const networkCalls = require("../utils/network-calls.js");
+const networkCalls = require("./network-calls.js");
 
 /* Move all the api calls into this one location */
 /* Trade Bot API */
@@ -22,6 +22,18 @@ const getAdvice = async (cb) => {
     });
 };
 
+const getLockedAdvice = async (botId, token, cb) => {
+    /* We start calling in the advice every half second */
+    networkCalls
+        .apiGet(
+            `http://localhost:1408/api/locked_advice?botId=${botId}&token=${token}`
+        )
+        .then((res) => {
+            console.log(res);
+            cb(res);
+        });
+};
+
 const assignBot = async (cb) => {
     networkCalls.apiGet("http://localhost:1408/api/assign_bot").then((res) => {
         console.log(res);
@@ -40,9 +52,10 @@ const unassignBot = async (botId, cb) => {
         });
 };
 
-exports.modules = {
+module.exports = {
     lockBot,
     getAdvice,
+    getLockedAdvice,
     assignBot,
     unassignBot,
 };

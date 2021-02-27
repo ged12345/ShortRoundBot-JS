@@ -4,6 +4,8 @@
 const BOT_EVENT = {
     SEEKING_COIN: "seeking_coin", // Looking for advice
     SHAKING_HANDS: "shaking_hands", // Lock token exchange
+    TRADE_LOCKED: "trade_locked",
+    PREPARING_TRADE: "preparing_trade",
     LOOKING_TO_BUY: "looking_to_buy",
     HOLDING: "holding",
     LOOKING_TO_SELL: "looking_to_sell", // For "CRASHING" - we just shortcut and sell at whatevr price
@@ -20,4 +22,7 @@ EAGER_TO_PLAY -
 
 const BOT_COIN_STANCE = ["RISK_AVERSE", "EAGER_TO_PLAY", "AVOID"];
 
-module.exports = [BOT_EVENT, BOT_COIN_STANCE];
+module.exports = {
+    BOT_EVENT,
+    BOT_COIN_STANCE,
+};

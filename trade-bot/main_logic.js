@@ -1,7 +1,6 @@
 const Queuer = require("../utils/queuer.js").Queuer;
 const Queue = require("../utils/queue.js");
-const networkCalls = require("../utils/network-calls.js");
-const API = require("../utils/network-calls.js");
+const API = require("../utils/api.js");
 const eventConstants = require("./constants.js").BOT_EVENT;
 class MainLogic {
     // Need to "lock" bot when new info comes in.
@@ -56,39 +55,69 @@ class MainLogic {
     /* Here we add the code that checks the coin bot and locks the bot in if the coin bot advice is good and probability high */
     setupCoinAdviceQueue() {
         this.coinAdviceQueue.enqueue(async () => {
-            mainCoinAdviceLogic();
+            this.mainCoinAdviceLogic();
         });
     }
 
     mainCoinAdviceLogic() {
-        if (
-            this.lockToken === null &&
-            this.state === eventConstants.SEEKING_COIN
-        ) {
-            this.AdviceAPI();
-        } else if (
-            this.lockCoinId != 0 &&
-            this.lockToken === null &&
-            this.state === eventConstants.SHAKING_HANDS
-        ) {
-            this.lockBot();
+        /* If we don't have a token, we just look for advice. Once we have a token, we don't do anything with the coin advice */
+        console.log(this.state);
+        if (this.lockToken === null) {
+            if (this.state === eventConstants.SEEKING_COIN) {
+                this.getAdvice();
+            } else if (
+                this.lockCoinId !== 0 &&
+                this.state === eventConstants.SHAKING_HANDS
+            ) {
+                this.lockBot();
+            }
         }
     }
 
-    setupTradeOrderQueue() {}
+    setupTradeOrderQueue() {
+        this.tradeOrderQueue.enqueue(async () => {
+            this.mainTradeOrderLogic();
+        });
+    }
+
+    mainTradeOrderLogic() {
+        /* At this point, we have our play from the advice. Where do we record the play? Don't we check the coin for specific advice? We haven't implemented this yet.
+
+        Locked advice will be more specific: If the coin is currently falling sharply, lots of sell orders (asks) and volume compared to bids in Order Book, the coin bot may put out a SELL_IMMEDIATELY request, if somehow we've missed the boat. */
+        if (this.lockToken !== null) {
+            console.log("Lock token: " + this.lockToken);
+            if (this.state === eventConstants.TRADE_LOCKED) {
+                this.getLockedAdvice();
+            } else if (this.state === eventConstants.PREPARING_TRADE) {
+                /* Here we perform the actual trade order: bracketed or otherwise */
+                console.log("Preparing trade!");
+            }
+        }
+    }
 
     lockBot() {
-        API.lockBot(function (lockToken) {
+        API.lockBot((lockToken) => {
             this.lockToken = lockToken;
+            this.state = eventConstants.TRADE_LOCKED;
         });
     }
 
     getAdvice() {
-        API.getAdvice(function (advice) {
+        API.getAdvice((advice) => {
             this.advice = advice;
             /* Here we will calculate the best option from
             the advice supplied, including probability. Hard coded for testing. */
             this.state = eventConstants.SHAKING_HANDS;
+            this.lockCoinId = 1;
+        });
+    }
+
+    getLockedAdvice() {
+        API.getLockedAdvice(this.id, this.lockToken, (advice) => {
+            this.advice = advice;
+            /* Here we will calculate the best option from
+            the advice supplied, including probability. Hard coded for testing. */
+            this.state = eventConstants.PREPARING_TRADE;
             this.lockCoinId = 1;
         });
     }
