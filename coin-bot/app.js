@@ -80,7 +80,7 @@ async function init() {
 
 /* REST API Endpoints */
 app.listen(1408, () => {
-    console.log("Server running on port 3000");
+    console.log("Server running on port 1408");
 });
 
 app.get("/api/advice", async (req, res, next) => {
@@ -132,6 +132,10 @@ app.get("/api/locked_advice", (req, res, next) => {
         });
         return;
     }
+
+    res.json({
+        response: 200,
+    });
 });
 
 app.get("/api/assign_bot", async (req, res, next) => {

@@ -2,11 +2,11 @@ const networkCalls = require("./network-calls.js");
 
 /* Move all the api calls into this one location */
 /* Trade Bot API */
-const lockBot = async (cb) => {
+const lockBot = async (botId, lockCoinId, cb) => {
     networkCalls
         .apiPost(`http://localhost:1408/api/lock_bot`, {
-            botId: this.id,
-            coinId: this.lockCoinId,
+            botId: botId,
+            coinId: lockCoinId,
         })
         .then((res) => {
             console.log(res);

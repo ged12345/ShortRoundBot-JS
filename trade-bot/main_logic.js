@@ -61,7 +61,6 @@ class MainLogic {
 
     mainCoinAdviceLogic() {
         /* If we don't have a token, we just look for advice. Once we have a token, we don't do anything with the coin advice */
-        console.log(this.state);
         if (this.lockToken === null) {
             if (this.state === eventConstants.SEEKING_COIN) {
                 this.getAdvice();
@@ -85,18 +84,18 @@ class MainLogic {
 
         Locked advice will be more specific: If the coin is currently falling sharply, lots of sell orders (asks) and volume compared to bids in Order Book, the coin bot may put out a SELL_IMMEDIATELY request, if somehow we've missed the boat. */
         if (this.lockToken !== null) {
-            console.log("Lock token: " + this.lockToken);
             if (this.state === eventConstants.TRADE_LOCKED) {
                 this.getLockedAdvice();
             } else if (this.state === eventConstants.PREPARING_TRADE) {
                 /* Here we perform the actual trade order: bracketed or otherwise */
                 console.log("Preparing trade!");
+                /* We format a kraken trade order */
             }
         }
     }
 
     lockBot() {
-        API.lockBot((lockToken) => {
+        API.lockBot(this.id, this.lockCoinId, (lockToken) => {
             this.lockToken = lockToken;
             this.state = eventConstants.TRADE_LOCKED;
         });
