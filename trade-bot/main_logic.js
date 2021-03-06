@@ -27,6 +27,7 @@ class MainLogic {
 
         /* When we contact the coin bot, this is our main 'key' */
         this.id = config.id;
+        this.name = config.name;
         this.trade_api_config = config.api_config;
         this.exchange_fees = config.fees;
     }

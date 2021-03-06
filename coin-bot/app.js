@@ -140,21 +140,21 @@ app.get("/api/locked_advice", (req, res, next) => {
 
 app.get("/api/assign_bot", async (req, res, next) => {
     /* Here we find a bot that hasn't been assigned, and supply the id, api config, and fees */
-    let botId = new Promise(async (resolve, reject) => {
-        await mysql.assignBot(function (botId) {
+    let botIdName = new Promise(async (resolve, reject) => {
+        await mysql.assignBot(function (botId, botName) {
             if (botId) {
-                resolve(botId);
+                resolve({ botId: botId, botName: botName });
             } else {
                 resolve();
             }
         });
     });
 
-    await botId.then(function (result) {
-        botId = result;
+    await botIdName.then(function (result) {
+        botIdName = result;
     });
 
-    if (botId == null) {
+    if (botIdName == null) {
         /* Major error at this point. We should have been able to assign available bots */
         res.json({
             response: 400,
@@ -163,7 +163,7 @@ app.get("/api/assign_bot", async (req, res, next) => {
     }
 
     let botConfig = new Promise(async (resolve, reject) => {
-        await mysql.getBotConfig(botId, function (botConfig) {
+        await mysql.getBotConfig(botIdName.botId, function (botConfig) {
             if (botConfig) {
                 resolve(botConfig);
             } else {
@@ -192,7 +192,8 @@ app.get("/api/assign_bot", async (req, res, next) => {
     });
 
     res.json({
-        id: botId,
+        id: botIdName.botId,
+        name: botIdName.botName,
         api_config: botConfig,
         fees: exchangeFees,
         response: 200,

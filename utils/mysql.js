@@ -25,12 +25,12 @@ class Mysql {
                 console.log(rows);
 
                 let botId = null;
+                let botName = null;
 
                 /* Should be one row returned */
                 if (rows.length === 1) {
                     botId = rows[0].bot_id;
-                } else {
-                    botId = null;
+                    botName = rows[0].bot_name;
                 }
 
                 if (botId !== null) {
@@ -45,7 +45,7 @@ class Mysql {
                     );
                 }
 
-                cb(botId);
+                cb(botId, botName);
             }
         );
     }
