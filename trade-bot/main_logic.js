@@ -30,6 +30,10 @@ class MainLogic {
         this.name = config.name;
         this.trade_api_config = config.api_config;
         this.exchange_fees = config.fees;
+
+        console.log(
+            `Bot assigned!\n\nid: ${this.id}\nname: ${this.name}\napi-config:${this.trade_api_config}\nfees: ${this.exchange_fees}`
+        );
     }
 
     setupQueues() {
@@ -102,6 +106,13 @@ class MainLogic {
         });
     }
 
+    unlockBot() {
+        API.releaseBot(this.id, this.lockCoinId, (lockToken) => {
+            this.lockToken = null;
+            this.state = eventConstants.SEEKING_COIN;
+        });
+    }
+
     getAdvice() {
         API.getAdvice((advice) => {
             this.advice = advice;
@@ -123,6 +134,13 @@ class MainLogic {
     }
 
     cleanup(cb) {
+        /* TODO: For now we remove the token when the bot is shutdown - later, we'll want the bot to detect the token and go back to the current trade */
+        if (this.lockToken !== null) {
+            API.releaseBot(this.id, this.lockToken, () => {
+                this.lockToken = null;
+            });
+        }
+
         if (this.id) {
             API.unassignBot(this.id, function (didUnassigned) {
                 cb(didUnassigned);
