@@ -9,21 +9,39 @@ class Queuer {
     }
 
     /* Queue up new queues, along with the interval of time they should be run at */
-    enqueueQueue(queue, interval, repeat = false) {
+    enqueueQueue(queue, interval, repeat = false, runParallel = false) {
         this.queueArr[this.queueArr.length] = {
             queue: queue,
             repeat: repeat,
+            runParallel: runParallel /* This allows us to run the queue every in parallel  interval MS */,
+            lastParallelElapsed: Date.now(),
             interval: interval,
         };
     }
 
     processQueues() {
+        /* Process parallel queues */
+        this.queueArr.forEach((queueEl) => {
+            if (queueEl.runParallel === true) {
+                if (this.hasParallelIntervalElapsed(queueEl)) {
+                    this.processQueue(
+                        queueEl.queue,
+                        queueEl.repeat,
+                        queueEl.lastParallelElapsed
+                    );
+                }
+            }
+        });
+
+        /* Process sequential queues */
         const currentQueue = this.queueArr[this.currentQueueIndex];
-        const currentQueueInterval = currentQueue.interval;
-        if (this.hasQueueIntervalElapsed(currentQueueInterval)) {
-            /* Here we process the queue, then move to the next queue for processing */
-            this.processQueue(currentQueue.queue, currentQueue.repeat);
-            this.incrementCurrentQueue();
+        if (!currentQueue.runParallel) {
+            const currentQueueInterval = currentQueue.interval;
+            if (this.hasQueueIntervalElapsed(currentQueueInterval)) {
+                /* Here we process the queue, then move to the next queue for processing */
+                this.processQueue(currentQueue.queue, currentQueue.repeat);
+                this.incrementCurrentQueue();
+            }
         }
     }
 
@@ -33,16 +51,34 @@ class Queuer {
         return now > this.lastTimeElapsed + queueInterval;
     }
 
+    /* Checks if the current queue interval has elapsed by looking at the last bypass time we ran a queue */
+    hasParallelIntervalElapsed(queue) {
+        const now = Date.now();
+        return now > queue.lastParallelElapsed + queue.interval;
+    }
+
     /* How we iterate through the queue and cycle back */
     incrementCurrentQueue() {
-        this.currentQueueIndex++;
-        if (this.currentQueueIndex >= this.queueArr.length) {
-            this.currentQueueIndex = 0;
-        }
+        /* If we have a parallel queue, keep incrementing the queue index */
+        /* We also add a queue limiter that only allows one iteration through the queue, just in case we only have parallel queues. */
+        let queueLengthLimitIndex = 0;
+
+        do {
+            this.currentQueueIndex++;
+
+            if (this.currentQueueIndex >= this.queueArr.length) {
+                this.currentQueueIndex = 0;
+            }
+
+            queueLengthLimitIndex++;
+        } while (
+            this.queueArr[this.currentQueueIndex].runParallel &&
+            queueLengthLimitIndex < this.queueArr.length
+        );
     }
 
     /* Process the queue and then dequeue the current item */
-    processQueue(queue, repeat) {
+    processQueue(queue, repeat, lastParallelElapsed = false) {
         if (queue.peek() !== null) {
             if (repeat === true) {
                 queue.peek()();
@@ -55,7 +91,11 @@ class Queuer {
         }
 
         /* Update the current elapsed time since we've now processed the queue */
-        this.lastTimeElapsed = Date.now();
+        if (lastParallelElapsed !== false) {
+            lastParallelElapsed = Date.now();
+        } else {
+            this.lastTimeElapsed = Date.now();
+        }
     }
 }
 

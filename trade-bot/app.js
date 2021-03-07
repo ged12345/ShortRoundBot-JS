@@ -2,6 +2,7 @@ const NETWORK = require("../legacy/config/network-config.js");
 const MainLogic = require("./main_logic.js").MainLogic;
 const queue = require("../utils/queue.js");
 const sleep = require("../utils/general.js").sleep;
+const plotly = require("../utils/plotly.js").Plotly;
 
 const kraken = require("kraken-api-wrapper")(
     NETWORK.config.apiKey,
@@ -11,12 +12,23 @@ kraken.setOtp(NETWORK.config.twoFactor);
 
 const main = new MainLogic();
 let unassignedBot = false;
+
 init();
 
 async function init() {
     let heartbeatId = setInterval(async () => {
         main.processQueues();
     }, 100);
+
+    /*kraken
+    .Ticker({ pair: "BTCUSD" })
+    .then((result) => console.log(result))
+    .catch((err) => console.error(err));
+
+    kraken
+    .OHLC({ pair: "BTCUSD", interval })
+    .then((result) => console.log(result))
+    .catch((err) => console.error(err));*/
 
     /* Basic bot logic for now */
     /*let tradeToken = null;

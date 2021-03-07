@@ -1,5 +1,6 @@
 const NETWORK = require("../legacy/config/network-config.js");
 //const coin = require("./coin/main_logic.js");
+const MainLogic = require("./main_logic.js").MainLogic;
 const queue = require("../utils/queue.js");
 const { generateRandomToken } = require("../utils/general.js");
 const logger = require("../utils/logger.js").logger;
@@ -43,9 +44,15 @@ const checkDebug = (argv, logger) => {
 /* Check for debug (logging) */
 checkDebug(process.argv, logger);
 
-async function init() {
-    //const coinTracker = new coin();
+const main = new MainLogic();
+init();
 
+async function init() {
+    let heartbeatId = setInterval(async () => {
+        main.processQueues();
+    }, 100);
+
+    //const coinTracker = new coin();
     /*botQueue.enqueue(async () => {
         kraken
             .Time()
@@ -59,15 +66,13 @@ async function init() {
             .then((result) => console.log(result))
             .catch((err) => console.error(err));
     });*/
-
     //const botQueue = new queue();
     //botQueue.enqueue(async () => {
-    kraken
+    /*kraken
         .Depth({ pair: "USDTZUSD" })
         .then((result) => console.log(result))
-        .catch((err) => console.error(err));
+        .catch((err) => console.error(err));*/
     //});
-
     /*let heartbeatId = setInterval(async () => {
         if (Date.now() % 2) {
             //botQueue.dequeue()();

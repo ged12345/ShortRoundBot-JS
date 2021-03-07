@@ -1,11 +1,35 @@
+NEW:
+
+RSI for general trends
+Bollinger bands for high and low volatility and overbought/oversold trends
+Small spread so we can make small profits quickly.
+Stochastic to work out another indicator of overbought and oversold signals.
+
+Note: Always wait for a pullback.
+
+This step is important because prices tend to return to their mean value after a strong up- or down-move. Waiting for pullbacks prevents us from entering into long and short positions immediately after a strong price-change. Profit-taking activities often cause the price to reverse after a sustained move, which can lead to fake signals and losses.
+
+https://mytradingskills.com/1-minute-scalping-strategy
+
+OLD:
+
 We generally want coins with a decent level of volatility, even if they are trending upward or downward. (Spread = bids vs asks )
 
 1. Support and resistance (Order book API)
 If we can identify these trends we can buy on a support level and sell on a resistance level, looking for breakout trends via the order book (large amount of asks/bids depending on direction) and trade volume. (Bracket trading via API?)
 2. SMA/EMA (Need to work out how to calculate)
 Will give us a general idea of trends (the EMA is more volatile but this may also be useful). If a coin is trending slowly upwards, we know the likelyhood of it breaking through a resitance threshold is higher. Both the SMA and EMA can confirm this, with less importance given to the EMA because it can generate false sell/buy signals (more volatile). [May want SMA-10 and SMA-30, EMA-10 and EMA-30 so we can compare along multipe charts]
+
+
+2.a. Bollinger bands! 1. We can see when there are periods of high and then low volatility (generally one comes after another) by seeing how pinched the lines get together for low and widening for high, which is position indicator (hgh volatility = change). 2. Any time the price falls outside of the standard deviation of the Bollinger bands, it signals that the coin is either overbought or oversold. If overbought, then this signals there will soon be a downward trend so sell, and if oversold, then this would be a good time to buy.
+Lower the period moving average to 15 (usually 20) and tne standard deviation to 1.5 (usually 2) for scalping.
+
 3. Market spread (Kraken API)
 Need a small market spread because that means if the price rises we're likely to make profit (will have to work out average percentage over allowable time period to be okay - if there's a solid trend, it's a safe bet).
+
+4. RSI with line at 50? Shes upward and downward trends
+https://www.youtube.com/watch?v=510G39RXuPE
+
 
 We take all of these into account when we make our plays.
 

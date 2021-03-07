@@ -11,6 +11,7 @@ class MainLogic {
         this.state = eventConstants.SEEKING_COIN;
         this.getBotConfig();
         this.setupQueues();
+        this.queueSetupComplete = false;
     }
 
     async getBotConfig() {
@@ -50,11 +51,15 @@ class MainLogic {
 
         this.mainQueuer.enqueueQueue(this.coinAdviceQueue, 500, true);
         this.mainQueuer.enqueueQueue(this.tradeOrderQueue, 500, true);
+
+        this.queueSetupComplete = true;
     }
 
     processQueues() {
         /* Here we process both incoming coin bot advice (locked or not) and monitor bots current trades */
-        this.mainQueuer.processQueues();
+        if (this.queueSetupComplete === true) {
+            this.mainQueuer.processQueues();
+        }
     }
 
     /* Here we add the code that checks the coin bot and locks the bot in if the coin bot advice is good and probability high */
