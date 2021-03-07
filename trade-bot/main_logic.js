@@ -9,9 +9,9 @@ class MainLogic {
         this.lockToken = null;
         this.lockCoinId = 0;
         this.state = eventConstants.SEEKING_COIN;
+        this.queueSetupComplete = false;
         this.getBotConfig();
         this.setupQueues();
-        this.queueSetupComplete = false;
     }
 
     async getBotConfig() {

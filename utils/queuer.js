@@ -4,7 +4,7 @@ const Queue = require("./queue.js");
 class Queuer {
     constructor() {
         this.queueArr = Array();
-        this.lastTimeElapsed = Date.now();
+        this.lastTimeElapsed = 0;
         this.currentQueueIndex = 0;
     }
 
@@ -14,12 +14,15 @@ class Queuer {
             queue: queue,
             repeat: repeat,
             runParallel: runParallel /* This allows us to run the queue every in parallel  interval MS */,
-            lastParallelElapsed: Date.now(),
+            lastParallelElapsed: 0,
             interval: interval,
         };
     }
 
     processQueues() {
+        /* Empty queue array? We don't process */
+        if (this.queueArr.length === 0) return;
+
         /* Process parallel queues */
         this.queueArr.forEach((queueEl) => {
             if (queueEl.runParallel === true) {
@@ -27,7 +30,8 @@ class Queuer {
                     this.processQueue(
                         queueEl.queue,
                         queueEl.repeat,
-                        queueEl.lastParallelElapsed
+                        queueEl.lastParallelElapsed,
+                        queueEl
                     );
                 }
             }
@@ -78,7 +82,7 @@ class Queuer {
     }
 
     /* Process the queue and then dequeue the current item */
-    processQueue(queue, repeat, lastParallelElapsed = false) {
+    processQueue(queue, repeat, lastParallelElapsed = false, queueEl = null) {
         if (queue.peek() !== null) {
             if (repeat === true) {
                 queue.peek()();
@@ -92,7 +96,7 @@ class Queuer {
 
         /* Update the current elapsed time since we've now processed the queue */
         if (lastParallelElapsed !== false) {
-            lastParallelElapsed = Date.now();
+            queueEl.lastParallelElapsed = Date.now();
         } else {
             this.lastTimeElapsed = Date.now();
         }

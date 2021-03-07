@@ -168,6 +168,23 @@ class Mysql {
             }
         );
     }
+
+    /* Coin Kraken API functions */
+    cleanupCoinOHLC(limitNum, cb) {
+        this.connection.query(
+            `DELETE c FROM coin_ohlc as c JOIN ( SELECT timestamp as ts FROM coin_ohlc ORDER BY ts ASC LIMIT 1 OFFSET ${mysqlCon.escape(
+                limitNum - 1
+            )}) AS ohlc_limit ON c.timestamp > ohlc_limit.ts`,
+            (err, rows) => {
+                if (err) throw err;
+
+                console.log("Data received from Db:");
+                console.log(rows);
+
+                cb();
+            }
+        );
+    }
 }
 
 module.exports = {

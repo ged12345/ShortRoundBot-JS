@@ -28,15 +28,24 @@ How do we get 10 mins and 1 hour ago?
 const Queuer = require("../utils/queuer.js").Queuer;
 const Queue = require("../utils/queue.js");
 const API = require("../utils/api.js");
+const { sleep } = require("../utils/general.js");
+const NETWORK = require("../legacy/config/network-config.js");
 
 class MainLogic {
     // Need to "lock" bot when new info comes in.
 
     constructor() {
         //this.state = eventConstants.SEEKING_COIN;
+        this.queueSetupComplete = false;
         this.getCoinConfig();
         this.setupQueues();
-        this.queueSetupComplete = false;
+
+        /* Initialise Kraken API */
+        this.kraken = require("kraken-api-wrapper")(
+            NETWORK.config.apiKey,
+            NETWORK.config.privateApiKey
+        );
+        this.kraken.setOtp(NETWORK.config.twoFactor);
     }
 
     async getCoinConfig() {}
@@ -54,25 +63,21 @@ class MainLogic {
         /*this.coinAdviceGenerationQueue = new Queue();
         this.setupCoinAdviceGenerationQueue();*/
 
+        let numberOfCoins = 2; /* For testing purposes */
+        let OHLCFrequency = 60000 / numberOfCoins;
         this.coinDataAcquisitionQueuer.enqueueQueue(
             this.OHLCAcquisitionQueue,
-            5000,
+            OHLCFrequency /* We only acquire this info once a minute */,
             true,
             true
         );
-        /* Don't need this anymore - we know have the ability to have queues that are processed sequentially, or in parallel.
-        /* This is just a blank function so the rest of this minute is filled up, as OHLC is currently on minute. We'll update this later. */
-        /*this.coinDataAcquisitionQueuer.enqueueQueue(
-            () => { }),
-            55000,
-            true
-        );*/
 
         this.queueSetupComplete = true;
     }
 
     processQueues() {
         /* Here we process both incoming coin bot advice (locked or not) and monitor bots current trades */
+
         if (this.queueSetupComplete === true) {
             this.coinDataAcquisitionQueuer.processQueues();
             this.coinAdviceGenerationQueuer.processQueues();
@@ -98,7 +103,7 @@ class MainLogic {
     setupOHLCAcquisitionQueue() {
         /* We need to get all the coins we're going to focus on here from mysql - for now we'll just use BTCUSD for testing. */
 
-        let coinArr = ["BTCUSD"];
+        let coinArr = ["BTCUSD", "ETHUSD"];
 
         coinArr.forEach((coin) => {
             this.OHLCAcquisitionQueue.enqueue(async () => {
@@ -108,10 +113,10 @@ class MainLogic {
     }
 
     getOHLC(pair) {
-        kraken
+        this.kraken
             .OHLC({ pair: pair, interval: 1 })
             .then((result) => {
-                console.log(result);
+                console.log(require("util").inspect(result, true, 10));
                 /* Add this to mysql */
                 /* We remove all the old OHLC data from mysql and then insert the new data. */
             })
