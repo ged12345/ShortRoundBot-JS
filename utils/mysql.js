@@ -170,9 +170,53 @@ class Mysql {
     }
 
     /* Coin Kraken API functions */
-    cleanupCoinOHLC(limitNum, cb) {
+    storeCoinOHLC(coin_id, results, cb) {
+        let timestamp = results[0];
+        let timestampDate = new Date(timestamp * 1000);
+        let stampFullDate = timestampDate
+            .toLocaleDateString("en-US")
+            .slice(0, 10)
+            .split("/")
+            .reverse()
+            .join("-");
+        let stampFullTime = timestampDate.toLocaleTimeString("en-US", {
+            hour12: false,
+        });
+
         this.connection.query(
-            `DELETE c FROM coin_ohlc as c JOIN ( SELECT timestamp as ts FROM coin_ohlc ORDER BY ts ASC LIMIT 1 OFFSET ${mysqlCon.escape(
+            `INSERT INTO coin_ohlc VALUES (${coin_id}, '${stampFullTime}', '${stampFullDate}','${timestamp}',${results[1]},${results[2]},${results[3]},${results[4]},${results[5]},${results[6]},${results[7]}) ON DUPLICATE KEY UPDATE open=${results[1]}, high=${results[2]}, low=${results[3]}, close=${results[4]}, vwap=${results[5]}, volume=${results[6]}, count=${results[7]}`,
+            (err, rows) => {
+                if (err) throw err;
+
+                console.log("Data received from Db:");
+                console.log(rows);
+
+                cb();
+            }
+        );
+    }
+
+    /* Coin Kraken API functions */
+    countCoinOHLC(cb) {
+        this.connection.query(
+            `SELECT COUNT(*) as count FROM coin_ohlc`,
+            (err, rows) => {
+                if (err) throw err;
+
+                console.log("Data received from Db:");
+                console.log(rows[0]);
+
+                cb(rows);
+            }
+        );
+    }
+
+    /* Coin Kraken API functions */
+    cleanupCoinOHLC(limitNum, numRows, cb) {
+        this.connection.query(
+            `DELETE c FROM coin_ohlc as c JOIN ( SELECT timestamp as ts FROM coin_ohlc ORDER BY ts ASC LIMIT ${mysqlCon.escape(
+                numRows - limitNum
+            )} OFFSET ${mysqlCon.escape(
                 limitNum - 1
             )}) AS ohlc_limit ON c.timestamp > ohlc_limit.ts`,
             (err, rows) => {

@@ -34,7 +34,12 @@ const NETWORK = require("../legacy/config/network-config.js");
 class MainLogic {
     // Need to "lock" bot when new info comes in.
 
-    constructor() {
+    constructor(mysqlCon) {
+        this.mysqlCon = mysqlCon;
+
+        // For the MACD (EMA-9, EMA-12, EMA-26)
+        this.ohlcStoreNum = 26;
+
         //this.state = eventConstants.SEEKING_COIN;
         this.queueSetupComplete = false;
         this.getCoinConfig();
@@ -103,22 +108,45 @@ class MainLogic {
     setupOHLCAcquisitionQueue() {
         /* We need to get all the coins we're going to focus on here from mysql - for now we'll just use BTCUSD for testing. */
 
-        let coinArr = ["BTCUSD", "ETHUSD"];
+        let coinArr = [
+            { name: "XXBTZUSD", id: 1 },
+            { name: "XETHZUSD", id: 2 },
+        ];
 
         coinArr.forEach((coin) => {
             this.OHLCAcquisitionQueue.enqueue(async () => {
-                this.getOHLC(coin);
+                this.getOHLC(coin["id"], coin["name"], this.ohlcStoreNum);
             });
         });
     }
 
-    getOHLC(pair) {
+    getOHLC(coinId, coinPair, storeNum) {
         this.kraken
-            .OHLC({ pair: pair, interval: 1 })
+            .OHLC({ pair: coinPair, interval: 1 })
             .then((result) => {
-                console.log(require("util").inspect(result, true, 10));
                 /* Add this to mysql */
                 /* We remove all the old OHLC data from mysql and then insert the new data. */
+
+                let ohlcDesc = result[coinPair].reverse();
+                //console.log(require("util").inspect(ohlcDesc, true, 10));
+                //console.log(result["last"]);
+
+                let limiterIndex = 0;
+                for (const ohlcEl of ohlcDesc) {
+                    this.mysqlCon.storeCoinOHLC(coinId, ohlcEl, () => {});
+
+                    if (limiterIndex >= storeNum) break;
+                    limiterIndex++;
+                }
+                this.mysqlCon.countCoinOHLC((result) => {
+                    let numOfRows = result["count"];
+                    console.log(numOfRows);
+                    this.mysqlCon.cleanupCoinOHLC(
+                        storeNum,
+                        numOfRows,
+                        () => {}
+                    );
+                });
             })
             .catch((err) => console.error(err));
     }

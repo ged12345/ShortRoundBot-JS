@@ -44,7 +44,7 @@ const checkDebug = (argv, logger) => {
 /* Check for debug (logging) */
 checkDebug(process.argv, logger);
 
-const main = new MainLogic();
+const main = new MainLogic(mysql);
 init();
 
 async function init() {

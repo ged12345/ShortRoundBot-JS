@@ -1,9 +1,27 @@
 NEW:
 
-RSI for general trends
+RSI for general trends - DOING
+              100
+    RSI = 100 - --------
+                 1 + RS
+
+    RS = Average Gain / Average Loss
+
+The very first calculations for average gain and average loss are simple 14-period averages:
+
+First Average Gain = Sum of Gains over the past 14 periods / 14.
+First Average Loss = Sum of Losses over the past 14 periods / 14
+The second, and subsequent, calculations are based on the prior averages and the current gain loss:
+
+Average Gain = [(previous Average Gain) x 13 + current Gain] / 14.
+Average Loss = [(previous Average Loss) x 13 + current Loss] / 14.
+
+Result should be locked between 0 and 100.
+
+MACD - EMA 12 - EMA 26 (5 min periods) plus signal line (EMA 9 of MACD - so we take the last 9 MACD points and average them)
+Stochastic to work out another indicator of overbought and oversold signals.
 Bollinger bands for high and low volatility and overbought/oversold trends
 Small spread so we can make small profits quickly.
-Stochastic to work out another indicator of overbought and oversold signals.
 
 Note: Always wait for a pullback.
 
