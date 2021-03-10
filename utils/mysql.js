@@ -228,7 +228,6 @@ class Mysql {
         );
     }
 
-    /* Coin Kraken API functions */
     cleanupCoinOHLC(coin_id, limitNum, cb) {
         this.connection.query(
             `DELETE FROM coin_ohlc
@@ -239,6 +238,75 @@ class Mysql {
                     (
                         SELECT timestamp
                         FROM coin_ohlc
+                        WHERE coin_id = ${mysqlCon.escape(coin_id)}
+                        ORDER BY timestamp DESC
+                        LIMIT ${mysqlCon.escape(limitNum)},60
+                    ) a
+            )`,
+            (err, rows) => {
+                if (err) throw err;
+
+                //console.log("Data received from Db:");
+                //console.log(rows);
+
+                cb();
+            }
+        );
+    }
+
+    /* Coin Processing functions */
+    getProcessedRSI(coin_id, cb) {
+        this.connection.query(
+            `SELECT * from coin_processed_rsi WHERE coin_id=${mysqlCon.escape(
+                coin_id
+            )}`,
+            (err, rows) => {
+                if (err) throw err;
+
+                //console.log("Data received from Db:");
+                //console.log(rows);
+
+                cb(rows);
+            }
+        );
+    }
+
+    storeProcessedRSI(coin_id, results, cb) {
+        let timestamp = results["timestamp"];
+        let timestampDate = new Date(timestamp * 1000);
+        let stampFullDate = timestampDate
+            .toLocaleDateString("en-US")
+            .slice(0, 10)
+            .split("/")
+            .reverse()
+            .join("-");
+        let stampFullTime = timestampDate.toLocaleTimeString("en-US", {
+            hour12: false,
+        });
+
+        this.connection.query(
+            `INSERT INTO coin_processed_rsi VALUES (${coin_id}, '${stampFullTime}', '${stampFullDate}','${timestamp}',${results["close"]},${results["lossOrGain"]},${results["aveGain"]},${results["aveLoss"]},${results["RS"]},${results["RSI"]}) ON DUPLICATE KEY UPDATE close=${results["close"]},loss_or_gain=${results["lossOrGain"]}, ave_gain=${results["aveGain"]}, ave_loss=${results["aveLoss"]}, RS=${results["RS"]}, RSI=${results["RSI"]}`,
+            (err, rows) => {
+                if (err) throw err;
+
+                //console.log("Data received from Db:");
+                //console.log(rows);
+
+                cb();
+            }
+        );
+    }
+
+    cleanupProcessedRSI(coin_id, limitNum, cb) {
+        this.connection.query(
+            `DELETE FROM coin_processed_rsi
+            WHERE timestamp IN
+            (
+                SELECT timestamp
+                FROM
+                    (
+                        SELECT timestamp
+                        FROM coin_processed_rsi
                         WHERE coin_id = ${mysqlCon.escape(coin_id)}
                         ORDER BY timestamp DESC
                         LIMIT ${mysqlCon.escape(limitNum)},60

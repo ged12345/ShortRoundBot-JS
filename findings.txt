@@ -1,5 +1,7 @@
 NEW:
 
+https://school.stockcharts.com/doku.php?id=technical_indicators:relative_strength_index_rsi
+
 RSI for general trends - DOING
               100
     RSI = 100 - --------

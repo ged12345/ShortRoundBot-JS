@@ -140,17 +140,15 @@ class MainLogic {
     }
 
     getOHLC(coinId, coinPair, storeNum) {
+        /* DEBUG FOR RSI: REMOVE THIS LATER */
+        if (coinId != 1) return;
+
         console.log(`Processing OHLC: ${coinPair}`);
         this.kraken
             .OHLC({ pair: coinPair, interval: 1 })
             .then((result) => {
-                /* Add this to mysql */
-                /* We remove all the old OHLC data from mysql and then insert the new data. */
-
                 /* This gets the result array in the proper order */
                 let ohlcDesc = result[coinPair].reverse();
-                //console.log(require("util").inspect(ohlcDesc, true, 10));
-                //console.log(result["last"]);
 
                 let limiterIndex = 0;
                 for (const ohlcEl of ohlcDesc) {
@@ -161,7 +159,6 @@ class MainLogic {
                 }
                 this.mysqlCon.cleanupCoinOHLC(coinId, storeNum, () => {
                     /* Unlock ohlc here so we can do calculations on this element - do we need this per coin? */
-
                     this.processLocks.unlock("OHLC");
                 });
             })
@@ -173,13 +170,14 @@ class MainLogic {
 
         this.mysqlCon.getCoinList((coinArr) => {
             /* Here we rotate the array so we can more easily perform the processing of coins outside of the time periods they're locked. We aim to process at the farthest point away from our async API calls etc. in the hopes that ~half a minute is enough for all operations to complete.*/
-            rotateArray(coinArr, parseInt(coinArr.length / 2, 10));
+            //rotateArray(coinArr, parseInt(coinArr.length / 2, 10));
+            rotateArray(coinArr, 2);
 
             coinArr.forEach((coin) => {
                 this.RSIProcessingQueue.enqueue(async () => {
                     this.processLocks.lock("RSI", coin["id"]);
                     console.log(`Processing RSI: ${coin["coin_id_kraken"]}`);
-                    RSIProcesser.calculate(coin["id"]);
+                    this.RSIProcesser.calculate(coin["id"]);
                     this.processLocks.unlock("RSI");
                 });
             });

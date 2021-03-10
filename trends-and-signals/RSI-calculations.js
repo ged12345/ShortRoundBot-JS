@@ -17,15 +17,16 @@ Average Loss = [(previous Average Loss) x 13 + current Loss] / 14.
 Result should be locked between 0 and 100.
 */
 
+const util = require("util");
+
 class RSICalculations {
     constructor(mysqlCon, storeNum) {
         this.mysqlCon = mysqlCon;
         this.RSIStoreNum = storeNum;
     }
 
-    calculate(coinId) {
-        /* We have the first time RSI calculation, and then we can calculate the latest one off the old RSI? */
-        /*
+    /*
+        RSI Calculation steps:
         1. First we grab all the OHLC data for the coinId
         2. Then we take the close prices of each OHLC.
         3. For the first run through (or if the bot crashes), we average out the last 14 entries (but we don't start at the latest minute, as we'll be using those 4 values to calculate this minutes RSI), calculating gain and loss as the close price either goes down or up.
@@ -35,26 +36,45 @@ class RSICalculations {
 
         7. Now, if we already have the Ave. Gain and Ave. Loss from our first RSI value (the prev timestamp), then we use the second calculation and calculate the current gain or loss for the latest time period.
         */
+    calculate(coinId) {
+        this.mysqlCon.getProcessedRSI(coinId, (resultsRSI) => {
+            if (resultsRSI.length === 0) {
+                console.log("Turn down for what 1?");
+                this.firstRSICalculation(coinId);
+            } else {
+                console.log("Turn down for what 2?");
+                this.secondRSICalculation(coinId, resultsRSI);
+            }
 
-        this.mysqlCon.getCoinOHLC(coinId, (results) => {
+            /* Cleanup the processed RSI and limit */
+            this.mysqlCon.cleanupProcessedRSI(
+                coinId,
+                this.RSIStoreNum,
+                () => {}
+            );
+        });
+    }
+
+    firstRSICalculation(coinId) {
+        this.mysqlCon.getCoinOHLC(coinId, (resultsOHLC) => {
             /* No acquired OHLC results yet */
 
-            if (results.length === 0) return;
+            if (resultsOHLC.length === 0) return;
 
             let arrRSI = Array();
-            let countOHLC = results.length;
+            let countOHLC = resultsOHLC.length;
             let offsetIndexOHLC = 0;
             let offsetInteriorIndexOHLC = 0;
 
             let aveLoss = 0;
             let aveGain = 0;
 
-            results.forEach((el) => {
-                if (offsetIndexOHLC > countOHLC - this.RSIStoreNum) {
+            resultsOHLC.forEach((el) => {
+                if (offsetIndexOHLC + 1 > countOHLC - this.RSIStoreNum) {
                     arrRSI.push({
                         timestamp: el["timestamp"],
                         close: Number(el["close"]),
-                        change: 0,
+                        lossOrGain: 0,
                         aveGain: 0,
                         aveLoss: 0,
                         RS: 0,
@@ -66,38 +86,112 @@ class RSICalculations {
                         // Calculate the change for the first 14, and on the 15th, we calculate the
                         let prevElRSI = arrRSI[offsetInteriorIndexOHLC - 1];
                         let currElRSI = arrRSI[offsetInteriorIndexOHLC];
-                        let change = (arrRSI[offsetInteriorIndexOHLC][
-                            "change"
+                        let lossOrGain = (arrRSI[offsetInteriorIndexOHLC][
+                            "lossOrGain"
                         ] =
                             Number(currElRSI["close"]) -
                             Number(prevElRSI["close"]));
 
-                        if (change > 0) {
-                            aveGain += change;
-                        } else if (change < 0) {
+                        if (lossOrGain > 0) {
+                            aveGain += lossOrGain;
+                        } else if (lossOrGain < 0) {
                             /* Change is always negative here */
-                            aveLoss += -change;
+                            aveLoss += -lossOrGain;
                         }
-
-                        offsetInteriorIndexOHLC++;
                     }
-                    /* 15th entry */
+                    /* 15th entry, so we calculate aveGain, aveLoss, RS, and RSI */
                     if (offsetInteriorIndexOHLC === 14) {
                         arrRSI[offsetInteriorIndexOHLC]["aveGain"] =
                             aveGain / 14.0;
                         arrRSI[offsetInteriorIndexOHLC]["aveLoss"] =
                             aveLoss / 14.0;
-                        let RS = (arrRSI[offsetInteriorIndexOHLC]["RS"] =
-                            aveGain / aveLoss);
-                        arrRSI[offsetInteriorIndexOHLC]["RSI"] =
-                            100 - 100 / (1 + RS);
+
+                        if (arrRSI[offsetInteriorIndexOHLC]["aveLoss"] === 0) {
+                            arrRSI[offsetInteriorIndexOHLC]["RSI"] = 100;
+                        } else if (
+                            arrRSI[offsetInteriorIndexOHLC]["aveGain"] === 0
+                        ) {
+                            arrRSI[offsetInteriorIndexOHLC]["RSI"] = 0;
+                        } else {
+                            let RS = (arrRSI[offsetInteriorIndexOHLC]["RS"] =
+                                aveGain / aveLoss);
+                            arrRSI[offsetInteriorIndexOHLC]["RSI"] =
+                                100 - 100 / (1 + RS);
+                        }
                     }
+
+                    offsetInteriorIndexOHLC++;
                 }
 
                 offsetIndexOHLC++;
             });
 
-            console.log("RSI Arr: " + arrRSI);
+            /*console.log(
+                util.inspect(arrRSI, { showHidden: false, depth: null })
+            );*/
+
+            arrRSI.forEach((el) => {
+                this.mysqlCon.storeProcessedRSI(coinId, el, () => {});
+            });
+        });
+    }
+
+    secondRSICalculation(coinId, resultsRSI) {
+        /* Find the 15th result, and there should always be 15 */
+        if (resultsRSI.length != this.RSIStoreNum) return;
+        let lastResult = resultsRSI[this.RSIStoreNum - 1];
+
+        this.mysqlCon.getCoinOHLC(coinId, (resultsOHLC) => {
+            /* No acquired OHLC results yet */
+
+            console.log("WHAT??1");
+            if (resultsOHLC.length === 0) return;
+
+            let elLastOHLC = resultsOHLC[resultsOHLC.length - 1];
+            let currRSI = {
+                timestamp: elLastOHLC["timestamp"],
+                close: Number(lastResult["close"]),
+                lossOrGain: lastResult["close"] - elLastOHLC["close"],
+                aveGain: 0,
+                aveLoss: 0,
+                RS: 0,
+                RSI: 0,
+            };
+
+            // Average Gain = [(previous Average Gain) x 13 + current Gain] / 14.
+            // Average Loss = [(previous Average Loss) x 13 + current Loss] / 14.
+
+            let gain =
+                currRSI["lossOrGain"] > 0 ? Number(currRSI["lossOrGain"]) : 0;
+            let loss =
+                currRSI["lossOrGain"] < 0 ? Number(-currRSI["lossOrGain"]) : 0;
+            currRSI["aveGain"] =
+                (Number(lastResult["ave_gain"]) * 13 + gain) / 14.0;
+            currRSI["aveLoss"] =
+                (Number(lastResult["ave_loss"]) * 13 + loss) / 14.0;
+
+            /* If loss or gain are zero, we'll get NaN, so set this to 0 */
+            if (currRSI["aveGain"] === NaN) {
+                currRSI["aveGain"] = 0;
+            } else if (currRSI["aveLoss"] === NaN) {
+                currRSI["aveLoss"] = 0;
+            }
+
+            if (currRSI["aveLoss"] === 0) {
+                currRSI["RSI"] = 100;
+            } else if (currRSI["aveGain"] === 0) {
+                currRSI["RSI"] = 0;
+            } else {
+                currRSI["RS"] = currRSI["aveGain"] / currRSI["aveLoss"];
+                currRSI["RSI"] = 100 - 100 / (1 + currRSI["RS"]);
+            }
+
+            console.log("WHAT??2");
+            console.log(elLastOHLC);
+            console.log(lastResult);
+            console.log(currRSI);
+
+            this.mysqlCon.storeProcessedRSI(coinId, currRSI, () => {});
         });
     }
 }
