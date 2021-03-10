@@ -322,6 +322,74 @@ class Mysql {
             }
         );
     }
+
+    getProcessedStochastic(coin_id, cb) {
+        this.connection.query(
+            `SELECT * from coin_processed_stochastic WHERE coin_id=${mysqlCon.escape(
+                coin_id
+            )}`,
+            (err, rows) => {
+                if (err) throw err;
+
+                //console.log("Data received from Db:");
+                //console.log(rows);
+
+                cb(rows);
+            }
+        );
+    }
+
+    storeProcessedStochastic(coin_id, results, cb) {
+        let timestamp = results["timestamp"];
+        let timestampDate = new Date(timestamp * 1000);
+        let stampFullDate = timestampDate
+            .toLocaleDateString("en-US")
+            .slice(0, 10)
+            .split("/")
+            .reverse()
+            .join("-");
+        let stampFullTime = timestampDate.toLocaleTimeString("en-US", {
+            hour12: false,
+        });
+
+        this.connection.query(
+            `INSERT INTO coin_processed_stochastic VALUES (${coin_id}, '${stampFullTime}', '${stampFullDate}','${timestamp}',${results["kFast"]},${results["dSlow"]}) ON DUPLICATE KEY UPDATE k_fast=${results["kFast"]},d_slow=${results["dSlow"]}`,
+            (err, rows) => {
+                if (err) throw err;
+
+                //console.log("Data received from Db:");
+                //console.log(rows);
+
+                cb();
+            }
+        );
+    }
+
+    cleanupProcessedStochastic(coin_id, limitNum, cb) {
+        this.connection.query(
+            `DELETE FROM coin_processed_stochastic
+            WHERE timestamp IN
+            (
+                SELECT timestamp
+                FROM
+                    (
+                        SELECT timestamp
+                        FROM coin_processed_stochastic
+                        WHERE coin_id = ${mysqlCon.escape(coin_id)}
+                        ORDER BY timestamp DESC
+                        LIMIT ${mysqlCon.escape(limitNum)},60
+                    ) a
+            )`,
+            (err, rows) => {
+                if (err) throw err;
+
+                //console.log("Data received from Db:");
+                //console.log(rows);
+
+                cb();
+            }
+        );
+    }
 }
 
 module.exports = {

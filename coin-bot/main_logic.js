@@ -41,8 +41,9 @@ class MainLogic {
         this.mysqlCon = mysqlCon;
 
         // For the MACD (EMA-9, EMA-12, EMA-26)
-        this.ohlcStoreNum = 26;
+        this.ohlcStoreNum = 26; // 26 time periods
         this.RSIStoreNum = 15; // 14 for calculations plus the latest
+        this.StochasticStoreNum = 14; // 14 time periods
         this.processLocks = new ProcessLocks(["OHLC", "RSI"]);
         //this.state = eventConstants.SEEKING_COIN;
 
