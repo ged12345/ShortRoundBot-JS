@@ -27,8 +27,9 @@ How do we get 10 mins and 1 hour ago?
 
 const Queuer = require("../utils/queuer.js").Queuer;
 const Queue = require("../utils/queue.js");
+const ProcessLocks = require("../utils/process-locks.js");
 const API = require("../utils/api.js");
-const { sleep } = require("../utils/general.js");
+const { rotateArray } = require("../utils/general.js");
 const NETWORK = require("../legacy/config/network-config.js");
 
 class MainLogic {
@@ -39,6 +40,7 @@ class MainLogic {
 
         // For the MACD (EMA-9, EMA-12, EMA-26)
         this.ohlcStoreNum = 26;
+        this.processLocks = new ProcessLocks(["OHLC", "RSI"]);
 
         //this.state = eventConstants.SEEKING_COIN;
         this.queueSetupComplete = false;
@@ -58,6 +60,7 @@ class MainLogic {
     setupQueues() {
         /* Setup the main queuers and queues */
         this.coinDataAcquisitionQueuer = new Queuer();
+        this.coinTrendsAndSignalsProcessingQueuer = new Queuer();
         this.coinAdviceGenerationQueuer = new Queuer();
 
         /* Do we need separate queues - one to handle calls to grab required api and populate mysql with data, and another to process the info? Yes! */
@@ -68,11 +71,25 @@ class MainLogic {
         /*this.coinAdviceGenerationQueue = new Queue();
         this.setupCoinAdviceGenerationQueue();*/
 
-        let numberOfCoins = 2; /* For testing purposes */
+        let numberOfCoins = 7; /* For testing purposes */
         let OHLCFrequency = 60000 / numberOfCoins;
         this.coinDataAcquisitionQueuer.enqueueQueue(
             this.OHLCAcquisitionQueue,
             OHLCFrequency /* We only acquire this info once a minute */,
+            true,
+            true
+        );
+
+        this.RSIProcessingQueue = new Queue();
+        this.setupTrendsAndSignalsProcessingQueue();
+
+        /* We up this for each trend/signal we calculate, and for each coin */
+        let trendsAndSignalsNumber = 1;
+        let trendsAndSignalsFrequency =
+            60000 / (trendsAndSignalsNumber * numberOfCoins);
+        this.coinTrendsAndSignalsProcessingQueuer.enqueueQueue(
+            this.RSIProcessingQueue,
+            trendsAndSignalsFrequency /* We only acquire this info once a minute */,
             true,
             true
         );
@@ -85,48 +102,45 @@ class MainLogic {
 
         if (this.queueSetupComplete === true) {
             this.coinDataAcquisitionQueuer.processQueues();
+            this.coinTrendsAndSignalsProcessingQueuer.processQueues();
             this.coinAdviceGenerationQueuer.processQueues();
         }
     }
 
     setupCoinDataAcquisitionQueue() {
-        /* 1st. The spread (asks and bids) - generally want low spread as easiest wins */
-        /* 2nd. Order book (Price By Volume to work out support and resistance levels) - LATER! - FOCUS ON BOLLINGER BANDS FOR NOW. */
-        /* 3rd. Ticker for current pricings */
-        /* 4th. Bollinger bands:
-
-        /*
-        1. RSI
-        2. Stoachastic
-        3. The spread
-        4. Bollinger bands or 2 EMAs
-        */
-        /* Need a way to schedule the queue after a certain number of seconds */
         this.setupOHLCAcquisitionQueue();
+    }
+
+    setupTrendsAndSignalsProcessingQueue() {
+        this.setupRSIProcessingQueue();
     }
 
     setupOHLCAcquisitionQueue() {
         /* We need to get all the coins we're going to focus on here from mysql - for now we'll just use BTCUSD for testing. */
 
-        let coinArr = [
-            { name: "XXBTZUSD", id: 1 },
-            { name: "XETHZUSD", id: 2 },
-        ];
-
-        coinArr.forEach((coin) => {
-            this.OHLCAcquisitionQueue.enqueue(async () => {
-                this.getOHLC(coin["id"], coin["name"], this.ohlcStoreNum);
+        this.mysqlCon.getCoinList((coinArr) => {
+            coinArr.forEach((coin) => {
+                this.OHLCAcquisitionQueue.enqueue(async () => {
+                    this.processLocks.lock("OHLC", coin["id"]);
+                    this.getOHLC(
+                        coin["id"],
+                        coin["coin_id_kraken"],
+                        this.ohlcStoreNum
+                    );
+                });
             });
         });
     }
 
     getOHLC(coinId, coinPair, storeNum) {
+        console.log(`Processing OHLC: ${coinPair}`);
         this.kraken
             .OHLC({ pair: coinPair, interval: 1 })
             .then((result) => {
                 /* Add this to mysql */
                 /* We remove all the old OHLC data from mysql and then insert the new data. */
 
+                /* This gets the result array in the proper order */
                 let ohlcDesc = result[coinPair].reverse();
                 //console.log(require("util").inspect(ohlcDesc, true, 10));
                 //console.log(result["last"]);
@@ -138,17 +152,30 @@ class MainLogic {
                     if (limiterIndex >= storeNum) break;
                     limiterIndex++;
                 }
-                this.mysqlCon.countCoinOHLC((result) => {
-                    let numOfRows = result["count"];
-                    console.log(numOfRows);
-                    this.mysqlCon.cleanupCoinOHLC(
-                        storeNum,
-                        numOfRows,
-                        () => {}
-                    );
+                this.mysqlCon.cleanupCoinOHLC(coinId, storeNum, () => {
+                    /* Unlock ohlc here so we can do calculations on this element - do we need this per coin? */
+
+                    this.processLocks.unlock("OHLC");
                 });
             })
             .catch((err) => console.error(err));
+    }
+
+    setupRSIProcessingQueue() {
+        /* We do processing in the same way we did previously, an RSI for each coin. */
+
+        this.mysqlCon.getCoinList((coinArr) => {
+            /* Here we rotate the array so we can more easily perform the processing of coins outside of the time periods they're locked. We aim to process at the farthest point away from our async API calls etc. in the hopes that ~half a minute is enough for all operations to complete.*/
+            rotateArray(coinArr, parseInt(coinArr.length / 2, 10));
+
+            coinArr.forEach((coin) => {
+                this.RSIProcessingQueue.enqueue(async () => {
+                    this.processLocks.lock("RSI", coin["id"]);
+                    console.log(`Processing RSI: ${coin["coin_id_kraken"]}`);
+                    this.processLocks.unlock("RSI");
+                });
+            });
+        });
     }
 }
 

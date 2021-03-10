@@ -108,13 +108,16 @@ class Mysql {
     }
 
     getCoinList(cb) {
-        this.connection.query("SELECT id, coin_name FROM coin", (err, rows) => {
-            if (err) throw err;
+        this.connection.query(
+            "SELECT id, coin_name, coin_id_kraken, coin_id_binance FROM coin",
+            (err, rows) => {
+                if (err) throw err;
 
-            console.log("Data received from Db:");
-            console.log(rows);
-            cb(rows);
-        });
+                console.log("Data received from Db:");
+                console.log(rows);
+                cb(rows);
+            }
+        );
     }
 
     getCoinAdvice(coinId, cb) {
@@ -188,8 +191,8 @@ class Mysql {
             (err, rows) => {
                 if (err) throw err;
 
-                console.log("Data received from Db:");
-                console.log(rows);
+                //console.log("Data received from Db:");
+                //console.log(rows);
 
                 cb();
             }
@@ -203,27 +206,35 @@ class Mysql {
             (err, rows) => {
                 if (err) throw err;
 
-                console.log("Data received from Db:");
-                console.log(rows[0]);
+                //console.log("Data received from Db:");
+                //console.log(rows[0]);
 
-                cb(rows);
+                cb(rows[0]);
             }
         );
     }
 
     /* Coin Kraken API functions */
-    cleanupCoinOHLC(limitNum, numRows, cb) {
+    cleanupCoinOHLC(coinId, limitNum, cb) {
         this.connection.query(
-            `DELETE c FROM coin_ohlc as c JOIN ( SELECT timestamp as ts FROM coin_ohlc ORDER BY ts ASC LIMIT ${mysqlCon.escape(
-                numRows - limitNum
-            )} OFFSET ${mysqlCon.escape(
-                limitNum - 1
-            )}) AS ohlc_limit ON c.timestamp > ohlc_limit.ts`,
+            `DELETE FROM coin_ohlc
+            WHERE timestamp IN
+            (
+                SELECT timestamp
+                FROM
+                    (
+                        SELECT timestamp
+                        FROM coin_ohlc
+                        WHERE coin_id = ${mysqlCon.escape(coinId)}
+                        ORDER BY timestamp DESC
+                        LIMIT ${mysqlCon.escape(limitNum)},60
+                    ) a
+            )`,
             (err, rows) => {
                 if (err) throw err;
 
-                console.log("Data received from Db:");
-                console.log(rows);
+                //console.log("Data received from Db:");
+                //console.log(rows);
 
                 cb();
             }

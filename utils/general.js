@@ -10,9 +10,17 @@ function generateRandomToken() {
     return Math.random().toString(36).slice(2);
 }
 
+/* Can change array because it's pass by reference (not a primitive) */
+function rotateArray(arr, numSteps) {
+    for (var i = 0; i < numSteps; i++) {
+        let lastEl = arr.pop();
+        arr.unshift(lastEl);
+    }
+}
+
 // sleep time expects milliseconds
 function sleep(time) {
     return new Promise((resolve) => setTimeout(resolve, time));
 }
 
-module.exports = { encrypt512, generateRandomToken, sleep };
+module.exports = { encrypt512, generateRandomToken, rotateArray, sleep };
