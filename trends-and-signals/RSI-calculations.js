@@ -53,7 +53,7 @@ class RSICalculations {
                 if (offsetIndexOHLC > countOHLC - this.RSIStoreNum) {
                     arrRSI.push({
                         timestamp: el["timestamp"],
-                        close: el["close"],
+                        close: Number(el["close"]),
                         change: 0,
                         aveGain: 0,
                         aveLoss: 0,
@@ -68,7 +68,9 @@ class RSICalculations {
                         let currElRSI = arrRSI[offsetInteriorIndexOHLC];
                         let change = (arrRSI[offsetInteriorIndexOHLC][
                             "change"
-                        ] = currElRSI["close"] - prevElRSI["close"]);
+                        ] =
+                            Number(currElRSI["close"]) -
+                            Number(prevElRSI["close"]));
 
                         if (change > 0) {
                             aveGain += change;
@@ -82,9 +84,9 @@ class RSICalculations {
                     /* 15th entry */
                     if (offsetInteriorIndexOHLC === 14) {
                         arrRSI[offsetInteriorIndexOHLC]["aveGain"] =
-                            aveGain / 14;
+                            aveGain / 14.0;
                         arrRSI[offsetInteriorIndexOHLC]["aveLoss"] =
-                            aveLoss / 14;
+                            aveLoss / 14.0;
                         let RS = (arrRSI[offsetInteriorIndexOHLC]["RS"] =
                             aveGain / aveLoss);
                         arrRSI[offsetInteriorIndexOHLC]["RSI"] =
