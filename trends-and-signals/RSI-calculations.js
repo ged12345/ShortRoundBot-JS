@@ -15,6 +15,10 @@ Average Gain = [(previous Average Gain) x 13 + current Gain] / 14.
 Average Loss = [(previous Average Loss) x 13 + current Loss] / 14.
 
 Result should be locked between 0 and 100.
+
+66.66 <-- overbought
+33.33 <-- oversold
+https://tradingsim.com/blog/relative-strength-index/
 */
 
 const util = require("util");
