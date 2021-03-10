@@ -28,6 +28,7 @@ How do we get 10 mins and 1 hour ago?
 const Queuer = require("../utils/queuer.js").Queuer;
 const Queue = require("../utils/queue.js");
 const ProcessLocks = require("../utils/process-locks.js");
+const RSIProcesser = require("../trends-and-signals/RSI-calculations.js");
 const API = require("../utils/api.js");
 const { rotateArray } = require("../utils/general.js");
 const NETWORK = require("../legacy/config/network-config.js");
@@ -36,17 +37,25 @@ class MainLogic {
     // Need to "lock" bot when new info comes in.
 
     constructor(mysqlCon) {
+        this.queueSetupComplete = false;
         this.mysqlCon = mysqlCon;
 
         // For the MACD (EMA-9, EMA-12, EMA-26)
         this.ohlcStoreNum = 26;
+        this.RSIStoreNum = 15; // 14 for calculations plus the latest
         this.processLocks = new ProcessLocks(["OHLC", "RSI"]);
-
         //this.state = eventConstants.SEEKING_COIN;
-        this.queueSetupComplete = false;
+
+        this.RSIProcesser = new RSIProcesser(this.mysqlCon, this.RSIStoreNum);
+
         this.getCoinConfig();
         this.setupQueues();
+        this.setupKraken();
+    }
 
+    async getCoinConfig() {}
+
+    setupKraken() {
         /* Initialise Kraken API */
         this.kraken = require("kraken-api-wrapper")(
             NETWORK.config.apiKey,
@@ -54,8 +63,6 @@ class MainLogic {
         );
         this.kraken.setOtp(NETWORK.config.twoFactor);
     }
-
-    async getCoinConfig() {}
 
     setupQueues() {
         /* Setup the main queuers and queues */
@@ -172,6 +179,7 @@ class MainLogic {
                 this.RSIProcessingQueue.enqueue(async () => {
                     this.processLocks.lock("RSI", coin["id"]);
                     console.log(`Processing RSI: ${coin["coin_id_kraken"]}`);
+                    RSIProcesser.calculate(coin["id"]);
                     this.processLocks.unlock("RSI");
                 });
             });

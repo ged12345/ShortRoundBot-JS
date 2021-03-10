@@ -113,8 +113,8 @@ class Mysql {
             (err, rows) => {
                 if (err) throw err;
 
-                console.log("Data received from Db:");
-                console.log(rows);
+                /*console.log("Data received from Db:");
+                console.log(rows);*/
                 cb(rows);
             }
         );
@@ -172,6 +172,20 @@ class Mysql {
         );
     }
 
+    getCoinOHLC(coin_id, cb) {
+        this.connection.query(
+            `SELECT * FROM coin_ohlc WHERE coin_id=${mysqlCon.escape(coin_id)}`,
+            (err, rows) => {
+                if (err) throw err;
+
+                //console.log("Data received from Db:");
+                //console.log(rows);
+
+                cb(rows);
+            }
+        );
+    }
+
     /* Coin Kraken API functions */
     storeCoinOHLC(coin_id, results, cb) {
         let timestamp = results[0];
@@ -215,7 +229,7 @@ class Mysql {
     }
 
     /* Coin Kraken API functions */
-    cleanupCoinOHLC(coinId, limitNum, cb) {
+    cleanupCoinOHLC(coin_id, limitNum, cb) {
         this.connection.query(
             `DELETE FROM coin_ohlc
             WHERE timestamp IN
@@ -225,7 +239,7 @@ class Mysql {
                     (
                         SELECT timestamp
                         FROM coin_ohlc
-                        WHERE coin_id = ${mysqlCon.escape(coinId)}
+                        WHERE coin_id = ${mysqlCon.escape(coin_id)}
                         ORDER BY timestamp DESC
                         LIMIT ${mysqlCon.escape(limitNum)},60
                     ) a
