@@ -4,7 +4,7 @@ const MainLogic = require("./main_logic.js").MainLogic;
 const queue = require("../utils/queue.js");
 const { generateRandomToken } = require("../utils/general.js");
 const logger = require("../utils/logger.js").logger;
-const MysqlCon = require("../utils/mysql.js").Mysql;
+const MysqlCon = require("../utils/mysql2.js").Mysql;
 
 const express = require("express");
 const app = express();
@@ -101,28 +101,27 @@ app.get("/api/advice", async (req, res, next) => {
         let coinsPromises = Array();
         coins.forEach((el, index) => {
             coinsPromises[index] = new Promise(async (resolve, reject) => {
-                await mysql.getCoinAdvice(el.id, function (adviceArr) {
-                    // If we found advice for the array
-                    if (adviceArr) {
-                        resolve([el.coin_name, adviceArr]);
-                    } else {
-                        resolve();
-                    }
-                });
+                let adviceArr = await mysql.getCoinAdvice(el.id);
+                // If we found advice for the array
+                if (adviceArr) {
+                    resolve([el.coin_name, adviceArr]);
+                } else {
+                    resolve();
+                }
             });
         });
+    });
 
-        await Promise.all(coinsPromises).then((coinInnerArr) => {
-            /* Remove null */
-            coinInnerArr = coinInnerArr.filter(function (el) {
-                return el != null;
-            });
+    await Promise.all(coinsPromises).then((coinInnerArr) => {
+        /* Remove null */
+        coinInnerArr = coinInnerArr.filter(function (el) {
+            return el != null;
+        });
 
-            // 3. Return json arrays
-            res.json({
-                coins: coinInnerArr,
-                response: 200,
-            });
+        // 3. Return json arrays
+        res.json({
+            coins: coinInnerArr,
+            response: 200,
         });
     });
 });
@@ -145,19 +144,12 @@ app.get("/api/locked_advice", (req, res, next) => {
 
 app.get("/api/assign_bot", async (req, res, next) => {
     /* Here we find a bot that hasn't been assigned, and supply the id, api config, and fees */
-    let botIdName = new Promise(async (resolve, reject) => {
-        await mysql.assignBot(function (botId, botName) {
-            if (botId) {
-                resolve({ botId: botId, botName: botName });
-            } else {
-                resolve();
-            }
-        });
-    });
+    const [botId, botName] = await mysql.assignBot();
+    let botIdName = null;
 
-    await botIdName.then(function (result) {
-        botIdName = result;
-    });
+    if (botId) {
+        botIdName = { botId: botId, botName: botName };
+    }
 
     if (botIdName == null) {
         /* Major error at this point. We should have been able to assign available bots */
@@ -167,34 +159,8 @@ app.get("/api/assign_bot", async (req, res, next) => {
         return;
     }
 
-    let botConfig = new Promise(async (resolve, reject) => {
-        await mysql.getBotConfig(botIdName.botId, function (botConfig) {
-            if (botConfig) {
-                resolve(botConfig);
-            } else {
-                resolve();
-            }
-        });
-    });
-
-    await botConfig.then(function (result) {
-        botConfig = result;
-    });
-
-    let exchangeFees = new Promise(async (resolve, reject) => {
-        await mysql.getExchangeFees(botConfig.exchange_id, function (fees) {
-            // If we found advice for the array
-            if (fees) {
-                resolve(fees);
-            } else {
-                resolve();
-            }
-        });
-    });
-
-    await exchangeFees.then(function (result) {
-        exchangeFees = result;
-    });
+    let botConfig = await mysql.getBotConfig(botIdName.botId);
+    let exchangeFees = await mysql.getExchangeFees(botConfig.exchange_id);
 
     res.json({
         id: botIdName.botId,
@@ -208,7 +174,7 @@ app.get("/api/assign_bot", async (req, res, next) => {
 app.post("/api/unassign_bot", async (req, res, next) => {
     let botId = req.body.botId;
     /* Here we unassign the bot */
-    mysql.unassignBot(botId);
+    await mysql.unassignBot(botId);
 
     res.json({
         response: 200,
@@ -227,24 +193,23 @@ app.post("/api/lock_bot", async (req, res, next) => {
         return;
     }
 
-    mysql.checkBotLock(botId, function (isLocked) {
-        if (isLocked === false) {
-            mysql.addToken(botId, coinId, tradeBotToken);
-            res.json({
-                token: tradeBotToken,
-                response: 200,
-            });
-        } else {
-            res.json({
-                token: "",
-                // Conflict, already exists
-                response: 409,
-            });
-        }
-    });
+    let isLocked = await mysql.checkBotLock(botId);
+    if (isLocked === false) {
+        await mysql.addToken(botId, coinId, tradeBotToken);
+        res.json({
+            token: tradeBotToken,
+            response: 200,
+        });
+    } else {
+        res.json({
+            token: "",
+            // Conflict, already exists
+            response: 409,
+        });
+    }
 });
 
-app.post("/api/release_bot", (req, res, next) => {
+app.post("/api/release_bot", async (req, res, next) => {
     let botId = req.body.botId;
     let token = req.body.token;
 
@@ -255,17 +220,16 @@ app.post("/api/release_bot", (req, res, next) => {
         return;
     }
 
-    mysql.checkBotLock(botId, function (isLocked) {
-        if (isLocked === true) {
-            mysql.removeToken(token);
-            res.json({
-                response: 200,
-            });
-        } else {
-            res.json({
-                // Gone
-                response: 410,
-            });
-        }
-    });
+    let isLocked = await mysql.checkBotLock(botId);
+    if (isLocked === true) {
+        mysql.removeToken(token);
+        res.json({
+            response: 200,
+        });
+    } else {
+        res.json({
+            // Gone
+            response: 410,
+        });
+    }
 });

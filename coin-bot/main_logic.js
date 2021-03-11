@@ -41,7 +41,7 @@ class MainLogic {
         this.mysqlCon = mysqlCon;
 
         // For the MACD (EMA-9, EMA-12, EMA-26)
-        this.ohlcStoreNum = 26; // 26 time periods
+        this.OHLCStoreNum = 26; // 26 time periods
         this.RSIStoreNum = 15; // 14 for calculations plus the latest
         this.StochasticStoreNum = 14; // 14 time periods
         this.processLocks = new ProcessLocks(["OHLC", "RSI"]);
@@ -123,64 +123,61 @@ class MainLogic {
         this.setupRSIProcessingQueue();
     }
 
-    setupOHLCAcquisitionQueue() {
+    async setupOHLCAcquisitionQueue() {
         /* We need to get all the coins we're going to focus on here from mysql - for now we'll just use BTCUSD for testing. */
 
-        this.mysqlCon.getCoinList((coinArr) => {
-            coinArr.forEach((coin) => {
-                this.OHLCAcquisitionQueue.enqueue(async () => {
-                    this.processLocks.lock("OHLC", coin["id"]);
-                    this.getOHLC(
-                        coin["id"],
-                        coin["coin_id_kraken"],
-                        this.ohlcStoreNum
-                    );
-                });
+        let coinArr = await this.mysqlCon.getCoinList();
+        coinArr.forEach((coin) => {
+            this.OHLCAcquisitionQueue.enqueue(async () => {
+                this.processLocks.lock("OHLC", coin["id"]);
+                this.getOHLC(
+                    coin["id"],
+                    coin["coin_id_kraken"],
+                    this.OHLCStoreNum
+                );
             });
         });
     }
 
-    getOHLC(coinId, coinPair, storeNum) {
+    async getOHLC(coinId, coinPair, storeNum) {
         /* DEBUG FOR RSI: REMOVE THIS LATER */
         if (coinId != 1) return;
 
         console.log(`Processing OHLC: ${coinPair}`);
         this.kraken
             .OHLC({ pair: coinPair, interval: 1 })
-            .then((result) => {
+            .then(async (result) => {
                 /* This gets the result array in the proper order */
                 let ohlcDesc = result[coinPair].reverse();
 
                 let limiterIndex = 0;
                 for (const ohlcEl of ohlcDesc) {
-                    this.mysqlCon.storeCoinOHLC(coinId, ohlcEl, () => {});
+                    await this.mysqlCon.storeCoinOHLC(coinId, ohlcEl);
 
                     if (limiterIndex >= storeNum) break;
                     limiterIndex++;
                 }
-                this.mysqlCon.cleanupCoinOHLC(coinId, storeNum, () => {
-                    /* Unlock ohlc here so we can do calculations on this element - do we need this per coin? */
-                    this.processLocks.unlock("OHLC");
-                });
+                await this.mysqlCon.cleanupCoinOHLC(coinId, storeNum);
+                /* Unlock ohlc here so we can do calculations on this element - do we need this per coin? */
+                this.processLocks.unlock("OHLC");
             })
             .catch((err) => console.error(err));
     }
 
-    setupRSIProcessingQueue() {
+    async setupRSIProcessingQueue() {
         /* We do processing in the same way we did previously, an RSI for each coin. */
 
-        this.mysqlCon.getCoinList((coinArr) => {
-            /* Here we rotate the array so we can more easily perform the processing of coins outside of the time periods they're locked. We aim to process at the farthest point away from our async API calls etc. in the hopes that ~half a minute is enough for all operations to complete.*/
-            //rotateArray(coinArr, parseInt(coinArr.length / 2, 10));
-            rotateArray(coinArr, 2);
+        let coinArr = await this.mysqlCon.getCoinList();
+        /* Here we rotate the array so we can more easily perform the processing of coins outside of the time periods they're locked. We aim to process at the farthest point away from our async API calls etc. in the hopes that ~half a minute is enough for all operations to complete.*/
+        //rotateArray(coinArr, parseInt(coinArr.length / 2, 10));
+        rotateArray(coinArr, 2);
 
-            coinArr.forEach((coin) => {
-                this.RSIProcessingQueue.enqueue(async () => {
-                    this.processLocks.lock("RSI", coin["id"]);
-                    console.log(`Processing RSI: ${coin["coin_id_kraken"]}`);
-                    this.RSIProcesser.calculate(coin["id"]);
-                    this.processLocks.unlock("RSI");
-                });
+        coinArr.forEach((coin) => {
+            this.RSIProcessingQueue.enqueue(async () => {
+                this.processLocks.lock("RSI", coin["id"]);
+                console.log(`Processing RSI: ${coin["coin_id_kraken"]}`);
+                this.RSIProcesser.calculate(coin["id"]);
+                this.processLocks.unlock("RSI");
             });
         });
     }
