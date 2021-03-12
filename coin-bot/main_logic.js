@@ -265,7 +265,7 @@ class MainLogic {
                     trend,
                     coin["id"]
                 );
-            }
+            });
         });
     }
 

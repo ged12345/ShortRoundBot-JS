@@ -111,4 +111,4 @@ class BollingerBandsCalculations {
     }
 }
 
-module.exports = StochasticCalculations;
+module.exports = BollingerBandsCalculations;
