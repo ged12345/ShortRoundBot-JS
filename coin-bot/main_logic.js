@@ -175,7 +175,7 @@ class MainLogic {
 
     setupTrendsAndSignalsProcessingQueue() {
         /* Here we rotate the array so we can more easily perform the processing of coins outside of the time periods they're locked. We aim to process at the farthest point away from our async API calls etc. in the hopes that ~half a minute is enough for all operations to complete.*/
-        rotateArray(this.coinConfigArr, 2);
+        rotateArray(this.coinConfigArr, 1);
 
         this.setupRSIProcessingQueue();
         this.setupStochasticProcessingQueue();

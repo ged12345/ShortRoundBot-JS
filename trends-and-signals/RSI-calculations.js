@@ -153,8 +153,8 @@ class RSICalculations {
         let elLastOHLC = resultsOHLC[resultsOHLC.length - 1];
         let currRSI = {
             timestamp: elLastOHLC["timestamp"],
-            close: Number(lastResult["close"]),
-            lossOrGain: lastResult["close"] - elLastOHLC["close"],
+            close: Number(elLastOHLC["close"]),
+            lossOrGain: elLastOHLC["close"] - lastResult["close"],
             aveGain: 0,
             aveLoss: 0,
             RS: 0,

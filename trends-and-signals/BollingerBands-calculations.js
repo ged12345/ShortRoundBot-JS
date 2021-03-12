@@ -90,6 +90,8 @@ class BollingerBandsCalculations {
             }
         });
 
+        MA = MA / this.BollingerStoreNum;
+
         let lastElOHLC = resultsOHLC[resultsOHLC.length - 1];
 
         let currBollinger = {

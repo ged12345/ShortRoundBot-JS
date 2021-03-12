@@ -13,6 +13,9 @@ trading sessions
 H14 = The highest price traded during the same
 14-day period
 %K = The current value of the stochastic indicator
+
+80 - overbought
+20 - oversold
 */
 const util = require("util");
 
@@ -61,7 +64,7 @@ class StochasticCalculations {
                     Number(
                         resultsStochastics[stochasticsStartIndex + 2]["k_fast"]
                     )) /
-                3;
+                3.0;
         }
 
         if (dSlow === NaN) {
@@ -69,13 +72,21 @@ class StochasticCalculations {
         }
 
         /* Highest and lowest of last 14 periods */
-        resultsOHLC.forEach((el) => {
-            if (lowestTraded > el["low"]) {
-                lowestTraded = Number(el["low"]);
-            }
+        let totalOHLCResults = resultsOHLC.length;
+        let startLowHighIndex = totalOHLCResults - this.StochasticStoreNum;
+        let lowHighIndex = 0;
 
-            if (highestTraded < el["high"]) {
-                highestTraded = Number(el["high"]);
+        resultsOHLC.forEach((el) => {
+            if (lowHighIndex < startLowHighIndex) {
+                lowHighIndex++;
+            } else {
+                if (Number(el["low"]) < lowestTraded) {
+                    lowestTraded = Number(el["low"]);
+                }
+
+                if (Number(el["high"]) > highestTraded) {
+                    highestTraded = Number(el["high"]);
+                }
             }
         });
 
