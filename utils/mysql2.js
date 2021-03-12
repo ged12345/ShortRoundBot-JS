@@ -159,12 +159,12 @@ class Mysql {
         let timestamp = results[0];
         let timestampDate = new Date(timestamp * 1000);
         let stampFullDate = timestampDate
-            .toLocaleDateString("en-US")
+            .toLocaleDateString("en-AU")
             .slice(0, 10)
             .split("/")
             .reverse()
             .join("-");
-        let stampFullTime = timestampDate.toLocaleTimeString("en-US", {
+        let stampFullTime = timestampDate.toLocaleTimeString("en-AU", {
             hour12: false,
         });
 
@@ -225,12 +225,12 @@ class Mysql {
         let timestamp = results["timestamp"];
         let timestampDate = new Date(timestamp * 1000);
         let stampFullDate = timestampDate
-            .toLocaleDateString("en-US")
+            .toLocaleDateString("en-AU")
             .slice(0, 10)
             .split("/")
             .reverse()
             .join("-");
-        let stampFullTime = timestampDate.toLocaleTimeString("en-US", {
+        let stampFullTime = timestampDate.toLocaleTimeString("en-AU", {
             hour12: false,
         });
 
@@ -280,12 +280,12 @@ class Mysql {
         let timestamp = results["timestamp"];
         let timestampDate = new Date(timestamp * 1000);
         let stampFullDate = timestampDate
-            .toLocaleDateString("en-US")
+            .toLocaleDateString("en-AU")
             .slice(0, 10)
             .split("/")
             .reverse()
             .join("-");
-        let stampFullTime = timestampDate.toLocaleTimeString("en-US", {
+        let stampFullTime = timestampDate.toLocaleTimeString("en-AU", {
             hour12: false,
         });
 
@@ -322,12 +322,12 @@ class Mysql {
         let timestamp = results["timestamp"];
         let timestampDate = new Date(timestamp * 1000);
         let stampFullDate = timestampDate
-            .toLocaleDateString("en-US")
+            .toLocaleDateString("en-AU")
             .slice(0, 10)
             .split("/")
             .reverse()
             .join("-");
-        let stampFullTime = timestampDate.toLocaleTimeString("en-US", {
+        let stampFullTime = timestampDate.toLocaleTimeString("en-AU", {
             hour12: false,
         });
 
