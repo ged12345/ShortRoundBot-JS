@@ -27,6 +27,13 @@ class RSICalculations {
     constructor(mysqlCon, storeNum) {
         this.mysqlCon = mysqlCon;
         this.RSIStoreNum = storeNum;
+        this.unlockKey = null;
+    }
+
+    unlockKey(keyFunction) {
+        if (this.unlockKey !== null) {
+            this.unlockKey = keyFunction;
+        }
     }
 
     /*
@@ -53,15 +60,17 @@ class RSICalculations {
         this.cleanup(coinId);
     }
 
-    cleanup(coinId) {
+    async cleanup(coinId) {
         /* Cleanup the processed RSI and limit */
-        this.mysqlCon.cleanupProcessedRSI(coinId, this.RSIStoreNum, () => {});
+        await this.mysqlCon.cleanupProcessedRSI(coinId, this.RSIStoreNum);
+        /* Unlock the coin for processing */
+        this.unlockKey();
     }
 
     async firstRSICalculation(coinId) {
         let resultsOHLC = await this.mysqlCon.getCoinOHLC(coinId);
-        /* No acquired OHLC results yet */
 
+        /* No acquired OHLC results yet */
         if (resultsOHLC.length === 0) return;
 
         let arrRSI = Array();

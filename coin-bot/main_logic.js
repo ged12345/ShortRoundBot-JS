@@ -29,6 +29,7 @@ const Queuer = require("../utils/queuer.js").Queuer;
 const Queue = require("../utils/queue.js");
 const ProcessLocks = require("../utils/process-locks.js");
 const RSIProcesser = require("../trends-and-signals/RSI-calculations.js");
+const StochasticProcesser = require("../trends-and-signals/Stochastic-calculations.js");
 const API = require("../utils/api.js");
 const { rotateArray } = require("../utils/general.js");
 const NETWORK = require("../legacy/config/network-config.js");
@@ -40,23 +41,42 @@ class MainLogic {
         this.queueSetupComplete = false;
         this.mysqlCon = mysqlCon;
 
+        this.coinConfigArr = Array();
+
         // For the MACD (EMA-9, EMA-12, EMA-26)
         this.OHLCStoreNum = 26; // 26 time periods
         this.RSIStoreNum = 15; // 14 for calculations plus the latest
         this.StochasticStoreNum = 14; // 14 time periods
-        this.processLocks = new ProcessLocks(["OHLC", "RSI"]);
+        this.processLocks = new ProcessLocks(["OHLC", "RSI", "Stochastic"]);
         //this.state = eventConstants.SEEKING_COIN;
 
         this.RSIProcesser = new RSIProcesser(this.mysqlCon, this.RSIStoreNum);
+        this.StochasticProcesser = new StochasticProcesser(
+            this.mysqlCon,
+            this.StochasticStoreNum
+        );
 
-        this.getCoinConfig();
-        this.setupQueues();
-        this.setupKraken();
+        this.init();
     }
 
-    async getCoinConfig() {}
+    async init() {
+        await this.cleanOldData();
+        await this.getCoinConfig();
+        await this.setupKraken();
+        await this.setupQueues();
+    }
 
-    setupKraken() {
+    async getCoinConfig() {
+        this.coinConfigArr = await this.mysqlCon.getCoinList();
+    }
+
+    async cleanOldData() {
+        await this.mysqlCon.emptyCoinOHLC();
+        await this.mysqlCon.emptyProcessRSI();
+        await this.mysqlCon.emptyProcessStochastic();
+    }
+
+    async setupKraken() {
         /* Initialise Kraken API */
         this.kraken = require("kraken-api-wrapper")(
             NETWORK.config.apiKey,
@@ -65,7 +85,7 @@ class MainLogic {
         this.kraken.setOtp(NETWORK.config.twoFactor);
     }
 
-    setupQueues() {
+    async setupQueues() {
         /* Setup the main queuers and queues */
         this.coinDataAcquisitionQueuer = new Queuer();
         this.coinTrendsAndSignalsProcessingQueuer = new Queuer();
@@ -89,6 +109,7 @@ class MainLogic {
         );
 
         this.RSIProcessingQueue = new Queue();
+        this.StochasticProcessingQueue = new Queue();
         this.setupTrendsAndSignalsProcessingQueue();
 
         /* We up this for each trend/signal we calculate, and for each coin */
@@ -97,6 +118,13 @@ class MainLogic {
             60000 / (trendsAndSignalsNumber * numberOfCoins);
         this.coinTrendsAndSignalsProcessingQueuer.enqueueQueue(
             this.RSIProcessingQueue,
+            trendsAndSignalsFrequency /* We only acquire this info once a minute */,
+            true,
+            true
+        );
+
+        this.coinTrendsAndSignalsProcessingQueuer.enqueueQueue(
+            this.StochasticProcessingQueue,
             trendsAndSignalsFrequency /* We only acquire this info once a minute */,
             true,
             true
@@ -120,14 +148,17 @@ class MainLogic {
     }
 
     setupTrendsAndSignalsProcessingQueue() {
+        /* Here we rotate the array so we can more easily perform the processing of coins outside of the time periods they're locked. We aim to process at the farthest point away from our async API calls etc. in the hopes that ~half a minute is enough for all operations to complete.*/
+        rotateArray(this.coinConfigArr, 2);
+
         this.setupRSIProcessingQueue();
+        this.setupStochasticProcessingQueue();
     }
 
     async setupOHLCAcquisitionQueue() {
         /* We need to get all the coins we're going to focus on here from mysql - for now we'll just use BTCUSD for testing. */
 
-        let coinArr = await this.mysqlCon.getCoinList();
-        coinArr.forEach((coin) => {
+        this.coinConfigArr.forEach((coin) => {
             this.OHLCAcquisitionQueue.enqueue(async () => {
                 this.processLocks.lock("OHLC", coin["id"]);
                 this.getOHLC(
@@ -143,7 +174,7 @@ class MainLogic {
         /* DEBUG FOR RSI: REMOVE THIS LATER */
         if (coinId != 1) return;
 
-        console.log(`Processing OHLC: ${coinPair}`);
+        console.log(`Acquiring OHLC: ${coinPair}`);
         this.kraken
             .OHLC({ pair: coinPair, interval: 1 })
             .then(async (result) => {
@@ -167,17 +198,30 @@ class MainLogic {
     async setupRSIProcessingQueue() {
         /* We do processing in the same way we did previously, an RSI for each coin. */
 
-        let coinArr = await this.mysqlCon.getCoinList();
-        /* Here we rotate the array so we can more easily perform the processing of coins outside of the time periods they're locked. We aim to process at the farthest point away from our async API calls etc. in the hopes that ~half a minute is enough for all operations to complete.*/
-        //rotateArray(coinArr, parseInt(coinArr.length / 2, 10));
-        rotateArray(coinArr, 2);
-
-        coinArr.forEach((coin) => {
+        this.coinConfigArr.forEach((coin) => {
             this.RSIProcessingQueue.enqueue(async () => {
                 this.processLocks.lock("RSI", coin["id"]);
                 console.log(`Processing RSI: ${coin["coin_id_kraken"]}`);
+                this.RSIProcesser.unlockKey(this.processLocks.unlock("RSI"));
                 this.RSIProcesser.calculate(coin["id"]);
                 this.processLocks.unlock("RSI");
+                this.processLocks.awaitLock("RSI");
+            });
+        });
+    }
+
+    async setupStochasticProcessingQueue() {
+        /* We do processing in the same way we did previously, a Stochastic for each coin. */
+
+        this.coinConfigArr.forEach((coin) => {
+            this.StochasticProcessingQueue.enqueue(async () => {
+                this.processLocks.lock("Stochastic", coin["id"]);
+                console.log(`Processing Stochastic: ${coin["coin_id_kraken"]}`);
+                this.StochasticProcesser.unlockKey(
+                    this.processLocks.unlock("Stochastic")
+                );
+                this.StochasticProcesser.calculate(coin["id"]);
+                this.processLocks.awaitLock("Stochastic");
             });
         });
     }

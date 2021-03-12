@@ -10,7 +10,7 @@ class ProcessLocks {
     addLock(name) {
         /* If lock doesn't exist */
         if (typeof this.locks[name] !== undefined) {
-            this.locks[name] = { coin: -1, locked: false };
+            this.locks[name] = { coin: -1, locked: false, lock: new Promise() };
         }
     }
 
@@ -18,7 +18,11 @@ class ProcessLocks {
         names.forEach((name) => {
             /* If lock doesn't exist */
             if (typeof this.locks[name] !== undefined) {
-                this.locks[name] = { coin: -1, locked: false };
+                this.locks[name] = {
+                    coin: -1,
+                    locked: false,
+                    lock: new Promise(),
+                };
             }
         });
     }
@@ -31,8 +35,13 @@ class ProcessLocks {
         this.locks[name]["coin"] = coinId;
     }
 
+    async awaitLock(name) {
+        await this.locks[name]["lock"];
+    }
+
     unlock(name) {
-        this.locks[name] = { coin: -1, locked: false };
+        this.locks[name]["lock"].resolve();
+        this.locks[name] = { coin: -1, locked: false, lock: new Promise() };
     }
 
     isLocked(name) {

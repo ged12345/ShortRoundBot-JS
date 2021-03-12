@@ -205,6 +205,12 @@ class Mysql {
         //console.log(rows);
     }
 
+    async emptyCoinOHLC() {
+        const [rows, fields] = await this.connection.query(
+            "TRUNCATE TABLE coin_ohlc"
+        );
+    }
+
     /* Coin Processing functions */
     async getProcessedRSI(coin_id) {
         const [rows, fields] = await this.connection.query(
@@ -233,7 +239,7 @@ class Mysql {
         );
     }
 
-    async cleanupProcessedRSI(coin_id, limitNum, cb) {
+    async cleanupProcessedRSI(coin_id, limitNum) {
         const [rows, fields] = await this.connection.query(
             `DELETE FROM coin_processed_rsi
             WHERE timestamp IN
@@ -251,7 +257,13 @@ class Mysql {
         );
     }
 
-    async getProcessedStochastic(coin_id, cb) {
+    async emptyProcessRSI() {
+        const [rows, fields] = await this.connection.query(
+            "TRUNCATE TABLE coin_processed_rsi"
+        );
+    }
+
+    async getProcessedStochastic(coin_id) {
         const [rows, fields] = await this.connection.query(
             `SELECT * from coin_processed_stochastic WHERE coin_id=${mysqlCon.escape(
                 coin_id
@@ -264,7 +276,7 @@ class Mysql {
         return rows;
     }
 
-    async storeProcessedStochastic(coin_id, results, cb) {
+    async storeProcessedStochastic(coin_id, results) {
         let timestamp = results["timestamp"];
         let timestampDate = new Date(timestamp * 1000);
         let stampFullDate = timestampDate
@@ -282,7 +294,7 @@ class Mysql {
         );
     }
 
-    async cleanupProcessedStochastic(coin_id, limitNum, cb) {
+    async cleanupProcessedStochastic(coin_id, limitNum) {
         const [rows, fields] = await this.connection.query(
             `DELETE FROM coin_processed_stochastic
             WHERE timestamp IN
@@ -297,6 +309,12 @@ class Mysql {
                         LIMIT ${mysqlCon.escape(limitNum)},60
                     ) a
             )`
+        );
+    }
+
+    async emptyProcessStochastic() {
+        const [rows, fields] = await this.connection.query(
+            "TRUNCATE TABLE coin_processed_stochastic"
         );
     }
 }
