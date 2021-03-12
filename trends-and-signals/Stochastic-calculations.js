@@ -17,16 +17,10 @@ H14 = The highest price traded during the same
 const util = require("util");
 
 class StochasticCalculations {
-    constructor(mysqlCon, storeNum) {
+    constructor(mysqlCon, storeNum, unlockKey) {
         this.mysqlCon = mysqlCon;
         this.StochasticStoreNum = storeNum;
-        this.unlockKey = null;
-    }
-
-    unlockKey(keyFunction) {
-        if (this.unlockKey !== null) {
-            this.unlockKey = keyFunction;
-        }
+        this.unlockKey = unlockKey;
     }
 
     async cleanup(coinId) {
@@ -36,7 +30,7 @@ class StochasticCalculations {
             this.StochasticStoreNum
         );
         /* Unlock the coin for processing */
-        this.unlockKey();
+        this.unlockKey("Stochastic");
     }
 
     async calculate(coinId) {

@@ -24,16 +24,10 @@ https://tradingsim.com/blog/relative-strength-index/
 const util = require("util");
 
 class RSICalculations {
-    constructor(mysqlCon, storeNum) {
+    constructor(mysqlCon, storeNum, unlockKey) {
         this.mysqlCon = mysqlCon;
         this.RSIStoreNum = storeNum;
-        this.unlockKey = null;
-    }
-
-    unlockKey(keyFunction) {
-        if (this.unlockKey !== null) {
-            this.unlockKey = keyFunction;
-        }
+        this.unlockKey = unlockKey;
     }
 
     /*
@@ -50,10 +44,10 @@ class RSICalculations {
     async calculate(coinId) {
         let resultsRSI = await this.mysqlCon.getProcessedRSI(coinId);
         if (resultsRSI.length === 0) {
-            console.log("FIRST: " + coinId);
+            // console.log("RSI FIRST: " + coinId);
             await this.firstRSICalculation(coinId);
         } else {
-            console.log("SECOND: " + coinId);
+            // console.log("RSI SECOND: " + coinId);
             await this.secondRSICalculation(coinId, resultsRSI);
         }
 
@@ -64,7 +58,7 @@ class RSICalculations {
         /* Cleanup the processed RSI and limit */
         await this.mysqlCon.cleanupProcessedRSI(coinId, this.RSIStoreNum);
         /* Unlock the coin for processing */
-        this.unlockKey();
+        this.unlockKey("RSI");
     }
 
     async firstRSICalculation(coinId) {

@@ -10,7 +10,7 @@ class ProcessLocks {
     addLock(name) {
         /* If lock doesn't exist */
         if (typeof this.locks[name] !== undefined) {
-            this.locks[name] = { coin: -1, locked: false, lock: new Promise() };
+            this.resetLock(name);
         }
     }
 
@@ -18,11 +18,7 @@ class ProcessLocks {
         names.forEach((name) => {
             /* If lock doesn't exist */
             if (typeof this.locks[name] !== undefined) {
-                this.locks[name] = {
-                    coin: -1,
-                    locked: false,
-                    lock: new Promise(),
-                };
+                this.resetLock(name);
             }
         });
     }
@@ -32,20 +28,43 @@ class ProcessLocks {
     }
 
     lock(name, coinId) {
+        this.locks[name]["locked"] = true;
         this.locks[name]["coin"] = coinId;
     }
 
-    async awaitLock(name) {
-        await this.locks[name]["lock"];
+    async awaitLock(name, coinId) {
+        if (this.locks[name]["coin"] === coinId) {
+            await this.locks[name]["lock"];
+        } else {
+            return false;
+        }
     }
 
-    unlock(name) {
-        this.locks[name]["lock"].resolve();
-        this.locks[name] = { coin: -1, locked: false, lock: new Promise() };
+    /* Need this form because 'this' is lost (non ED6 syntax) */
+    unlock = (name) => {
+        this.locks[name]["tumbler"]();
+        this.resetLock(name);
+    };
+
+    isLocked(name, coinId) {
+        return (
+            this.locks[name]["locked"] === true &&
+            this.locks[name]["coin"] === coinId
+        );
     }
 
-    isLocked(name) {
-        return this.locks[name]["locked"] === true;
+    resetLock(name) {
+        let tempTumbler = null;
+        this.locks[name] = {
+            tumbler: null,
+            coin: -1,
+            locked: false,
+            lock: new Promise((resolve, reject) => {
+                tempTumbler = resolve;
+            }),
+        };
+
+        this.locks[name].tumbler = tempTumbler;
     }
 }
 

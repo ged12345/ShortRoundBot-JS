@@ -28,8 +28,8 @@ How do we get 10 mins and 1 hour ago?
 const Queuer = require("../utils/queuer.js").Queuer;
 const Queue = require("../utils/queue.js");
 const ProcessLocks = require("../utils/process-locks.js");
-const RSIProcesser = require("../trends-and-signals/RSI-calculations.js");
-const StochasticProcesser = require("../trends-and-signals/Stochastic-calculations.js");
+const RSIProcessor = require("../trends-and-signals/RSI-calculations.js");
+const StochasticProcessor = require("../trends-and-signals/Stochastic-calculations.js");
 const API = require("../utils/api.js");
 const { rotateArray } = require("../utils/general.js");
 const NETWORK = require("../legacy/config/network-config.js");
@@ -50,10 +50,15 @@ class MainLogic {
         this.processLocks = new ProcessLocks(["OHLC", "RSI", "Stochastic"]);
         //this.state = eventConstants.SEEKING_COIN;
 
-        this.RSIProcesser = new RSIProcesser(this.mysqlCon, this.RSIStoreNum);
-        this.StochasticProcesser = new StochasticProcesser(
+        this.RSIProcessor = new RSIProcessor(
             this.mysqlCon,
-            this.StochasticStoreNum
+            this.RSIStoreNum,
+            this.processLocks.unlock
+        );
+        this.StochasticProcessor = new StochasticProcessor(
+            this.mysqlCon,
+            this.StochasticStoreNum,
+            this.processLocks.unlock
         );
 
         this.init();
@@ -199,13 +204,11 @@ class MainLogic {
         /* We do processing in the same way we did previously, an RSI for each coin. */
 
         this.coinConfigArr.forEach((coin) => {
+            let trend = "RSI";
             this.RSIProcessingQueue.enqueue(async () => {
-                this.processLocks.lock("RSI", coin["id"]);
-                console.log(`Processing RSI: ${coin["coin_id_kraken"]}`);
-                this.RSIProcesser.unlockKey(this.processLocks.unlock("RSI"));
-                this.RSIProcesser.calculate(coin["id"]);
-                this.processLocks.unlock("RSI");
-                this.processLocks.awaitLock("RSI");
+                console.log(`Processing ${trend}: ${coin["coin_id_kraken"]}`);
+
+                this.processTrendWithLock(this.RSIProcessor, trend, coin["id"]);
             });
         });
     }
@@ -214,16 +217,30 @@ class MainLogic {
         /* We do processing in the same way we did previously, a Stochastic for each coin. */
 
         this.coinConfigArr.forEach((coin) => {
+            let trend = "Stochastic";
             this.StochasticProcessingQueue.enqueue(async () => {
-                this.processLocks.lock("Stochastic", coin["id"]);
-                console.log(`Processing Stochastic: ${coin["coin_id_kraken"]}`);
-                this.StochasticProcesser.unlockKey(
-                    this.processLocks.unlock("Stochastic")
+                console.log(`Processing ${trend}: ${coin["coin_id_kraken"]}`);
+
+                this.processTrendWithLock(
+                    this.StochasticProcessor,
+                    trend,
+                    coin["id"]
                 );
-                this.StochasticProcesser.calculate(coin["id"]);
-                this.processLocks.awaitLock("Stochastic");
             });
         });
+    }
+
+    /* Generic processor lock and then wait for function to finish to unlock */
+    async processTrendWithLock(processor, trend, coinId) {
+        this.processLocks.lock(trend, coinId);
+        processor.calculate(coinId);
+        let unlocked = this.processLocks.awaitLock(trend, coinId);
+
+        if (unlocked === false) {
+            console.log(
+                `Error: ${trend} lock for ${coinId} is not for the current coin!`
+            );
+        }
     }
 }
 
