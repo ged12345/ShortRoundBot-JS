@@ -24,17 +24,39 @@ https://www.investopedia.com/terms/b/bollingerbands.asp
 */
 
 const util = require("util");
-
 class BollingerBandsCalculations {
-    constructor(mysqlCon, storeNum) {
+    constructor(mysqlCon, storeNum, unlockKey) {
         this.mysqlCon = mysqlCon;
         this.BollingerStoreNum = storeNum;
+        this.unlockKey = unlockKey;
     }
 
-    /*
-        Bollinger Bands Calculation steps:
-    */
-    calculate(coinId) {}
+    async cleanup(coinId) {
+        /* Cleanup the processed RSI and limit */
+        await this.mysqlCon.cleanupProcessedStochastic(
+            coinId,
+            this.BollingerStoreNum
+        );
+        /* Unlock the coin for processing */
+        this.unlockKey("Bollinger");
+    }
+
+    async calculate(coinId) {
+        let resultsOHLC = await this.mysqlCon.getCoinOHLC(coinId);
+        let arrBollinger = Array();
+
+        /* No acquired OHLC results yet */
+        if (resultsOHLC.length === 0) return;
+
+        /* Add this to mysql and then cleanup*/
+        await this.mysqlCon.storeProcessedBollinger(coinId, currBollinger);
+        await this.mysqlCon.cleanupProcessedBollinger(
+            coinId,
+            this.BollingerStoreNum
+        );
+
+        this.cleanup(coinId);
+    }
 }
 
-module.exports = RSICalculations;
+module.exports = StochasticCalculations;

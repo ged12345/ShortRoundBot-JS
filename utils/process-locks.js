@@ -40,7 +40,7 @@ class ProcessLocks {
         }
     }
 
-    /* Need this form because 'this' is lost (non ED6 syntax) */
+    /* Need this form of a function because the 'this' points to the wrong 'this' (with non ES-6 syntax) */
     unlock = (name) => {
         this.locks[name]["tumbler"]();
         this.resetLock(name);

@@ -317,6 +317,48 @@ class Mysql {
             "TRUNCATE TABLE coin_processed_stochastic"
         );
     }
+
+    async storeProcessedBollinger(coin_id, results) {
+        let timestamp = results["timestamp"];
+        let timestampDate = new Date(timestamp * 1000);
+        let stampFullDate = timestampDate
+            .toLocaleDateString("en-US")
+            .slice(0, 10)
+            .split("/")
+            .reverse()
+            .join("-");
+        let stampFullTime = timestampDate.toLocaleTimeString("en-US", {
+            hour12: false,
+        });
+
+        const [rows, fields] = await this.connection.query(
+            `INSERT INTO coin_processed_stochastic VALUES (${coin_id}, '${stampFullTime}', '${stampFullDate}','${timestamp}',${results["bolU"]},${results["bolD"]},${results["bolMA"]}) ON DUPLICATE KEY UPDATE bol_u=${results["bolU"]},bol_d=${results["bolD"]},bol_ma=${results["bolMA"]}`
+        );
+    }
+
+    async cleanupProcessedBollinger(coin_id, limitNum) {
+        const [rows, fields] = await this.connection.query(
+            `DELETE FROM coin_processed_bollinger
+            WHERE timestamp IN
+            (
+                SELECT timestamp
+                FROM
+                    (
+                        SELECT timestamp
+                        FROM coin_processed_bollinger
+                        WHERE coin_id = ${mysqlCon.escape(coin_id)}
+                        ORDER BY timestamp DESC
+                        LIMIT ${mysqlCon.escape(limitNum)},60
+                    ) a
+            )`
+        );
+    }
+
+    async emptyProcessBollinger() {
+        const [rows, fields] = await this.connection.query(
+            "TRUNCATE TABLE coin_processed_bollinger"
+        );
+    }
 }
 
 module.exports = {
