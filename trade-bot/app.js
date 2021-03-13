@@ -2,7 +2,6 @@ const NETWORK = require("../legacy/config/network-config.js");
 const MainLogic = require("./main_logic.js").MainLogic;
 const queue = require("../utils/queue.js");
 const sleep = require("../utils/general.js").sleep;
-const plotly = require("../utils/plotly.js").Plotly;
 
 const kraken = require("kraken-api-wrapper")(
     NETWORK.config.apiKey,

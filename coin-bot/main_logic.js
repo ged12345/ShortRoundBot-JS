@@ -34,6 +34,10 @@ const BollingerProcessor = require("../trends-and-signals/BollingerBands-calcula
 const API = require("../utils/api.js");
 const { rotateArray } = require("../utils/general.js");
 const NETWORK = require("../legacy/config/network-config.js");
+const Plotly = require("../utils/plotly.js").Plotly;
+
+const fs = require("fs");
+const write = require("write");
 
 class MainLogic {
     // Need to "lock" bot when new info comes in.
@@ -45,6 +49,7 @@ class MainLogic {
         this.coinConfigArr = Array();
 
         // For the MACD (EMA-9, EMA-12, EMA-26)
+        this.graphPeriod = 32;
         this.OHLCStoreNum = 26; // 26 time periods
         this.RSIStoreNum = 15; // 14 for calculations plus the latest
         this.StochasticStoreNum = 14; // 14 time periods
@@ -60,16 +65,19 @@ class MainLogic {
         this.RSIProcessor = new RSIProcessor(
             this.mysqlCon,
             this.RSIStoreNum,
+            this.graphPeriod,
             this.processLocks.unlock
         );
         this.StochasticProcessor = new StochasticProcessor(
             this.mysqlCon,
             this.StochasticStoreNum,
+            this.graphPeriod,
             this.processLocks.unlock
         );
         this.BollingerProcessor = new BollingerProcessor(
             this.mysqlCon,
             this.BollingerStoreNum,
+            this.graphPeriod,
             this.processLocks.unlock
         );
 
@@ -108,6 +116,7 @@ class MainLogic {
         this.coinDataAcquisitionQueuer = new Queuer();
         this.coinTrendsAndSignalsProcessingQueuer = new Queuer();
         this.coinAdviceGenerationQueuer = new Queuer();
+        this.coinTrendsAndSignalsGraphingQueuer = new Queuer();
 
         /* Do we need separate queues - one to handle calls to grab required api and populate mysql with data, and another to process the info? Yes! */
         this.OHLCAcquisitionQueue = new Queue();
@@ -156,6 +165,17 @@ class MainLogic {
             true
         );
 
+        /* Plotting graphs to compare calculations with online */
+        this.PlotlyGraphingQueue = new Queue();
+        this.setupTrendsAndSignalsGraphingQueue();
+
+        this.coinTrendsAndSignalsGraphingQueuer.enqueueQueue(
+            this.PlotlyGraphingQueue,
+            trendsAndSignalsFrequency /* We only acquire this info once a minute */,
+            true,
+            true
+        );
+
         this.queueSetupComplete = true;
     }
 
@@ -166,6 +186,7 @@ class MainLogic {
             this.coinDataAcquisitionQueuer.processQueues();
             this.coinTrendsAndSignalsProcessingQueuer.processQueues();
             this.coinAdviceGenerationQueuer.processQueues();
+            this.coinTrendsAndSignalsGraphingQueuer.processQueues();
         }
     }
 
@@ -180,6 +201,11 @@ class MainLogic {
         this.setupRSIProcessingQueue();
         this.setupStochasticProcessingQueue();
         this.setupBollingerProcessingQueue();
+    }
+
+    setupTrendsAndSignalsGraphingQueue() {
+        rotateArray(this.coinConfigArr, 1);
+        this.setupPlotlyGraphingQueue();
     }
 
     async setupOHLCAcquisitionQueue() {
@@ -280,6 +306,110 @@ class MainLogic {
                 `Error: ${trend} lock for ${coinId} is not for the current coin!`
             );
         }
+    }
+
+    setupPlotlyGraphingQueue() {
+        this.coinConfigArr.forEach((coin) => {
+            let trend = "Plotly";
+            this.PlotlyGraphingQueue.enqueue(async () => {
+                let coinId = coin["id"];
+                let coinName = coin["coin_name"];
+
+                /* We only draw this for Bitcoin for now */
+                if (coinId === 1) {
+                    console.log(`Plotting ${trend}: ${coin["coin_id_kraken"]}`);
+
+                    let resultsRSI = await this.mysqlCon.getProcessedRSI(
+                        coinId
+                    );
+
+                    let resultsStochastics = await this.mysqlCon.getProcessedStochastic(
+                        coinId
+                    );
+
+                    this.plotGraph(
+                        coinId,
+                        coinName,
+                        resultsRSI,
+                        resultsStochastics
+                    );
+                }
+            });
+        });
+    }
+
+    plotGraph(coinId, coinName, resultsRSI, resultsStochastics) {
+        /* RSI lines */
+        let xRSI = resultsRSI.map((el) => {
+            let date = new Date(el["date"]);
+            date = date.toLocaleDateString("en-AU");
+            return `${el["time"]} ${date}`;
+        });
+        let yRSI = resultsRSI.map((el) => el["RSI"]);
+
+        /* Stochastic kFast and dSlow */
+        let xStochastic = resultsRSI.map((el) => {
+            let date = new Date(el["date"]);
+            date = date.toLocaleDateString("en-AU");
+            return `${el["time"]} ${date}`;
+        });
+
+        let y1Stochastic = resultsStochastics.map((el) => el["k_fast"]);
+        let y2Stochastic = resultsStochastics.map((el) => el["d_slow"]);
+        /* We let the size of the RSI drive how many xaxis entries we have */
+        let unfilledAmount = xRSI.length - y1Stochastic.length;
+
+        for (var i = 0; i < unfilledAmount; i++) {
+            y1Stochastic.unshift(0);
+            y2Stochastic.unshift(0);
+        }
+
+        /*let graph = new Plotly(
+                        xRSI,
+                        yRSI,
+                        xStochastic,
+                        y1Stochastic,
+                        xStochastic,
+                        y2Stochastic
+                    );
+                    graph.plot();*/
+
+        /* Open template file */
+        fs.readFile(
+            "../plots/template/plotGenerator.html",
+            "utf8",
+            function (err, data) {
+                let plotString = data;
+                plotString = plotString.replace(/%coin_name%/g, `${coinName}`);
+                plotString = plotString.replace(
+                    "%rsi_x1%",
+                    `["${xRSI.join('","')}"]`
+                );
+                plotString = plotString.replace(
+                    "%rsi_y1%",
+                    `["${yRSI.join('","')}"]`
+                );
+                plotString = plotString.replace(
+                    "%sto_x1%",
+                    `["${xStochastic.join('","')}"]`
+                );
+                plotString = plotString.replace(
+                    "%sto_y1%",
+                    `["${y1Stochastic.join('","')}"]`
+                );
+                plotString = plotString.replace(
+                    "%sto_x2%",
+                    `["${xStochastic.join('","')}"]`
+                );
+                plotString = plotString.replace(
+                    "%sto_y2%",
+                    `["${y2Stochastic.join('","')}"]`
+                );
+                write.sync(`../plots/${coinId}.html`, plotString, {
+                    newline: true,
+                });
+            }
+        );
     }
 }
 

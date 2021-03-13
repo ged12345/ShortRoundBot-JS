@@ -25,9 +25,10 @@ https://www.investopedia.com/terms/b/bollingerbands.asp
 
 const util = require("util");
 class BollingerBandsCalculations {
-    constructor(mysqlCon, storeNum, unlockKey) {
+    constructor(mysqlCon, storeNum, totalRecordsNum, unlockKey) {
         this.mysqlCon = mysqlCon;
         this.BollingerStoreNum = storeNum;
+        this.totalRecordsNum = totalRecordsNum;
         this.unlockKey = unlockKey;
     }
 
@@ -35,7 +36,7 @@ class BollingerBandsCalculations {
         /* Cleanup the processed RSI and limit */
         await this.mysqlCon.cleanupProcessedStochastic(
             coinId,
-            this.BollingerStoreNum
+            this.totalRecordsNum
         );
         /* Unlock the coin for processing */
         this.unlockKey("Bollinger");

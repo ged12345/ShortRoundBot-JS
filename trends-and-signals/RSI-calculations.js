@@ -24,9 +24,10 @@ https://tradingsim.com/blog/relative-strength-index/
 const util = require("util");
 
 class RSICalculations {
-    constructor(mysqlCon, storeNum, unlockKey) {
+    constructor(mysqlCon, storeNum, totalRecordsNum, unlockKey) {
         this.mysqlCon = mysqlCon;
         this.RSIStoreNum = storeNum;
+        this.totalRecordsNum = totalRecordsNum;
         this.unlockKey = unlockKey;
     }
 
@@ -56,7 +57,7 @@ class RSICalculations {
 
     async cleanup(coinId) {
         /* Cleanup the processed RSI and limit */
-        await this.mysqlCon.cleanupProcessedRSI(coinId, this.RSIStoreNum);
+        await this.mysqlCon.cleanupProcessedRSI(coinId, this.totalRecordsNum);
         /* Unlock the coin for processing */
         this.unlockKey("RSI");
     }
