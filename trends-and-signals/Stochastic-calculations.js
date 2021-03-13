@@ -106,8 +106,8 @@ class StochasticCalculations {
                 3.0;
         }
 
-        if (resultsStochastics.length > 3 + 3) {
-            currStochastic["kFull"] = Number(currStochastic["kSlow"]);
+        if (resultsStochastics.length > 5) {
+            currStochastic["kFull"] = Number(currStochastic["dSlow"]);
 
             currStochastic["dFull"] =
                 (Number(currStochastic["kFull"]) +
@@ -124,6 +124,7 @@ class StochasticCalculations {
                     )) /
                 3.0;
         }
+        console.log(currStochastic);
 
         if (currStochastic["dSlow"] === NaN) {
             currStochastic["dSlow"] = -1;

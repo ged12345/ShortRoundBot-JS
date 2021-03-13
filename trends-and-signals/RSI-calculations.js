@@ -100,9 +100,6 @@ class RSICalculations {
                     let lossOrGain =
                         arrRSI[offsetInteriorIndexOHLC]["lossOrGain"];
 
-                    console.log("LOSS GAIN: ");
-                    console.log(lossOrGain);
-
                     /* 15th entry, so we calculate aveGain, aveLoss, RS, and RSI */
                     if (offsetInteriorIndexOHLC === this.RSIStoreNum - 1) {
                         arrRSI[offsetInteriorIndexOHLC]["aveGain"] =
@@ -178,15 +175,11 @@ class RSICalculations {
             currRSI["lossOrGain"] > 0 ? Number(currRSI["lossOrGain"]) : 0;
         let loss =
             currRSI["lossOrGain"] < 0 ? Number(-currRSI["lossOrGain"]) : 0;
-        console.log(gain);
-        console.log(loss);
+
         currRSI["aveGain"] =
             (Number(lastResult["ave_gain"]) * 13 + gain) / 14.0;
         currRSI["aveLoss"] =
             (Number(lastResult["ave_loss"]) * 13 + loss) / 14.0;
-
-        console.log(currRSI["aveGain"]);
-        console.log(currRSI["aveLoss"]);
 
         /* If loss or gain are zero, we'll get NaN, so set this to 0 */
         if (currRSI["aveGain"] === NaN) {
@@ -203,10 +196,6 @@ class RSICalculations {
             currRSI["RS"] = currRSI["aveGain"] / currRSI["aveLoss"];
             currRSI["RSI"] = 100 - 100 / (1 + currRSI["RS"]);
         }
-
-        console.log(elLastOHLC);
-        console.log(lastResult);
-        console.log(currRSI);
 
         await this.mysqlCon.storeProcessedRSI(coinId, currRSI);
     }
