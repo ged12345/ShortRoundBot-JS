@@ -217,7 +217,7 @@ class MainLogic {
                 this.getOHLC(
                     coin["id"],
                     coin["coin_id_kraken"],
-                    this.OHLCStoreNum
+                    this.graphPeriod
                 );
             });
         });
@@ -319,6 +319,8 @@ class MainLogic {
                 if (coinId === 1) {
                     console.log(`Plotting ${trend}: ${coin["coin_id_kraken"]}`);
 
+                    let resultsOHLC = await this.mysqlCon.getCoinOHLC(coinId);
+
                     let resultsRSI = await this.mysqlCon.getProcessedRSI(
                         coinId
                     );
@@ -327,38 +329,59 @@ class MainLogic {
                         coinId
                     );
 
+                    let resultsBollingerBands = await this.mysqlCon.getProcessedBollinger(
+                        coinId
+                    );
+
                     this.plotGraph(
                         coinId,
                         coinName,
+                        resultsOHLC,
                         resultsRSI,
-                        resultsStochastics
+                        resultsStochastics,
+                        resultsBollingerBands
                     );
                 }
             });
         });
     }
 
-    plotGraph(coinId, coinName, resultsRSI, resultsStochastics) {
+    plotGraph(
+        coinId,
+        coinName,
+        resultsOHLC,
+        resultsRSI,
+        resultsStochastics,
+        resultsBollingerBands
+    ) {
+        /* Coin candle indicators */
+        let yOpen = resultsOHLC.map((el) => el["open"]);
+        let yClose = resultsOHLC.map((el) => el["close"]);
+        let yLow = resultsOHLC.map((el) => el["low"]);
+        let yHigh = resultsOHLC.map((el) => el["high"]);
+
+        let highestYOHLC = yHigh.reduce((a, b) => Math.max(a, b));
+        let lowestYOHLC = yLow.reduce((a, b) => Math.min(a, b));
+
         /* RSI lines */
-        let xRSI = resultsRSI.map((el) => {
+        let xRSI = resultsOHLC.map((el) => {
             let date = new Date(el["date"]);
             date = date.toLocaleDateString("en-AU");
             return `${el["time"]} ${date}`;
         });
         let yRSI = resultsRSI.map((el) => el["RSI"]);
 
-        /* Stochastic kFast and dSlow */
-        let xStochastic = resultsRSI.map((el) => {
-            let date = new Date(el["date"]);
-            date = date.toLocaleDateString("en-AU");
-            return `${el["time"]} ${date}`;
-        });
+        let unfilledAmount = xRSI.length - yRSI.length;
+        for (var i = 0; i < unfilledAmount; i++) {
+            yRSI.unshift(0);
+        }
 
+        /* Stochastic kFast and dSlow */
         let y1Stochastic = resultsStochastics.map((el) => el["k_fast"]);
         let y2Stochastic = resultsStochastics.map((el) => el["d_slow"]);
-        /* We let the size of the RSI drive how many xaxis entries we have */
-        let unfilledAmount = xRSI.length - y1Stochastic.length;
 
+        /* We let the size of the RSI drive how many xaxis entries we have */
+        unfilledAmount = xRSI.length - y1Stochastic.length;
         for (var i = 0; i < unfilledAmount; i++) {
             y1Stochastic.unshift(0);
             y2Stochastic.unshift(0);
@@ -381,30 +404,88 @@ class MainLogic {
             function (err, data) {
                 let plotString = data;
                 plotString = plotString.replace(/%coin_name%/g, `${coinName}`);
+
+                plotString = plotString.replace(
+                    "%ohlc_x_range_start%",
+                    `${xRSI[0]}`
+                );
+
+                plotString = plotString.replace(
+                    "%ohlc_x_range_end%",
+                    `${xRSI[xRSI.length - 1]}`
+                );
+
+                plotString = plotString.replace(
+                    "%ohlc_y_range_start%",
+                    `${lowestYOHLC}`
+                );
+
+                plotString = plotString.replace(
+                    "%ohlc_y_range_end%",
+                    `${highestYOHLC}`
+                );
+
+                let dbDateTimeFormat = xRSI.map((el) => {
+                    let changedFormat = el.replace(/\//g, "-");
+                    let splitFormat = changedFormat.split(" ");
+                    return `${splitFormat[1]} ${splitFormat[0]}`;
+                });
+
+                plotString = plotString.replace(
+                    "%ohlc_x%",
+                    `["${dbDateTimeFormat.join('","')}"]`
+                );
+
+                plotString = plotString.replace(
+                    "%ohlc_low%",
+                    `["${yLow.join('","')}"]`
+                );
+
+                plotString = plotString.replace(
+                    "%ohlc_high%",
+                    `["${yHigh.join('","')}"]`
+                );
+
+                plotString = plotString.replace(
+                    "%ohlc_open%",
+                    `["${yOpen.join('","')}"]`
+                );
+
+                plotString = plotString.replace(
+                    "%ohlc_close%",
+                    `["${yClose.join('","')}"]`
+                );
+
                 plotString = plotString.replace(
                     "%rsi_x1%",
                     `["${xRSI.join('","')}"]`
                 );
+
                 plotString = plotString.replace(
                     "%rsi_y1%",
                     `["${yRSI.join('","')}"]`
                 );
+
                 plotString = plotString.replace(
                     "%sto_x1%",
-                    `["${xStochastic.join('","')}"]`
+                    `["${xRSI.join('","')}"]`
                 );
+
                 plotString = plotString.replace(
                     "%sto_y1%",
                     `["${y1Stochastic.join('","')}"]`
                 );
+
                 plotString = plotString.replace(
                     "%sto_x2%",
-                    `["${xStochastic.join('","')}"]`
+                    `["${xRSI.join('","')}"]`
                 );
+
                 plotString = plotString.replace(
                     "%sto_y2%",
                     `["${y2Stochastic.join('","')}"]`
                 );
+
                 write.sync(`../plots/${coinId}.html`, plotString, {
                     newline: true,
                 });

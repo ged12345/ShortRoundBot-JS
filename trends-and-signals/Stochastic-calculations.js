@@ -52,44 +52,31 @@ class StochasticCalculations {
             coinId
         );
 
-        let dSlow = -1;
-        if (resultsStochastics.length >= 3) {
-            /* Get the last three entries and average them to get the slowD */
-            let stochasticsStartIndex = resultsStochastics.length - 3;
-
-            dSlow =
-                (Number(resultsStochastics[stochasticsStartIndex]["k_fast"]) +
-                    Number(
-                        resultsStochastics[stochasticsStartIndex + 1]["k_fast"]
-                    ) +
-                    Number(
-                        resultsStochastics[stochasticsStartIndex + 2]["k_fast"]
-                    )) /
-                3.0;
-        }
-
-        if (dSlow === NaN) {
-            dSlow = -1;
-        }
-
         /* Highest and lowest of last 14 periods */
         let totalOHLCResults = resultsOHLC.length;
-        let startLowHighIndex = totalOHLCResults - this.StochasticStoreNum;
+        /* Note: We were hitting the current period as a part of the 14 prev. periods but this is incorrect. We use the innerLowHighIndex and the below index to skip the last one (our current period) */
+        let startLowHighIndex = totalOHLCResults - this.StochasticStoreNum - 1;
         let lowHighIndex = 0;
+        let innerLowHighIndex = 0;
 
         resultsOHLC.forEach((el) => {
             if (lowHighIndex < startLowHighIndex) {
                 lowHighIndex++;
             } else {
-                if (Number(el["low"]) < lowestTraded) {
-                    lowestTraded = Number(el["low"]);
-                }
+                if (innerLowHighIndex < this.StochasticStoreNum)
+                    if (Number(el["low"]) < lowestTraded) {
+                        lowestTraded = Number(el["low"]);
+                    }
 
                 if (Number(el["high"]) > highestTraded) {
                     highestTraded = Number(el["high"]);
                 }
+                innerLowHighIndex++;
             }
         });
+
+        console.log(lowestTraded);
+        console.log(highestTraded);
 
         let lastElOHLC = resultsOHLC[resultsOHLC.length - 1];
         let currStochastic = {
@@ -99,8 +86,30 @@ class StochasticCalculations {
                 ((Number(lastElOHLC["close"]) - lowestTraded) /
                     (highestTraded - lowestTraded)) *
                 100,
-            dSlow: dSlow,
+            dSlow: -1,
         };
+
+        if (resultsStochastics.length >= 2) {
+            /* Get the last three entries (including the current) and average them to get the slowD */
+            currStochastic["dSlow"] =
+                (Number(currStochastic["kFast"]) +
+                    //(Number(resultsStochastics[stochasticsStartIndex]["k_fast"]) +
+                    Number(
+                        resultsStochastics[resultsStochastics.length - 2][
+                            "k_fast"
+                        ]
+                    ) +
+                    Number(
+                        resultsStochastics[resultsStochastics.length - 1][
+                            "k_fast"
+                        ]
+                    )) /
+                3.0;
+        }
+
+        if (currStochastic["dSlow"] === NaN) {
+            currStochastic["dSlow"] = -1;
+        }
 
         console.log(currStochastic);
 

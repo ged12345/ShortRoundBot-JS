@@ -318,6 +318,19 @@ class Mysql {
         );
     }
 
+    async getProcessedBollinger(coin_id) {
+        const [rows, fields] = await this.connection.query(
+            `SELECT * from coin_processed_bollinger WHERE coin_id=${mysqlCon.escape(
+                coin_id
+            )}`
+        );
+
+        //console.log("Data received from Db:");
+        //console.log(rows);
+
+        return rows;
+    }
+
     async storeProcessedBollinger(coin_id, results) {
         let timestamp = results["timestamp"];
         let timestampDate = new Date(timestamp * 1000);
