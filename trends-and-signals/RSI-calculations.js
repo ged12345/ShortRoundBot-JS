@@ -45,10 +45,10 @@ class RSICalculations {
     async calculate(coinId) {
         let resultsRSI = await this.mysqlCon.getProcessedRSI(coinId);
         if (resultsRSI.length === 0) {
-            // console.log("RSI FIRST: " + coinId);
+            console.log("RSI FIRST: " + coinId);
             await this.firstRSICalculation(coinId);
         } else {
-            // console.log("RSI SECOND: " + coinId);
+            console.log("RSI SECOND: " + coinId);
             await this.secondRSICalculation(coinId, resultsRSI);
         }
 
@@ -77,7 +77,7 @@ class RSICalculations {
         let aveGain = 0;
 
         resultsOHLC.forEach((el) => {
-            if (offsetIndexOHLC + 1 > countOHLC - this.RSIStoreNum) {
+            if (offsetIndexOHLC + 1 > countOHLC - this.totalRecordsNum) {
                 arrRSI.push({
                     timestamp: el["timestamp"],
                     close: Number(el["close"]),
@@ -143,8 +143,8 @@ class RSICalculations {
     async secondRSICalculation(coinId, resultsRSI) {
         /* Find the 15th result, and there should always be 15 */
 
-        if (resultsRSI.length !== this.RSIStoreNum) return;
-        let lastResult = resultsRSI[this.RSIStoreNum - 1];
+        if (resultsRSI.length !== this.totalRecordsNum) return;
+        let lastResult = resultsRSI[resultsRSI.length - 1];
 
         let resultsOHLC = await this.mysqlCon.getCoinOHLC(coinId);
         /* No acquired OHLC results yet */
