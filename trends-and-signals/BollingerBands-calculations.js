@@ -92,6 +92,7 @@ class BollingerBandsCalculations {
         });
 
         MA = MA / this.BollingerStoreNum;
+        SD = SD / this.BollingerStoreNum;
 
         let lastElOHLC = resultsOHLC[resultsOHLC.length - 1];
 

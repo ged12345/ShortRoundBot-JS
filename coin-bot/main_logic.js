@@ -360,9 +360,6 @@ class MainLogic {
         let yLow = resultsOHLC.map((el) => el["low"]);
         let yHigh = resultsOHLC.map((el) => el["high"]);
 
-        let highestYOHLC = yHigh.reduce((a, b) => Math.max(a, b));
-        let lowestYOHLC = yLow.reduce((a, b) => Math.min(a, b));
-
         /* RSI lines */
         let xRSI = resultsOHLC.map((el) => {
             let date = new Date(el["date"]);
@@ -373,7 +370,7 @@ class MainLogic {
 
         let unfilledAmount = xRSI.length - yRSI.length;
         for (var i = 0; i < unfilledAmount; i++) {
-            yRSI.unshift(0);
+            yRSI.unshift("");
         }
 
         /* Stochastic kFast and dSlow */
@@ -383,8 +380,34 @@ class MainLogic {
         /* We let the size of the RSI drive how many xaxis entries we have */
         unfilledAmount = xRSI.length - y1Stochastic.length;
         for (var i = 0; i < unfilledAmount; i++) {
-            y1Stochastic.unshift(0);
-            y2Stochastic.unshift(0);
+            y1Stochastic.unshift("");
+            y2Stochastic.unshift("");
+        }
+
+        let y1Bollinger = resultsBollingerBands.map((el) => el["bol_ma"]);
+        let y2Bollinger = resultsBollingerBands.map((el) => el["bol_u"]);
+        let y3Bollinger = resultsBollingerBands.map((el) => el["bol_d"]);
+
+        let highestYOHLC = yHigh.reduce((a, b) => Math.max(a, b));
+        let lowestYOHLC = yLow.reduce((a, b) => Math.min(a, b));
+        /* We use the Bollinger bands for the range of the candle graph of large than the above */
+        let highestYBOLU = y2Bollinger.reduce((a, b) => Math.max(a, b));
+        let lowestYBOLD = y3Bollinger.reduce((a, b) => Math.min(a, b));
+
+        let highestCandleY =
+            highestYOHLC < highestYBOLU ? highestYBOLU : highestYOHLC;
+        let lowestCandleY =
+            lowestYOHLC < lowestYBOLD || lowestYBOLD === 0
+                ? lowestYOHLC
+                : lowestYBOLD;
+
+        /* We let the size of the RSI drive how many xaxis entries we have */
+        unfilledAmount = xRSI.length - y1Bollinger.length;
+
+        for (var i = 0; i < unfilledAmount; i++) {
+            y1Bollinger.unshift("");
+            y2Bollinger.unshift("");
+            y3Bollinger.unshift("");
         }
 
         /*let graph = new Plotly(
@@ -417,12 +440,12 @@ class MainLogic {
 
                 plotString = plotString.replace(
                     "%ohlc_y_range_start%",
-                    `${lowestYOHLC}`
+                    `${lowestCandleY}`
                 );
 
                 plotString = plotString.replace(
                     "%ohlc_y_range_end%",
-                    `${highestYOHLC}`
+                    `${highestCandleY}`
                 );
 
                 let dbDateTimeFormat = xRSI.map((el) => {
@@ -454,6 +477,36 @@ class MainLogic {
                 plotString = plotString.replace(
                     "%ohlc_close%",
                     `["${yClose.join('","')}"]`
+                );
+
+                plotString = plotString.replace(
+                    "%boll_ma_x1%",
+                    `["${dbDateTimeFormat.join('","')}"]`
+                );
+
+                plotString = plotString.replace(
+                    "%boll_ma_y1%",
+                    `["${y1Bollinger.join('","')}"]`
+                );
+
+                plotString = plotString.replace(
+                    "%boll_u_x1%",
+                    `["${dbDateTimeFormat.join('","')}"]`
+                );
+
+                plotString = plotString.replace(
+                    "%boll_u_y1%",
+                    `["${y2Bollinger.join('","')}"]`
+                );
+
+                plotString = plotString.replace(
+                    "%boll_l_x1%",
+                    `["${dbDateTimeFormat.join('","')}"]`
+                );
+
+                plotString = plotString.replace(
+                    "%boll_l_y1%",
+                    `["${y3Bollinger.join('","')}"]`
                 );
 
                 plotString = plotString.replace(

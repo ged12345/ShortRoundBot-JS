@@ -75,9 +75,6 @@ class StochasticCalculations {
             }
         });
 
-        console.log(lowestTraded);
-        console.log(highestTraded);
-
         let lastElOHLC = resultsOHLC[resultsOHLC.length - 1];
         let currStochastic = {
             timestamp: lastElOHLC["timestamp"],
@@ -87,6 +84,8 @@ class StochasticCalculations {
                     (highestTraded - lowestTraded)) *
                 100,
             dSlow: -1,
+            kFull: -1,
+            dFull: -1,
         };
 
         if (resultsStochastics.length >= 2) {
@@ -107,11 +106,28 @@ class StochasticCalculations {
                 3.0;
         }
 
+        if (resultsStochastics.length > 3 + 3) {
+            currStochastic["kFull"] = Number(currStochastic["kSlow"]);
+
+            currStochastic["dFull"] =
+                (Number(currStochastic["kFull"]) +
+                    //(Number(resultsStochastics[stochasticsStartIndex]["k_fast"]) +
+                    Number(
+                        resultsStochastics[resultsStochastics.length - 2][
+                            "k_slow"
+                        ]
+                    ) +
+                    Number(
+                        resultsStochastics[resultsStochastics.length - 1][
+                            "k_slow"
+                        ]
+                    )) /
+                3.0;
+        }
+
         if (currStochastic["dSlow"] === NaN) {
             currStochastic["dSlow"] = -1;
         }
-
-        console.log(currStochastic);
 
         /* Add this to mysql and then cleanup*/
         await this.mysqlCon.storeProcessedStochastic(coinId, currStochastic);

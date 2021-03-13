@@ -14,6 +14,8 @@ The second, and subsequent, calculations are based on the prior averages and the
 Average Gain = [(previous Average Gain) x 13 + current Gain] / 14.
 Average Loss = [(previous Average Loss) x 13 + current Loss] / 14.
 
+100-100/2
+
 Result should be locked between 0 and 100.
 
 66.66 <-- overbought
@@ -88,40 +90,47 @@ class RSICalculations {
                     RSI: 0,
                 });
 
-                // If we're at the correct last 15 elements, we don't calculate change for the first entry, but the next 13.
+                // If we're at the correct last 14 elements, we don't calculate change for the first entry, but the next 13.
                 if (offsetInteriorIndexOHLC > 0) {
                     // Calculate the change for the first 14, and on the 15th, we calculate the
                     let prevElRSI = arrRSI[offsetInteriorIndexOHLC - 1];
                     let currElRSI = arrRSI[offsetInteriorIndexOHLC];
-                    let lossOrGain = (arrRSI[offsetInteriorIndexOHLC][
-                        "lossOrGain"
-                    ] =
-                        Number(currElRSI["close"]) -
-                        Number(prevElRSI["close"]));
+                    arrRSI[offsetInteriorIndexOHLC]["lossOrGain"] =
+                        Number(currElRSI["close"]) - Number(prevElRSI["close"]);
+                    let lossOrGain =
+                        arrRSI[offsetInteriorIndexOHLC]["lossOrGain"];
 
-                    if (lossOrGain > 0) {
-                        aveGain += lossOrGain;
-                    } else if (lossOrGain < 0) {
-                        /* Change is always negative here */
-                        aveLoss += -lossOrGain;
-                    }
-                }
-                /* 15th entry, so we calculate aveGain, aveLoss, RS, and RSI */
-                if (offsetInteriorIndexOHLC === this.RSIStoreNum - 1) {
-                    arrRSI[offsetInteriorIndexOHLC]["aveGain"] = aveGain / 14.0;
-                    arrRSI[offsetInteriorIndexOHLC]["aveLoss"] = aveLoss / 14.0;
+                    console.log("LOSS GAIN: ");
+                    console.log(lossOrGain);
 
-                    if (arrRSI[offsetInteriorIndexOHLC]["aveLoss"] === 0) {
-                        arrRSI[offsetInteriorIndexOHLC]["RSI"] = 100;
-                    } else if (
-                        arrRSI[offsetInteriorIndexOHLC]["aveGain"] === 0
-                    ) {
-                        arrRSI[offsetInteriorIndexOHLC]["RSI"] = 0;
+                    /* 15th entry, so we calculate aveGain, aveLoss, RS, and RSI */
+                    if (offsetInteriorIndexOHLC === this.RSIStoreNum - 1) {
+                        arrRSI[offsetInteriorIndexOHLC]["aveGain"] =
+                            aveGain / 14.0;
+                        arrRSI[offsetInteriorIndexOHLC]["aveLoss"] =
+                            aveLoss / 14.0;
+
+                        if (arrRSI[offsetInteriorIndexOHLC]["aveLoss"] === 0) {
+                            arrRSI[offsetInteriorIndexOHLC]["RSI"] = 100;
+                        } else if (
+                            arrRSI[offsetInteriorIndexOHLC]["aveGain"] === 0
+                        ) {
+                            arrRSI[offsetInteriorIndexOHLC]["RSI"] = 0;
+                        } else {
+                            arrRSI[offsetInteriorIndexOHLC]["RS"] =
+                                aveGain / aveLoss;
+                            let RS = arrRSI[offsetInteriorIndexOHLC]["RS"];
+                            arrRSI[offsetInteriorIndexOHLC]["RSI"] =
+                                100 - 100 / (1 + RS);
+                        }
                     } else {
-                        let RS = (arrRSI[offsetInteriorIndexOHLC]["RS"] =
-                            aveGain / aveLoss);
-                        arrRSI[offsetInteriorIndexOHLC]["RSI"] =
-                            100 - 100 / (1 + RS);
+                        console.log(lossOrGain);
+                        if (lossOrGain > 0) {
+                            aveGain += lossOrGain;
+                        } else if (lossOrGain < 0) {
+                            /* Change is always negative here */
+                            aveLoss += -lossOrGain;
+                        }
                     }
                 }
 
@@ -169,10 +178,15 @@ class RSICalculations {
             currRSI["lossOrGain"] > 0 ? Number(currRSI["lossOrGain"]) : 0;
         let loss =
             currRSI["lossOrGain"] < 0 ? Number(-currRSI["lossOrGain"]) : 0;
+        console.log(gain);
+        console.log(loss);
         currRSI["aveGain"] =
             (Number(lastResult["ave_gain"]) * 13 + gain) / 14.0;
         currRSI["aveLoss"] =
             (Number(lastResult["ave_loss"]) * 13 + loss) / 14.0;
+
+        console.log(currRSI["aveGain"]);
+        console.log(currRSI["aveLoss"]);
 
         /* If loss or gain are zero, we'll get NaN, so set this to 0 */
         if (currRSI["aveGain"] === NaN) {
