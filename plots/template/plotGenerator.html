@@ -271,7 +271,7 @@
                         yaxis: "y3",
                         type: "scatter",
                         mode: "lines",
-                        name: "Stoc. - kFast",
+                        name: "S1. kFast",
                         line: { shape: "spline", smoothing: 0.65,color: "rgba(255, 160, 160, 0.8)" },
                     },
                     {
@@ -281,7 +281,7 @@
                         yaxis: "y3",
                         type: "scatter",
                         mode: "lines",
-                        name: "Stoch. - dSlow",
+                        name: "S1. dSlow",
                         line: { shape: "spline", smoothing: 0.65 , color: "rgba(160, 160, 255, 0.8)" },
                     },
                     {
@@ -291,7 +291,7 @@
                         yaxis: "y3",
                         type:"scatter",
                         mode: "lines",
-                        name: "Stoc. - kFull",
+                        name: "S2. kFull",
                         line: { shape: "spline", smoothing: 0.65,color: "d3a0ffcc" },
                     },
                     {
@@ -301,7 +301,7 @@
                         yaxis: "y3",
                         type: "scatter",
                         mode: "lines",
-                        name: "Stoch. - dFull",
+                        name: "S2. dFull",
                         line: { shape: "spline", smoothing: 0.65 , color: "fff0a0cc" },
                     }
                 ];
@@ -313,8 +313,51 @@
             }
 
             var stochasticFast = true;
-            let stoPlot = document.querySelector(".x3y3 .plot .scatterlayer");
+            let stoPlot = document.querySelector(".cartesianlayer .x3y3 .plot .scatterlayer");
+            let stoPlot2 = document.querySelectorAll(".cartesianlayer .x3y3 .plot .scatterlayer .trace");
             let stoTitle = document.querySelector(".infolayer .g-y3title text");
+
+            stoPlot2.forEach(function(elem) {
+                elem.addEventListener('mouseenter', (e) => {
+                    //setTimeout(() => {
+                        console.log("hey");
+                        let hoverText = document.querySelector(".main-svg .hoverlayer .hovertext");
+                        if(!stochasticFast) {
+                            if(hoverText.childNodes[0].innerHTML === "Stoc. - kFast") {
+                                hoverText.childNodes[0].style.visibility = "hidden";
+                                hoverText.childNodes[1].style.visibility = "hidden";
+                            }
+
+                        } else {
+                            stoTitle.innerHTML= "Stoch. - Fast";
+                            if(hoverText.childNodes[0].innerHTML === "Stoc. - kFast") {
+                                hoverText.childNodes[2].style.visibility = "hidden";
+                                hoverText.childNodes[3].style.visibility = "hidden";
+                            }
+                        }
+                    //}, 1000);
+                });
+            });
+
+            /*stoPlot.addEventListener('mouseenter', (e) => {
+                //setTimeout(() => {
+                    console.log("hey");
+                    let hoverText = document.querySelector(".main-svg .hoverlayer .hovertext");
+                    if(!stochasticFast) {
+                        if(hoverText.childNodes[0].innerHTML === "Stoc. - kFast") {
+                            hoverText.childNodes[0].style.visibility = "hidden";
+                            hoverText.childNodes[1].style.visibility = "hidden";
+                        }
+
+                    } else {
+                        stoTitle.innerHTML= "Stoch. - Fast";
+                        if(hoverText.childNodes[0].innerHTML === "Stoc. - kFast") {
+                            hoverText.childNodes[2].style.visibility = "hidden";
+                            hoverText.childNodes[3].style.visibility = "hidden";
+                        }
+                    }
+                //}, 1000);
+            });*/
 
             document.addEventListener('keydown', (e) => {
 
@@ -332,7 +375,6 @@
                     stoPlot.childNodes[2].style.visibility = "visible";
                     stoPlot.childNodes[3].style.visibility = "visible";
                     stoTitle.innerHTML = "Stoch. - Full";
-
                 } else {
                     stoPlot.childNodes[0].style.visibility = "visible";
                     stoPlot.childNodes[1].style.visibility = "visible";

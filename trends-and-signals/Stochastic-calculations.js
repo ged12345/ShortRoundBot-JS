@@ -63,26 +63,38 @@ class StochasticCalculations {
         let lowHighIndex = 0;
         let innerLowHighIndex = 0;
 
-        resultsOHLC.forEach((el) => {
+        resultsOHLC.forEach((el, index) => {
+            //console.log("Real index: " + index);
             if (lowHighIndex < startLowHighIndex) {
+                //console.log("lowHighIndex: " + lowHighIndex);
                 lowHighIndex++;
             } else {
-                if (innerLowHighIndex < this.StochasticStoreNum)
+                if (innerLowHighIndex < this.StochasticStoreNum) {
+                    //console.log("Current Low: " + Number(el["low"]));
                     if (Number(el["low"]) < lowestTraded) {
+                        //    console.log("Old Low: " + lowestTraded);
                         lowestTraded = Number(el["low"]);
                     }
 
-                if (Number(el["high"]) > highestTraded) {
-                    highestTraded = Number(el["high"]);
+                    //console.log("Current High: " + Number(el["high"]));
+                    if (Number(el["high"]) > highestTraded) {
+                        //    console.log("Old High: " + highestTraded);
+                        highestTraded = Number(el["high"]);
+                    }
                 }
                 innerLowHighIndex++;
             }
         });
 
+        // high: 60455
+        // low: 60211
+        // close: 60101.70000000
         let lastElOHLC = resultsOHLC[resultsOHLC.length - 1];
         let currStochastic = {
-            timestamp: lastElOHLC["timestamp"],
+            timestamp: Number(lastElOHLC["timestamp"]),
             close: Number(lastElOHLC["close"]),
+            high: highestTraded,
+            low: lowestTraded,
             kFast:
                 ((Number(lastElOHLC["close"]) - lowestTraded) /
                     (highestTraded - lowestTraded)) *
@@ -92,7 +104,7 @@ class StochasticCalculations {
             dFull: -1,
         };
 
-        if (resultsStochastics.length >= 2) {
+        if (resultsStochastics.length > 2) {
             /* Get the last three entries (including the current) and average them to get the slowD */
             currStochastic["dSlow"] =
                 (Number(currStochastic["kFast"]) +
@@ -110,7 +122,7 @@ class StochasticCalculations {
                 3.0;
         }
 
-        if (resultsStochastics.length >= 5) {
+        if (resultsStochastics.length > 5) {
             currStochastic["kFull"] = Number(currStochastic["dSlow"]);
 
             currStochastic["dFull"] =

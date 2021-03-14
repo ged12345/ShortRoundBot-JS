@@ -290,7 +290,7 @@ class Mysql {
         });
 
         const [rows, fields] = await this.connection.query(
-            `INSERT INTO coin_processed_stochastic VALUES (${coin_id}, '${stampFullTime}', '${stampFullDate}','${timestamp}',${results["kFast"]},${results["dSlow"]},${results["kFull"]},${results["dFull"]}) ON DUPLICATE KEY UPDATE k_fast=${results["kFast"]},d_slow=${results["dSlow"]}, k_full=${results["kFull"]},d_full=${results["dFull"]}`
+            `INSERT INTO coin_processed_stochastic VALUES (${coin_id}, '${stampFullTime}', '${stampFullDate}','${timestamp}',${results["high"]},${results["low"]},${results["kFast"]},${results["dSlow"]},${results["kFull"]},${results["dFull"]}) ON DUPLICATE KEY UPDATE high=${results["high"]},low=${results["low"]},k_fast=${results["kFast"]},d_slow=${results["dSlow"]}, k_full=${results["kFull"]},d_full=${results["dFull"]}`
         );
     }
 
