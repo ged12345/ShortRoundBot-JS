@@ -135,10 +135,6 @@ class StochasticCalculations {
 
         /* Add this to mysql and then cleanup*/
         await this.mysqlCon.storeProcessedStochastic(coinId, currStochastic);
-        await this.mysqlCon.cleanupProcessedStochastic(
-            coinId,
-            this.StochasticStoreNum
-        );
 
         this.cleanup(coinId);
     }

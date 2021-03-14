@@ -121,7 +121,6 @@ class RSICalculations {
                                 100 - 100 / (1 + RS);
                         }
                     } else {
-                        console.log(lossOrGain);
                         if (lossOrGain > 0) {
                             aveGain += lossOrGain;
                         } else if (lossOrGain < 0) {

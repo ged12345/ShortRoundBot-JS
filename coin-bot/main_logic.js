@@ -375,18 +375,20 @@ class MainLogic {
         }
 
         /* Stochastic kFast and dSlow */
-        /*let y1Stochastic = resultsStochastics.map((el) => el["k_fast"]);
-        let y2Stochastic = resultsStochastics.map((el) => el["d_slow"]);*/
+        let ykFastStochastic = resultsStochastics.map((el) => el["k_fast"]);
+        let ydSlowStochastic = resultsStochastics.map((el) => el["d_slow"]);
 
         /* Stochastic kFull and dFull */
-        let y1Stochastic = resultsStochastics.map((el) => el["k_full"]);
-        let y2Stochastic = resultsStochastics.map((el) => el["d_full"]);
+        let ykFullStochastic = resultsStochastics.map((el) => el["k_full"]);
+        let ydFullStochastic = resultsStochastics.map((el) => el["d_full"]);
 
         /* We let the size of the RSI drive how many xaxis entries we have */
-        unfilledAmount = xRSI.length - y1Stochastic.length;
+        unfilledAmount = xRSI.length - ykFastStochastic.length;
         for (var i = 0; i < unfilledAmount; i++) {
-            y1Stochastic.unshift("");
-            y2Stochastic.unshift("");
+            ykFastStochastic.unshift("");
+            ydSlowStochastic.unshift("");
+            ykFullStochastic.unshift("");
+            ydFullStochastic.unshift("");
         }
 
         let y1Bollinger = resultsBollingerBands.map((el) => el["bol_ma"]);
@@ -516,23 +518,43 @@ class MainLogic {
                 );
 
                 plotString = plotString.replace(
-                    "%sto_x1%",
+                    "%sto_fast_x1%",
                     `["${xRSI.join('","')}"]`
                 );
 
                 plotString = plotString.replace(
-                    "%sto_y1%",
-                    `["${y1Stochastic.join('","')}"]`
+                    "%sto_fast_y1%",
+                    `["${ykFastStochastic.join('","')}"]`
                 );
 
                 plotString = plotString.replace(
-                    "%sto_x2%",
+                    "%sto_slow_x2%",
                     `["${xRSI.join('","')}"]`
                 );
 
                 plotString = plotString.replace(
-                    "%sto_y2%",
-                    `["${y2Stochastic.join('","')}"]`
+                    "%sto_slow_y2%",
+                    `["${ydSlowStochastic.join('","')}"]`
+                );
+
+                plotString = plotString.replace(
+                    "%sto_full_x1%",
+                    `["${xRSI.join('","')}"]`
+                );
+
+                plotString = plotString.replace(
+                    "%sto_full_y1%",
+                    `["${ykFullStochastic.join('","')}"]`
+                );
+
+                plotString = plotString.replace(
+                    "%sto_full_x2%",
+                    `["${xRSI.join('","')}"]`
+                );
+
+                plotString = plotString.replace(
+                    "%sto_full_y2%",
+                    `["${ydFullStochastic.join('","')}"]`
                 );
 
                 write.sync(`../plots/${coinId}.html`, plotString, {
