@@ -362,9 +362,10 @@ class MainLogic {
 
         /* RSI lines */
         let xRSI = resultsOHLC.map((el) => {
-            let date = new Date(el["date"]);
+            /*let date = new Date(el["date"]);
             date = date.toLocaleDateString("en-AU");
-            return `${el["time"]} ${date}`;
+            return `${el["time"]} ${date}`;*/
+            return `${el["time"]}`;
         });
         let yRSI = resultsRSI.map((el) => el["RSI"]);
 
@@ -374,8 +375,12 @@ class MainLogic {
         }
 
         /* Stochastic kFast and dSlow */
-        let y1Stochastic = resultsStochastics.map((el) => el["k_fast"]);
-        let y2Stochastic = resultsStochastics.map((el) => el["d_slow"]);
+        /*let y1Stochastic = resultsStochastics.map((el) => el["k_fast"]);
+        let y2Stochastic = resultsStochastics.map((el) => el["d_slow"]);*/
+
+        /* Stochastic kFull and dFull */
+        let y1Stochastic = resultsStochastics.map((el) => el["k_full"]);
+        let y2Stochastic = resultsStochastics.map((el) => el["d_full"]);
 
         /* We let the size of the RSI drive how many xaxis entries we have */
         unfilledAmount = xRSI.length - y1Stochastic.length;
@@ -410,16 +415,6 @@ class MainLogic {
             y3Bollinger.unshift("");
         }
 
-        /*let graph = new Plotly(
-                        xRSI,
-                        yRSI,
-                        xStochastic,
-                        y1Stochastic,
-                        xStochastic,
-                        y2Stochastic
-                    );
-                    graph.plot();*/
-
         /* Open template file */
         fs.readFile(
             "../plots/template/plotGenerator.html",
@@ -450,8 +445,9 @@ class MainLogic {
 
                 let dbDateTimeFormat = xRSI.map((el) => {
                     let changedFormat = el.replace(/\//g, "-");
-                    let splitFormat = changedFormat.split(" ");
-                    return `${splitFormat[1]} ${splitFormat[0]}`;
+                    return `${changedFormat}`;
+                    //let splitFormat = changedFormat.split(" ");
+                    //return `${splitFormat[1]} ${splitFormat[0]}`;
                 });
 
                 plotString = plotString.replace(

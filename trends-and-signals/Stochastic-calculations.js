@@ -16,6 +16,10 @@ H14 = The highest price traded during the same
 
 80 - overbought
 20 - oversold
+
+Full stoch
+kFull = dSlow
+dFull = kFull for the past n periods / n (n=3 here, since our original for dSlow was 3)
 */
 const util = require("util");
 
@@ -106,7 +110,7 @@ class StochasticCalculations {
                 3.0;
         }
 
-        if (resultsStochastics.length > 5) {
+        if (resultsStochastics.length >= 5) {
             currStochastic["kFull"] = Number(currStochastic["dSlow"]);
 
             currStochastic["dFull"] =
@@ -114,17 +118,16 @@ class StochasticCalculations {
                     //(Number(resultsStochastics[stochasticsStartIndex]["k_fast"]) +
                     Number(
                         resultsStochastics[resultsStochastics.length - 2][
-                            "k_slow"
+                            "d_slow"
                         ]
                     ) +
                     Number(
                         resultsStochastics[resultsStochastics.length - 1][
-                            "k_slow"
+                            "d_slow"
                         ]
                     )) /
                 3.0;
         }
-        console.log(currStochastic);
 
         if (currStochastic["dSlow"] === NaN) {
             currStochastic["dSlow"] = -1;
