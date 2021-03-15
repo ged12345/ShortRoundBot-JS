@@ -104,6 +104,12 @@ class StochasticCalculations {
             dFull: -1,
         };
 
+        if (currStochastic["kFast"] < 0) {
+            currStochastic["kFast"] = 0;
+        } else if (currStochastic["kFast"] > 100) {
+            currStochastic["kFast"] = 100;
+        }
+
         if (resultsStochastics.length > 2) {
             /* Get the last three entries (including the current) and average them to get the slowD */
             currStochastic["dSlow"] =
@@ -122,7 +128,7 @@ class StochasticCalculations {
                 3.0;
         }
 
-        if (resultsStochastics.length > 5) {
+        if (resultsStochastics.length > 4) {
             currStochastic["kFull"] = Number(currStochastic["dSlow"]);
 
             currStochastic["dFull"] =
@@ -139,15 +145,6 @@ class StochasticCalculations {
                         ]
                     )) /
                 3.0;
-        }
-
-        if (currStochastic["dSlow"] === NaN) {
-            currStochastic["dSlow"] = -1;
-        }
-        if (currStochastic["kFast"] < 0) {
-            currStochastic["kFast"] = 0;
-        } else if (currStochastic["kFast"] > 100) {
-            currStochastic["kFast"] = 100;
         }
 
         /* Add this to mysql and then cleanup*/

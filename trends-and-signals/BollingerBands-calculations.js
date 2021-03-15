@@ -93,8 +93,8 @@ class BollingerBandsCalculations {
 
         let lastElOHLC = resultsOHLC[resultsOHLC.length - 1];
 
-        /* Eyeballed error from the graphs is 10 for Bitcoin */
-        let observedError = 0;
+        /* Eyeballed error from the graphs is 5-10 */
+        let observedError;
 
         let currBollinger = {
             timestamp: lastElOHLC["timestamp"] - 60,
@@ -102,9 +102,9 @@ class BollingerBandsCalculations {
             mean: mean,
             SD: SD,
             MA: MA,
-            bolU: MA + numOfSDs * SD + observedError,
-            bolD: MA - numOfSDs * SD + observedError,
-            bolMA: MA + observedError,
+            bolU: MA + numOfSDs * SD,
+            bolD: MA - numOfSDs * SD,
+            bolMA: MA,
         };
 
         /* Add this to mysql and then cleanup*/
