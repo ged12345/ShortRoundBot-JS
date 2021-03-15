@@ -13,7 +13,7 @@ m=Number of standard deviations (typically 2)
 MA = TP / n. <-- Moving Average
 Standard Deviation for scalping = 1.5-2
 
-σ[TP,n]= 1-n ( sqrt(((xi - mean) * (xi - mean)))
+σ[TP,n]= 1-n ( sqrt(((xi - mean) * (xi - mean))) / 2
 Mean = [1-n (xi) ] / n
 
 Math.pow(parseFloat(temp[i])-mean),2);
@@ -44,7 +44,6 @@ class BollingerBandsCalculations {
 
     async calculate(coinId) {
         let resultsOHLC = await this.mysqlCon.getCoinOHLC(coinId);
-        let arrBollinger = Array();
 
         /* Could be 1.5 for scalping */
         let numOfSDs = 2;
@@ -58,7 +57,7 @@ class BollingerBandsCalculations {
         let meanIndex = 0;
 
         let mean = 0;
-        resultsOHLC.forEach((el) => {
+        resultsOHLC.forEach((el, index) => {
             if (meanIndex < startMeanIndex) {
                 meanIndex++;
             } else {
@@ -74,7 +73,7 @@ class BollingerBandsCalculations {
 
         let MA = 0;
         let SD = 0;
-        resultsOHLC.forEach((el) => {
+        resultsOHLC.forEach((el, index) => {
             if (maAndSDIndex < startMAAndSDIndex) {
                 maAndSDIndex++;
             } else {
@@ -97,8 +96,11 @@ class BollingerBandsCalculations {
         let lastElOHLC = resultsOHLC[resultsOHLC.length - 1];
 
         let currBollinger = {
-            timestamp: lastElOHLC["timestamp"],
+            timestamp: lastElOHLC["timestamp"] - 60,
             close: Number(lastElOHLC["close"]),
+            mean: mean,
+            SD: SD,
+            MA: MA,
             bolU: MA + numOfSDs * SD,
             bolD: MA - numOfSDs * SD,
             bolMA: MA,

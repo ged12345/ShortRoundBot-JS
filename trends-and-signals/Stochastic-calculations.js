@@ -91,7 +91,7 @@ class StochasticCalculations {
         // close: 60101.70000000
         let lastElOHLC = resultsOHLC[resultsOHLC.length - 1];
         let currStochastic = {
-            timestamp: Number(lastElOHLC["timestamp"]),
+            timestamp: Number(lastElOHLC["timestamp"]) - 60,
             close: Number(lastElOHLC["close"]),
             high: highestTraded,
             low: lowestTraded,
@@ -143,6 +143,11 @@ class StochasticCalculations {
 
         if (currStochastic["dSlow"] === NaN) {
             currStochastic["dSlow"] = -1;
+        }
+        if (currStochastic["kFast"] < 0) {
+            currStochastic["kFast"] = 0;
+        } else if (currStochastic["kFast"] > 100) {
+            currStochastic["kFast"] = 100;
         }
 
         /* Add this to mysql and then cleanup*/

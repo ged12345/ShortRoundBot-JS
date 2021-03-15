@@ -345,7 +345,7 @@ class Mysql {
         });
 
         const [rows, fields] = await this.connection.query(
-            `INSERT INTO coin_processed_bollinger VALUES (${coin_id}, '${stampFullTime}', '${stampFullDate}','${timestamp}',${results["close"]}, ${results["bolU"]},${results["bolD"]},${results["bolMA"]}) ON DUPLICATE KEY UPDATE close=${results["close"]},bol_u=${results["bolU"]},bol_d=${results["bolD"]},bol_ma=${results["bolMA"]}`
+            `INSERT INTO coin_processed_bollinger VALUES (${coin_id}, '${stampFullTime}', '${stampFullDate}','${timestamp}',${results["close"]},${results["mean"]},${results["SD"]},${results["MA"]}, ${results["bolU"]},${results["bolD"]},${results["bolMA"]}) ON DUPLICATE KEY UPDATE close=${results["close"]},mean=${results["mean"]},SD=${results["SD"]},MA=${results["MA"]},bol_u=${results["bolU"]},bol_d=${results["bolD"]},bol_ma=${results["bolMA"]}`
         );
     }
 

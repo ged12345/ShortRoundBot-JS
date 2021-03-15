@@ -81,7 +81,7 @@ class RSICalculations {
         resultsOHLC.forEach((el) => {
             if (offsetIndexOHLC + 1 > Math.abs(countOHLC - this.RSIStoreNum)) {
                 arrRSI.push({
-                    timestamp: el["timestamp"],
+                    timestamp: el["timestamp"] - 60,
                     close: Number(el["close"]),
                     lossOrGain: 0,
                     aveGain: 0,
@@ -158,7 +158,7 @@ class RSICalculations {
 
         let elLastOHLC = resultsOHLC[resultsOHLC.length - 1];
         let currRSI = {
-            timestamp: elLastOHLC["timestamp"],
+            timestamp: elLastOHLC["timestamp"] - 60,
             close: Number(elLastOHLC["close"]),
             lossOrGain: elLastOHLC["close"] - lastResult["close"],
             aveGain: 0,
