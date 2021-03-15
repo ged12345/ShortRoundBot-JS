@@ -224,8 +224,8 @@ class MainLogic {
     }
 
     async getOHLC(coinId, coinPair, storeNum) {
-        /* DEBUG FOR RSI: REMOVE THIS LATER */
-        if (coinId != 1) return;
+        /* DEBUG: REMOVE THIS LATER */
+        //if (coinId != 1) return;
 
         console.log(`Acquiring OHLC: ${coinPair}`);
         this.kraken
@@ -316,32 +316,31 @@ class MainLogic {
                 let coinName = coin["coin_name"];
 
                 /* We only draw this for Bitcoin for now */
-                if (coinId === 1) {
-                    console.log(`Plotting ${trend}: ${coin["coin_id_kraken"]}`);
+                //if (coinId !== 1) {
+                //    return;
+                //}
+                console.log(`Plotting ${trend}: ${coin["coin_id_kraken"]}`);
 
-                    let resultsOHLC = await this.mysqlCon.getCoinOHLC(coinId);
+                let resultsOHLC = await this.mysqlCon.getCoinOHLC(coinId);
 
-                    let resultsRSI = await this.mysqlCon.getProcessedRSI(
-                        coinId
-                    );
+                let resultsRSI = await this.mysqlCon.getProcessedRSI(coinId);
 
-                    let resultsStochastics = await this.mysqlCon.getProcessedStochastic(
-                        coinId
-                    );
+                let resultsStochastics = await this.mysqlCon.getProcessedStochastic(
+                    coinId
+                );
 
-                    let resultsBollingerBands = await this.mysqlCon.getProcessedBollinger(
-                        coinId
-                    );
+                let resultsBollingerBands = await this.mysqlCon.getProcessedBollinger(
+                    coinId
+                );
 
-                    this.plotGraph(
-                        coinId,
-                        coinName,
-                        resultsOHLC,
-                        resultsRSI,
-                        resultsStochastics,
-                        resultsBollingerBands
-                    );
-                }
+                this.plotGraph(
+                    coinId,
+                    coinName,
+                    resultsOHLC,
+                    resultsRSI,
+                    resultsStochastics,
+                    resultsBollingerBands
+                );
             });
         });
     }

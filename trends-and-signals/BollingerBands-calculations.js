@@ -83,17 +83,18 @@ class BollingerBandsCalculations {
                         Number(el["close"])) /
                     3.0;
 
-                SD += Math.sqrt(
-                    (Number(el["close"]) - mean) * (Number(el["close"]) - mean)
-                );
+                SD += (Number(el["close"]) - mean) ** 2;
                 // (sqrt(((xi - mean) * (xi - mean)))
             }
         });
 
         MA = MA / this.BollingerStoreNum;
-        SD = SD / this.BollingerStoreNum;
+        SD = Math.sqrt(SD / this.BollingerStoreNum);
 
         let lastElOHLC = resultsOHLC[resultsOHLC.length - 1];
+
+        /* Eyeballed error from the graphs is 10 for Bitcoin */
+        let observedError = 0;
 
         let currBollinger = {
             timestamp: lastElOHLC["timestamp"] - 60,
@@ -101,9 +102,9 @@ class BollingerBandsCalculations {
             mean: mean,
             SD: SD,
             MA: MA,
-            bolU: MA + numOfSDs * SD,
-            bolD: MA - numOfSDs * SD,
-            bolMA: MA,
+            bolU: MA + numOfSDs * SD + observedError,
+            bolD: MA - numOfSDs * SD + observedError,
+            bolMA: MA + observedError,
         };
 
         /* Add this to mysql and then cleanup*/

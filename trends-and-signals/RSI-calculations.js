@@ -79,7 +79,11 @@ class RSICalculations {
         let aveGain = 0;
 
         resultsOHLC.forEach((el) => {
-            if (offsetIndexOHLC + 1 > Math.abs(countOHLC - this.RSIStoreNum)) {
+            /* Fix this check and make it make more sense */
+            if (
+                offsetIndexOHLC + 1 >
+                Math.abs(countOHLC - this.RSIStoreNum + 1)
+            ) {
                 arrRSI.push({
                     timestamp: el["timestamp"] - 60,
                     close: Number(el["close"]),
@@ -100,8 +104,18 @@ class RSICalculations {
                     let lossOrGain =
                         arrRSI[offsetInteriorIndexOHLC]["lossOrGain"];
 
-                    /* 15th entry, so we calculate aveGain, aveLoss, RS, and RSI */
-                    if (offsetInteriorIndexOHLC === this.RSIStoreNum - 1) {
+                    if (lossOrGain > 0) {
+                        aveGain += lossOrGain;
+                    } else if (lossOrGain < 0) {
+                        /* Change is always negative here */
+                        aveLoss += -lossOrGain;
+                    }
+
+                    /* 14th entry, so we calculate aveGain, aveLoss, RS, and RSI */
+                    if (
+                        offsetInteriorIndexOHLC ===
+                        this.RSIStoreNum - 2 /*- 1*/
+                    ) {
                         arrRSI[offsetInteriorIndexOHLC]["aveGain"] =
                             aveGain / 14.0;
                         arrRSI[offsetInteriorIndexOHLC]["aveLoss"] =
@@ -120,14 +134,14 @@ class RSICalculations {
                             arrRSI[offsetInteriorIndexOHLC]["RSI"] =
                                 100 - 100 / (1 + RS);
                         }
-                    } else {
-                        if (lossOrGain > 0) {
-                            aveGain += lossOrGain;
-                        } else if (lossOrGain < 0) {
-                            /* Change is always negative here */
-                            aveLoss += -lossOrGain;
-                        }
-                    }
+                    } /*else {
+                    if (lossOrGain > 0) {
+                        aveGain += lossOrGain;
+                    } else if (lossOrGain < 0) {
+                        /* Change is always negative here */
+                    //    aveLoss += -lossOrGain;
+                    //}
+                    // }
                 }
 
                 offsetInteriorIndexOHLC++;
@@ -148,7 +162,7 @@ class RSICalculations {
     async secondRSICalculation(coinId, resultsRSI) {
         /* Find the 15th result, and there should always be 15 */
         /* Note: This has changed - we want this to expand out to 32. */
-        if (resultsRSI.length < 15) return;
+        if (resultsRSI.length < 14) return;
         let lastResult = resultsRSI[resultsRSI.length - 1];
 
         let resultsOHLC = await this.mysqlCon.getCoinOHLC(coinId);
