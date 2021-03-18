@@ -148,8 +148,11 @@ class Mysql {
 
     async getCoinOHLC(coin_id) {
         const [rows, fields] = await this.connection.query(
-            `SELECT * FROM coin_ohlc WHERE coin_id=${mysqlCon.escape(coin_id)}`
+            `SELECT * FROM coin_ohlc WHERE coin_id=${mysqlCon.escape(
+                coin_id
+            )} LIMIT 32`
         );
+        /* TO DO: Replace 32 with our graph limit */
 
         return rows;
     }

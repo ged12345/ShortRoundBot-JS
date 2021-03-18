@@ -80,12 +80,9 @@ class RSICalculations {
 
         resultsOHLC.forEach((el) => {
             /* Fix this check and make it make more sense */
-            if (
-                offsetIndexOHLC + 1 >
-                Math.abs(countOHLC - this.RSIStoreNum + 1)
-            ) {
+            if (offsetIndexOHLC + 1 > Math.abs(countOHLC - this.RSIStoreNum)) {
                 arrRSI.push({
-                    timestamp: el["timestamp"] - 60,
+                    timestamp: el["timestamp"],
                     close: Number(el["close"]),
                     lossOrGain: 0,
                     aveGain: 0,
@@ -104,17 +101,17 @@ class RSICalculations {
                     let lossOrGain =
                         arrRSI[offsetInteriorIndexOHLC]["lossOrGain"];
 
-                    if (lossOrGain > 0) {
+                    /*if (lossOrGain > 0) {
                         aveGain += lossOrGain;
                     } else if (lossOrGain < 0) {
                         /* Change is always negative here */
-                        aveLoss += -lossOrGain;
-                    }
+                    //aveLoss += -lossOrGain;
+                    //}
 
                     /* 14th entry, so we calculate aveGain, aveLoss, RS, and RSI */
                     if (
                         offsetInteriorIndexOHLC ===
-                        this.RSIStoreNum - 2 /*- 1*/
+                        this.RSIStoreNum - 1 /*- 1*/
                     ) {
                         arrRSI[offsetInteriorIndexOHLC]["aveGain"] =
                             aveGain / 14.0;
@@ -134,14 +131,14 @@ class RSICalculations {
                             arrRSI[offsetInteriorIndexOHLC]["RSI"] =
                                 100 - 100 / (1 + RS);
                         }
-                    } /*else {
-                    if (lossOrGain > 0) {
-                        aveGain += lossOrGain;
-                    } else if (lossOrGain < 0) {
-                        /* Change is always negative here */
-                    //    aveLoss += -lossOrGain;
-                    //}
-                    // }
+                    } else {
+                        if (lossOrGain > 0) {
+                            aveGain += lossOrGain;
+                        } else if (lossOrGain < 0) {
+                            /* Change is always negative here */
+                            aveLoss += -lossOrGain;
+                        }
+                    }
                 }
 
                 offsetInteriorIndexOHLC++;
@@ -172,7 +169,7 @@ class RSICalculations {
 
         let elLastOHLC = resultsOHLC[resultsOHLC.length - 1];
         let currRSI = {
-            timestamp: elLastOHLC["timestamp"] - 60,
+            timestamp: elLastOHLC["timestamp"],
             close: Number(elLastOHLC["close"]),
             lossOrGain: elLastOHLC["close"] - lastResult["close"],
             aveGain: 0,

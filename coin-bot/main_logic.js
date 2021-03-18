@@ -50,7 +50,7 @@ class MainLogic {
 
         // For the MACD (EMA-9, EMA-12, EMA-26)
         this.graphPeriod = 32;
-        this.OHLCStoreNum = 26; // 26 time periods
+        this.OHLCStoreNum = 33; // 26 time periods (33 now, because we're storing one extra, the first one which is never correct)
         this.RSIStoreNum = 15; // 14 for calculations plus the latest
         this.StochasticStoreNum = 14; // 14 time periods
         this.BollingerStoreNum = 21; // 21 time periods
@@ -127,12 +127,16 @@ class MainLogic {
         this.setupCoinAdviceGenerationQueue();*/
 
         let numberOfCoins = 7; /* For testing purposes */
-        let OHLCFrequency = 60000 / numberOfCoins;
+        //let OHLCFrequency = 60000 / numberOfCoins;
+
+        let OHLCFrequency = 6000 / numberOfCoins;
         this.coinDataAcquisitionQueuer.enqueueQueue(
             this.OHLCAcquisitionQueue,
             OHLCFrequency /* We only acquire this info once a minute */,
             true,
-            true
+            true,
+            true,
+            7500 /* Just after the close */
         );
 
         this.RSIProcessingQueue = new Queue();
@@ -148,21 +152,27 @@ class MainLogic {
             this.RSIProcessingQueue,
             trendsAndSignalsFrequency /* We only acquire this info once a minute */,
             true,
-            true
+            true,
+            true,
+            10000
         );
 
         this.coinTrendsAndSignalsProcessingQueuer.enqueueQueue(
             this.StochasticProcessingQueue,
             trendsAndSignalsFrequency /* We only acquire this info once a minute */,
             true,
-            true
+            true,
+            true,
+            10000
         );
 
         this.coinTrendsAndSignalsProcessingQueuer.enqueueQueue(
             this.BollingerProcessingQueue,
             trendsAndSignalsFrequency /* We only acquire this info once a minute */,
             true,
-            true
+            true,
+            true,
+            10000
         );
 
         /* Plotting graphs to compare calculations with online */
@@ -173,7 +183,9 @@ class MainLogic {
             this.PlotlyGraphingQueue,
             trendsAndSignalsFrequency /* We only acquire this info once a minute */,
             true,
-            true
+            true,
+            true,
+            13000
         );
 
         this.queueSetupComplete = true;
@@ -217,7 +229,7 @@ class MainLogic {
                 this.getOHLC(
                     coin["id"],
                     coin["coin_id_kraken"],
-                    this.graphPeriod
+                    this.OHLCStoreNum
                 );
             });
         });
@@ -353,6 +365,10 @@ class MainLogic {
         resultsStochastics,
         resultsBollingerBands
     ) {
+        if (resultsOHLC.length == 0) {
+            return;
+        }
+
         /* Coin candle indicators */
         let yOpen = resultsOHLC.map((el) => el["open"]);
         let yClose = resultsOHLC.map((el) => el["close"]);
@@ -364,7 +380,7 @@ class MainLogic {
             /*let date = new Date(el["date"]);
             date = date.toLocaleDateString("en-AU");
             return `${el["time"]} ${date}`;*/
-            return `${el["time"]}`;
+            return `${el["time"].split(".")[0]}`;
         });
         let yRSI = resultsRSI.map((el) => el["RSI"]);
 

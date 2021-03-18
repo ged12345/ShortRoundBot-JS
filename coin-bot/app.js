@@ -50,7 +50,7 @@ init();
 async function init() {
     let heartbeatId = setInterval(async () => {
         main.processQueues();
-    }, 100);
+    }, 50);
 
     //const coinTracker = new coin();
     /*botQueue.enqueue(async () => {

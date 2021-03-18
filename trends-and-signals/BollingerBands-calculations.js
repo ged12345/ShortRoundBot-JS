@@ -97,7 +97,7 @@ class BollingerBandsCalculations {
         let observedError;
 
         let currBollinger = {
-            timestamp: lastElOHLC["timestamp"] - 60,
+            timestamp: lastElOHLC["timestamp"],
             close: Number(lastElOHLC["close"]),
             mean: mean,
             SD: SD,

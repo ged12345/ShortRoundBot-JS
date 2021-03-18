@@ -91,7 +91,7 @@ class StochasticCalculations {
         // close: 60101.70000000
         let lastElOHLC = resultsOHLC[resultsOHLC.length - 1];
         let currStochastic = {
-            timestamp: Number(lastElOHLC["timestamp"]) - 60,
+            timestamp: Number(lastElOHLC["timestamp"]),
             close: Number(lastElOHLC["close"]),
             high: highestTraded,
             low: lowestTraded,
@@ -114,7 +114,6 @@ class StochasticCalculations {
             /* Get the last three entries (including the current) and average them to get the slowD */
             currStochastic["dSlow"] =
                 (Number(currStochastic["kFast"]) +
-                    //(Number(resultsStochastics[stochasticsStartIndex]["k_fast"]) +
                     Number(
                         resultsStochastics[resultsStochastics.length - 2][
                             "k_fast"
@@ -128,12 +127,11 @@ class StochasticCalculations {
                 3.0;
         }
 
-        if (resultsStochastics.length > 4) {
+        if (resultsStochastics.length > 5) {
             currStochastic["kFull"] = Number(currStochastic["dSlow"]);
 
             currStochastic["dFull"] =
                 (Number(currStochastic["kFull"]) +
-                    //(Number(resultsStochastics[stochasticsStartIndex]["k_fast"]) +
                     Number(
                         resultsStochastics[resultsStochastics.length - 2][
                             "d_slow"
