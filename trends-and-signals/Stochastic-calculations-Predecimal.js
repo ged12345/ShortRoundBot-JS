@@ -22,7 +22,6 @@ kFull = dSlow
 dFull = kFull for the past n periods / n (n=3 here, since our original for dSlow was 3)
 */
 const util = require("util");
-const Decimal = require("decimal.js");
 
 class StochasticCalculations {
     constructor(mysqlCon, storeNum, totalRecordsNum, unlockKey) {
@@ -30,7 +29,6 @@ class StochasticCalculations {
         this.StochasticStoreNum = storeNum;
         this.totalRecordsNum = totalRecordsNum;
         this.unlockKey = unlockKey;
-        Decimal.set({ precision: 24 });
     }
 
     async cleanup(coinId) {
@@ -60,8 +58,8 @@ class StochasticCalculations {
 
         /* Highest and lowest of last 14 periods */
         let totalOHLCResults = resultsOHLC.length;
-        /* Note: We were hitting the current period as a part of the 14 prev. periods but this is incorrect. We use the innerLowHighIndex and DON'T skip the last one (our current period) */
-        let startLowHighIndex = totalOHLCResults - this.StochasticStoreNum;
+        /* Note: We were hitting the current period as a part of the 14 prev. periods but this is incorrect. We use the innerLowHighIndex and the below index to skip the last one (our current period) */
+        let startLowHighIndex = totalOHLCResults - this.StochasticStoreNum - 1;
         let lowHighIndex = 0;
         let innerLowHighIndex = 0;
 
@@ -94,12 +92,10 @@ class StochasticCalculations {
             close: Number(lastElOHLC["close"]),
             high: highestTraded,
             low: lowestTraded,
-            kFast: new Decimal(Number(lastElOHLC["close"]))
-                .minus(lowestTraded)
-                .dividedBy(
-                    new Decimal(highestTraded).minus(lowestTraded).times(100)
-                )
-                .times(10000),
+            kFast:
+                ((Number(lastElOHLC["close"]) - lowestTraded) /
+                    (highestTraded - lowestTraded)) *
+                100,
             dSlow: -1,
             kFull: -1,
             dFull: -1,
@@ -113,43 +109,37 @@ class StochasticCalculations {
 
         if (resultsStochastics.length > 2) {
             /* Get the last three entries (including the current) and average them to get the slowD */
-            currStochastic["dSlow"] = new Decimal(currStochastic["kFast"])
-                .plus(
+            currStochastic["dSlow"] =
+                (Number(currStochastic["kFast"]) +
                     Number(
                         resultsStochastics[resultsStochastics.length - 2][
                             "k_fast"
                         ]
-                    )
-                )
-                .plus(
+                    ) +
                     Number(
                         resultsStochastics[resultsStochastics.length - 1][
                             "k_fast"
                         ]
-                    )
-                )
-                .dividedBy(3.0);
+                    )) /
+                3.0;
         }
 
         if (resultsStochastics.length > 5) {
             currStochastic["kFull"] = Number(currStochastic["dSlow"]);
 
-            currStochastic["dFull"] = new Decimal(currStochastic["kFull"])
-                .plus(
+            currStochastic["dFull"] =
+                (Number(currStochastic["kFull"]) +
                     Number(
                         resultsStochastics[resultsStochastics.length - 2][
                             "d_slow"
                         ]
-                    )
-                )
-                .plus(
+                    ) +
                     Number(
                         resultsStochastics[resultsStochastics.length - 1][
                             "d_slow"
                         ]
-                    )
-                )
-                .dividedBy(3.0);
+                    )) /
+                3.0;
         }
 
         /* Add this to mysql and then cleanup*/

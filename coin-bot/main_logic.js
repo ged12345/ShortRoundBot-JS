@@ -136,7 +136,7 @@ class MainLogic {
             true,
             true,
             true,
-            7500 /* Just after the close */
+            20000 /* Just after the close */
         );
 
         this.RSIProcessingQueue = new Queue();
@@ -154,7 +154,7 @@ class MainLogic {
             true,
             true,
             true,
-            10000
+            25000
         );
 
         this.coinTrendsAndSignalsProcessingQueuer.enqueueQueue(
@@ -163,7 +163,7 @@ class MainLogic {
             true,
             true,
             true,
-            10000
+            25500
         );
 
         this.coinTrendsAndSignalsProcessingQueuer.enqueueQueue(
@@ -172,7 +172,7 @@ class MainLogic {
             true,
             true,
             true,
-            10000
+            26000
         );
 
         /* Plotting graphs to compare calculations with online */
@@ -185,7 +185,7 @@ class MainLogic {
             true,
             true,
             true,
-            13000
+            30000
         );
 
         this.queueSetupComplete = true;
@@ -382,7 +382,8 @@ class MainLogic {
             return `${el["time"]} ${date}`;*/
             return `${el["time"].split(".")[0]}`;
         });
-        let yRSI = resultsRSI.map((el) => el["RSI"]);
+        /* Need toFixed as value is too precise */
+        let yRSI = resultsRSI.map((el) => Number(el["RSI"]).toFixed(4));
 
         let unfilledAmount = xRSI.length - yRSI.length;
         for (var i = 0; i < unfilledAmount; i++) {
