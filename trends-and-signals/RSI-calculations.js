@@ -1,3 +1,4 @@
+/* NOTE: Takes 15-20mins for RSI to be close to accurate, and 30mins for full accuracy.
 /*
                   100
     RSI = 100 - --------

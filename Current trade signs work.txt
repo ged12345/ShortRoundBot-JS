@@ -1,0 +1,56 @@
+Bollinger bands - How to analyse and program into coin bottom
+
+1. First we have the bot track both the largest bWidth and smallest bWidth so we have an idea of the different widths over time and typical width so we can see would be considered a squeezed or expanded band.
+
+I can setup a table to track this historical info, easily, and then perhaps every little while I work out the new average squeezed and expanded band, as it occurs if say that high or low hadn't been reached in awhile. Or maybe an average of the top two or three biggest band widths to aim for somewhere in the middle - anywhere outside of this and we know this is a big squeeze or contraction.
+
+
+
+
+Remember:
+
+With Bollinger bands, what's important?
+
+Because Bollinger Bands are based on the standard deviation, falling BandWidth reflects decreasing volatility and rising BandWidth reflects increasing volatility.
+
+1. The squeeze
+The squeeze is the central concept of Bollinger Bands®. When the bands come close together, constricting the moving average, it is called a squeeze. A squeeze signals a period of low volatility and is considered by traders to be a potential sign of future increased volatility and possible trading opportunities. Conversely, the wider apart the bands move, the more likely the chance of a decrease in volatility and the greater the possibility of exiting a trade. However, these conditions are not trading signals. The bands give no indication when the change may take place or which direction price could move.
+
+2. Breakouts:
+Approximately 90% of price action occurs between the two bands. Any breakout above or below the bands is a major event. The breakout is not a trading signal. The mistake most people make is believing that that price hitting or exceeding one of the bands is a signal to buy or sell. Breakouts provide no clue as to the direction and extent of future price movement.
+
+
+I have conflict sources of info. I'm going to go with this one:
+https://school.stockcharts.com/doku.php?id=technical_indicators:bollinger_band_width
+
+So we need to identify a squeeze and then a breakout (where the closing price exceeds the bands at that point in time). This will signal either a potential bullish/buy or bearish/sell signal (combined with other indicators). We will work this out based on how far below or above the bWidth high/low the current bandwidth falls - this is referred to as %B, and we will calculate it when we calculate the bWidth (closing price)
+
+%B Overbought - 100
+Oversold - 0
+
+
+Okay, so steps:
+
+1. Setup a table to find historical high and low values for the bands.
+2. Find top and lowest three and average when do the calculations.
+3. If squeeze (below or close to low value), and if %B then goes above oversold (100) soon after, then probable buy and up trend.
+4. If squeeze (below or close to low value), and if %B then goes below overbought (0) soon after, then probable sell and down trend.
+5. If already in down trend and we get into overbought, continuing down trend. If already bought, may be best to sell now before price drops.
+6. If already in up trend and we go into oversold, continuing up trend. If haven't bought, best to buy now.
+
+General: If the SMA indicates an uptrend with a particular length/angle, this is a buying indicator.
+
+Further questions:
+1. How do we detect current trends outside of Bollinger? SMA? Maybe we calculate SMA on the fly?
+2. How do I determine stop-loss and profit trade level? Standard deviation?
+a. One way to set it is 6% less than the current price. I think this a good start.
+b. We can also set it by determining the support level.
+
+Later questions:
+How to determine support + resistance from the indicators I have?
+
+Todo:
+1. Add SMA/EMA list with a basic trend detector (31 data points).
+(We use the EMA because we can calculate trend faster, as EMA reacts faster to pricing changes).
+2. Add bolliger historical highs and lows.
+

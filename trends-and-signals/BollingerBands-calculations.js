@@ -33,8 +33,8 @@ class BollingerBandsCalculations {
     }
 
     async cleanup(coinId) {
-        /* Cleanup the processed RSI and limit */
-        await this.mysqlCon.cleanupProcessedStochastic(
+        /* Cleanup the processed Bollinger and limit */
+        await this.mysqlCon.cleanupProcessedBollinger(
             coinId,
             this.totalRecordsNum
         );
@@ -93,26 +93,29 @@ class BollingerBandsCalculations {
 
         let lastElOHLC = resultsOHLC[resultsOHLC.length - 1];
 
-        /* Eyeballed error from the graphs is 5-10 */
-        let observedError;
+        let close = Number(lastElOHLC["close"]);
 
         let currBollinger = {
             timestamp: lastElOHLC["timestamp"],
-            close: Number(lastElOHLC["close"]),
+            close: close,
             mean: mean,
             SD: SD,
-            MA: MA,
             bolU: MA + numOfSDs * SD,
             bolD: MA - numOfSDs * SD,
             bolMA: MA,
+            bWidth: null,
+            perB: null,
         };
+
+        currBollinger["bWidth"] =
+            (currBollinger["bolU"] - currBollinger["bolD"] / MA) * 100;
+
+        currBollinger["perB"] =
+            (close - currBollinger["bolD"]) /
+            (currBollinger["bolU"] - currBollinger["bolD"]);
 
         /* Add this to mysql and then cleanup*/
         await this.mysqlCon.storeProcessedBollinger(coinId, currBollinger);
-        await this.mysqlCon.cleanupProcessedBollinger(
-            coinId,
-            this.BollingerStoreNum
-        );
 
         this.cleanup(coinId);
     }

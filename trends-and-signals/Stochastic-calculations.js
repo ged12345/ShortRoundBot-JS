@@ -97,7 +97,7 @@ class StochasticCalculations {
             kFast: new Decimal(Number(lastElOHLC["close"]))
                 .minus(lowestTraded)
                 .dividedBy(new Decimal(highestTraded).minus(lowestTraded))
-                .dividedBy(100),
+                .times(100),
             dSlow: -1,
             kFull: -1,
             dFull: -1,

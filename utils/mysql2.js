@@ -348,7 +348,7 @@ class Mysql {
         });
 
         const [rows, fields] = await this.connection.query(
-            `INSERT INTO coin_processed_bollinger VALUES (${coin_id}, '${stampFullTime}', '${stampFullDate}','${timestamp}',${results["close"]},${results["mean"]},${results["SD"]},${results["MA"]}, ${results["bolU"]},${results["bolD"]},${results["bolMA"]}) ON DUPLICATE KEY UPDATE close=${results["close"]},mean=${results["mean"]},SD=${results["SD"]},MA=${results["MA"]},bol_u=${results["bolU"]},bol_d=${results["bolD"]},bol_ma=${results["bolMA"]}`
+            `INSERT INTO coin_processed_bollinger VALUES (${coin_id}, '${stampFullTime}', '${stampFullDate}','${timestamp}',${results["close"]},${results["mean"]},${results["SD"]},${results["bWidth"]},${results["perB"]},${results["bolU"]},${results["bolD"]},${results["bolMA"]}) ON DUPLICATE KEY UPDATE close=${results["close"]},mean=${results["mean"]},SD=${results["SD"]},per_b=${results["perB"]},b_width=${results["bWidth"]},bol_u=${results["bolU"]},bol_d=${results["bolD"]},bol_ma=${results["bolMA"]}`
         );
     }
 
@@ -373,6 +373,58 @@ class Mysql {
     async emptyProcessBollinger() {
         const [rows, fields] = await this.connection.query(
             "TRUNCATE TABLE coin_processed_bollinger"
+        );
+    }
+
+    /* Coin Processing functions */
+    async getProcessedSMA(coin_id) {
+        const [rows, fields] = await this.connection.query(
+            `SELECT * from coin_processed_sma WHERE coin_id=${mysqlCon.escape(
+                coin_id
+            )}`
+        );
+        return rows;
+    }
+
+    async storeProcessedSMA(coin_id, results) {
+        let timestamp = results["timestamp"];
+        let timestampDate = new Date(timestamp * 1000);
+        let stampFullDate = timestampDate
+            .toLocaleDateString("en-AU")
+            .slice(0, 10)
+            .split("/")
+            .reverse()
+            .join("-");
+        let stampFullTime = timestampDate.toLocaleTimeString("en-AU", {
+            hour12: false,
+        });
+
+        const [rows, fields] = await this.connection.query(
+            `INSERT INTO coin_processed_sma VALUES (${coin_id}, '${stampFullTime}', '${stampFullDate}','${timestamp}',${results["close"]},${results["SMA"]},${results["EMA"]},${results["trend"]},${results["trend_weighting"]}) ON DUPLICATE KEY UPDATE close=${results["close"]},sma=${results["SMA"]}, ema=${results["EMA"]},trend=${results["trend"]},trend_weighting=${results["trend_weighting"]}`
+        );
+    }
+
+    async cleanupProcessedSMA(coin_id, limitNum) {
+        const [rows, fields] = await this.connection.query(
+            `DELETE FROM coin_processed_sma
+            WHERE timestamp IN
+            (
+                SELECT timestamp
+                FROM
+                    (
+                        SELECT timestamp
+                        FROM coin_processed_sma
+                        WHERE coin_id = ${mysqlCon.escape(coin_id)}
+                        ORDER BY timestamp DESC
+                        LIMIT ${mysqlCon.escape(limitNum)},60
+                    ) a
+            )`
+        );
+    }
+
+    async emptyProcessSMA() {
+        const [rows, fields] = await this.connection.query(
+            "TRUNCATE TABLE coin_processed_sma"
         );
     }
 }

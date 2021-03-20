@@ -31,6 +31,7 @@ const ProcessLocks = require("../utils/process-locks.js");
 const RSIProcessor = require("../trends-and-signals/RSI-calculations.js");
 const StochasticProcessor = require("../trends-and-signals/Stochastic-calculations.js");
 const BollingerProcessor = require("../trends-and-signals/BollingerBands-calculations.js");
+const SMAProcessor = require("../trends-and-signals/SMA-calculations.js");
 const API = require("../utils/api.js");
 const { rotateArray } = require("../utils/general.js");
 const NETWORK = require("../legacy/config/network-config.js");
@@ -54,11 +55,13 @@ class MainLogic {
         this.RSIStoreNum = 15; // 14 for calculations plus the latest
         this.StochasticStoreNum = 14; // 14 time periods
         this.BollingerStoreNum = 21; // 21 time periods
+        this.SMAStoreNum = this.graphPeriod;
         this.processLocks = new ProcessLocks([
             "OHLC",
             "RSI",
             "Stochastic",
             "Bollinger",
+            "SMA",
         ]);
         //this.state = eventConstants.SEEKING_COIN;
 
@@ -77,6 +80,12 @@ class MainLogic {
         this.BollingerProcessor = new BollingerProcessor(
             this.mysqlCon,
             this.BollingerStoreNum,
+            this.graphPeriod,
+            this.processLocks.unlock
+        );
+        this.SMAProcessor = new SMAProcessor(
+            this.mysqlCon,
+            this.SMAStoreNum,
             this.graphPeriod,
             this.processLocks.unlock
         );
@@ -100,6 +109,7 @@ class MainLogic {
         await this.mysqlCon.emptyProcessRSI();
         await this.mysqlCon.emptyProcessStochastic();
         await this.mysqlCon.emptyProcessBollinger();
+        await this.mysqlCon.emptyProcessSMA();
     }
 
     async setupKraken() {
@@ -142,6 +152,7 @@ class MainLogic {
         this.RSIProcessingQueue = new Queue();
         this.StochasticProcessingQueue = new Queue();
         this.BollingerProcessingQueue = new Queue();
+        this.SMAProcessingQueue = new Queue();
         this.setupTrendsAndSignalsProcessingQueue();
 
         /* We up this for each trend/signal we calculate, and for each coin */
@@ -168,6 +179,15 @@ class MainLogic {
 
         this.coinTrendsAndSignalsProcessingQueuer.enqueueQueue(
             this.BollingerProcessingQueue,
+            trendsAndSignalsFrequency /* We only acquire this info once a minute */,
+            true,
+            true,
+            true,
+            26000
+        );
+
+        this.coinTrendsAndSignalsProcessingQueuer.enqueueQueue(
+            this.SMAProcessingQueue,
             trendsAndSignalsFrequency /* We only acquire this info once a minute */,
             true,
             true,
@@ -213,6 +233,7 @@ class MainLogic {
         this.setupRSIProcessingQueue();
         this.setupStochasticProcessingQueue();
         this.setupBollingerProcessingQueue();
+        this.setupSMAProcessingQueue();
     }
 
     setupTrendsAndSignalsGraphingQueue() {
@@ -303,6 +324,19 @@ class MainLogic {
                     trend,
                     coin["id"]
                 );
+            });
+        });
+    }
+
+    async setupSMAProcessingQueue() {
+        /* We do processing in the same way we did previously, a BollingerBand for each coin. */
+
+        this.coinConfigArr.forEach((coin) => {
+            let trend = "SMA";
+            this.BollingerProcessingQueue.enqueue(async () => {
+                console.log(`Processing ${trend}: ${coin["coin_id_kraken"]}`);
+
+                this.processTrendWithLock(this.SMAProcessor, trend, coin["id"]);
             });
         });
     }
