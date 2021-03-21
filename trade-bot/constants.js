@@ -4,6 +4,17 @@ const BOT_CODE = {
         "KGndibcY5EX3kwcIa+rsQNz2WsDrI31wo9SRYFS3N—g4L1Gfepbc0t4CC61GMzkc/gK+2nNeqpDVO5D87’YB32w==",
 };
 
+/* Redundancy, just in case issue with DB */
+const BOT_NAMES = [
+    "Gandalf",
+    "Wulfgar",
+    "Mara",
+    "Eowyn",
+    "Raistlin",
+    "Brutha",
+    "Spike",
+];
+
 /* HOLDING - Have bought, is not selling yet.
    SEEKING_COIN - No coins, looking for a reliable coin trending upwards.
    LOOKING_TO_BUY means we've found a coin and are waiting to purchase. There will be a limit on this before we go back to SEEKING_COIN. */
@@ -30,6 +41,7 @@ const BOT_COIN_STANCE = ["RISK_AVERSE", "EAGER_TO_PLAY", "AVOID"];
 
 module.exports = {
     BOT_CODE,
+    BOT_NAMES,
     BOT_EVENT,
     BOT_COIN_STANCE,
 };

@@ -19,6 +19,17 @@ class Mysql {
         });*/
     }
 
+    async getNumberOfBots() {
+        const [rows, fields] = await this.connection.query(
+            `SELECT COUNT(*) as count FROM bot WHERE assigned = 1`
+        );
+
+        //console.log("Data received from Db:");
+        //console.log(rows[0]);
+
+        return rows[0];
+    }
+
     async assignBot() {
         const [rows, fields] = await this.connection.query(
             `SELECT * FROM bot WHERE assigned = "0" LIMIT 1`
@@ -38,14 +49,11 @@ class Mysql {
 
         if (botId !== null) {
             /* Update bot as assigned */
-            this.connection.query(
-                `UPDATE bot SET assigned = "1" WHERE bot_id = '${botId}'`,
-                (err, rows) => {
-                    if (err) throw err;
-                    console.log("Data received from Db:");
-                    console.log(rows);
-                }
+            const [rows, fields] = await this.connection.query(
+                `UPDATE bot SET assigned = "1" WHERE bot_id = '${botId}'`
             );
+            console.log("Data received from Db:");
+            console.log(rows);
         }
 
         return [botId, botName];
@@ -60,6 +68,20 @@ class Mysql {
 
             console.log("Data received from Db:");
             console.log(rows);
+        }
+    }
+
+    async checkSalt(salt) {
+        if (salt !== null) {
+            /* Update bot as assigned */
+            const [rows, fields] = await this.connection.query(
+                `SELECT * FROM bot_config WHERE salt='${salt}'`
+            );
+
+            console.log("Data received from Db:");
+            console.log(rows);
+
+            return rows.length > 0 ? true : false;
         }
     }
 
@@ -123,7 +145,7 @@ class Mysql {
 
     async getBotConfig(botId) {
         const [rows, fields] = await this.connection.query(
-            `SELECT * FROM bot_config WHERE bot_id = ${mysqlCon.escape(
+            `SELECT bot_id, exchange_id, api_key, priv_api_key, 2fa_pass FROM bot_config WHERE bot_id = ${mysqlCon.escape(
                 botId
             )} LIMIT 1`
         );

@@ -26,12 +26,14 @@ const releaseBot = async (botId, token, cb) => {
         });
 };
 
-const getAdvice = async (cb) => {
+const getAdvice = async (code, name, cb) => {
     /* We start calling in the advice every half second */
-    networkCalls.apiGet(`http://localhost:1408/api/advice`).then((res) => {
-        //console.log(res);
-        cb(res);
-    });
+    networkCalls
+        .apiGet(`http://localhost:1408/api/advice?code=${code}&name=${name}`)
+        .then((res) => {
+            //console.log(res);
+            cb(res);
+        });
 };
 
 const getLockedAdvice = async (botId, token, cb) => {
@@ -46,11 +48,27 @@ const getLockedAdvice = async (botId, token, cb) => {
         });
 };
 
-const assignBot = async (cb) => {
-    networkCalls.apiGet("http://localhost:1408/api/assign_bot").then((res) => {
-        //console.log(res);
-        cb(res);
-    });
+const numAssignedBots = async (code, cb) => {
+    networkCalls
+        .apiGet("http://localhost:1408/api/num_assigned_bots", {
+            code: code,
+        })
+        .then((res) => {
+            //console.log(res);
+            cb(res.numOfBots);
+        });
+};
+
+const assignBot = async (code, name, cb) => {
+    networkCalls
+        .apiPost("http://localhost:1408/api/assign_bot", {
+            code: code,
+            name: name,
+        })
+        .then((res) => {
+            //console.log(res);
+            cb(res);
+        });
 };
 
 const unassignBot = async (botId, cb) => {
@@ -69,6 +87,7 @@ module.exports = {
     releaseBot,
     getAdvice,
     getLockedAdvice,
+    numAssignedBots,
     assignBot,
     unassignBot,
 };

@@ -35,7 +35,6 @@ const SMAProcessor = require("../trends-and-signals/SMA-calculations.js");
 const API = require("../utils/api.js");
 const { rotateArray } = require("../utils/general.js");
 const NETWORK = require("../legacy/config/network-config.js");
-const Plotly = require("../utils/plotly.js").Plotly;
 
 const fs = require("fs");
 const write = require("write");

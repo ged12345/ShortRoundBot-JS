@@ -1,13 +1,15 @@
 const Queuer = require("../utils/queuer.js").Queuer;
 const Queue = require("../utils/queue.js");
 const API = require("../utils/api.js");
-const { encryptCodeIn } = require("../utils/general.js");
+const { encryptCodeIn, encrypt512 } = require("../utils/general.js");
 const eventConstants = require("./constants.js").BOT_EVENT;
 const code = require("./constants.js").BOT_CODE["primer"];
+const botNames = require("./constants.js").BOT_NAMES;
 class MainLogic {
     // Need to "lock" bot when new info comes in.
 
     constructor() {
+        this.primeCode = encryptCodeIn(code);
         this.lockToken = null;
         this.lockCoinId = 0;
         this.state = eventConstants.SEEKING_COIN;
@@ -18,9 +20,22 @@ class MainLogic {
 
     async getBotConfig() {
         /* We need the bot config information to communicate with the exchange so it can do trades*, the bot ID, and max fees for the exchange */
-        let primeCode = encryptCodeIn(code);
+
+        /* We do our little dance */
+        let currNumberOfBots = new Promise(async (resolve, reject) => {
+            API.numAssignedBots(this.primeCode, function (numOfBots) {
+                resolve(numOfBots);
+            });
+        });
+
+        await currNumberOfBots.then(function (result) {
+            currNumberOfBots = result;
+        });
+
+        let botName = botNames[currNumberOfBots];
+
         let config = new Promise(async (resolve, reject) => {
-            API.assignBot(primeCode, function (config) {
+            API.assignBot(this.primeCode, botName, function (config) {
                 resolve(config);
             });
         });
@@ -101,7 +116,7 @@ class MainLogic {
                 this.getLockedAdvice();
             } else if (this.state === eventConstants.PREPARING_TRADE) {
                 /* Here we perform the actual trade order: bracketed or otherwise */
-                console.log("Preparing trade!");
+                console.log("Status: Preparing trade!");
                 /* We format a kraken trade order */
             }
         }
@@ -111,6 +126,7 @@ class MainLogic {
         API.lockBot(this.id, this.lockCoinId, (lockToken) => {
             this.lockToken = lockToken;
             this.state = eventConstants.TRADE_LOCKED;
+            console.log("Status: Locked bot to a trade!");
         });
     }
 
@@ -118,16 +134,19 @@ class MainLogic {
         API.releaseBot(this.id, this.lockCoinId, (lockToken) => {
             this.lockToken = null;
             this.state = eventConstants.SEEKING_COIN;
+            console.log("Status: Unlocked bot and seeking coin!");
         });
     }
 
     getAdvice() {
-        API.getAdvice((advice) => {
+        API.getAdvice(this.primeCode, this.name, (advice) => {
             this.advice = advice;
             /* Here we will calculate the best option from
             the advice supplied, including probability. Hard coded for testing. */
             this.state = eventConstants.SHAKING_HANDS;
             this.lockCoinId = 1;
+
+            console.log("Status: Shaking hands and getting advice!");
         });
     }
 
@@ -138,6 +157,8 @@ class MainLogic {
             the advice supplied, including probability. Hard coded for testing. */
             this.state = eventConstants.PREPARING_TRADE;
             this.lockCoinId = 1;
+
+            console.log("Status: Getting locked trading advice!");
         });
     }
 

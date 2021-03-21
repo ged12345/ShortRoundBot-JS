@@ -2,7 +2,11 @@ const NETWORK = require("../legacy/config/network-config.js");
 //const coin = require("./coin/main_logic.js");
 const MainLogic = require("./main_logic.js").MainLogic;
 const queue = require("../utils/queue.js");
-const { generateRandomToken } = require("../utils/general.js");
+const {
+    generateRandomToken,
+    encryptCodeOut,
+    encrypt512,
+} = require("../utils/general.js");
 const logger = require("../utils/logger.js").logger;
 const MysqlCon = require("../utils/mysql2.js").Mysql;
 
@@ -37,6 +41,16 @@ const checkDebug = (argv, logger) => {
             logger.disableLogger();
         }
     }
+};
+
+const checkSalt = async (code, name) => {
+    /* Here we check if salt in DB is same as code sent by bot */
+    let properCode = encryptCodeOut(code);
+    let salt = encrypt512(properCode, name);
+
+    /* Here we check if salt in DB. If so, assign the bot; If not some little hacker is hacking a little too hacking much */
+
+    return await mysql.checkSalt(salt);
 };
 
 /* Main code proper */
@@ -90,25 +104,34 @@ app.listen(1408, () => {
 
 app.get("/api/advice", async (req, res, next) => {
     // Here we return a json array of coins, probabilities, stance, and advice.
+    let code = req.query.code;
+    let name = req.query.name;
+
+    let hasSalt = await checkSalt(code, name);
+
+    if (hasSalt !== true) {
+        res.json({
+            response: 400,
+        });
+        return;
+    }
 
     // 1. Get list of coins
-    await mysql.getCoinList(async (coins) => {
-        console.log(coins);
+    let coins = await mysql.getCoinList();
+    //console.log(coins);
 
-        // 2. Get current coin advice for each coin
-
-        let coinsCounter = 1;
-        let coinsPromises = Array();
-        coins.forEach((el, index) => {
-            coinsPromises[index] = new Promise(async (resolve, reject) => {
-                let adviceArr = await mysql.getCoinAdvice(el.id);
-                // If we found advice for the array
-                if (adviceArr) {
-                    resolve([el.coin_name, adviceArr]);
-                } else {
-                    resolve();
-                }
-            });
+    // 2. Get current coin advice for each coin
+    let coinsCounter = 1;
+    let coinsPromises = Array();
+    coins.forEach((el, index) => {
+        coinsPromises[index] = new Promise(async (resolve, reject) => {
+            let adviceArr = await mysql.getCoinAdvice(el.id);
+            // If we found advice for the array
+            if (adviceArr) {
+                resolve([el.coin_name, adviceArr]);
+            } else {
+                resolve();
+            }
         });
     });
 
@@ -142,8 +165,31 @@ app.get("/api/locked_advice", (req, res, next) => {
     });
 });
 
-app.get("/api/assign_bot", async (req, res, next) => {
+app.get("/api/num_assigned_bots", async (req, res, next) => {
+    let code = req.query.code;
+    /* Here we unassign the bot */
+    let numAssignedBots = await mysql.getNumberOfBots();
+
+    res.json({
+        numOfBots: numAssignedBots["count"],
+        response: 200,
+    });
+});
+
+app.post("/api/assign_bot", async (req, res, next) => {
     /* Here we find a bot that hasn't been assigned, and supply the id, api config, and fees */
+    let code = req.body.code;
+    let name = req.body.name;
+
+    let hasSalt = await checkSalt(code, name);
+
+    if (hasSalt !== true) {
+        res.json({
+            response: 400,
+        });
+        return;
+    }
+
     const [botId, botName] = await mysql.assignBot();
     let botIdName = null;
 
@@ -169,6 +215,8 @@ app.get("/api/assign_bot", async (req, res, next) => {
         fees: exchangeFees,
         response: 200,
     });
+
+    console.log(`Status: Bot ${name} successfully authenticated and assigned.`);
 });
 
 app.post("/api/unassign_bot", async (req, res, next) => {
