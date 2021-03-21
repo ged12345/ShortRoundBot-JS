@@ -1,0 +1,5 @@
+Mangle
+Compress
+Obscure
+So if someone gets your code, it'll them time to reverse engineer.
+https://www.npmjs.com/package/uglify-js
