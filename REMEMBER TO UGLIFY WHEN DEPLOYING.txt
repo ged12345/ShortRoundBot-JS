@@ -5,3 +5,6 @@ Compress
 Obscure
 So if someone gets your code, it'll them time to reverse engineer.
 https://www.npmjs.com/package/uglify-js
+
+This allows us to uglify a whole folder - could do this for all the main folders?
+https://www.npmjs.com/package/uglifyjs-folder
