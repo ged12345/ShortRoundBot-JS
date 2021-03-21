@@ -1,5 +1,13 @@
 var crypto = require("crypto");
 
+function encryptCodeIn(str) {
+    return str;
+}
+
+function encryptCodeOut(str) {
+    return str;
+}
+
 function encrypt512(key, str) {
     var hmac = crypto.createHmac("sha512", key);
     var signed = hmac.update(new Buffer(str, "utf-8")).digest("base64");
@@ -23,4 +31,11 @@ function sleep(time) {
     return new Promise((resolve) => setTimeout(resolve, time));
 }
 
-module.exports = { encrypt512, generateRandomToken, rotateArray, sleep };
+module.exports = {
+    encryptCodeIn,
+    encryptCodeOut,
+    encrypt512,
+    generateRandomToken,
+    rotateArray,
+    sleep,
+};

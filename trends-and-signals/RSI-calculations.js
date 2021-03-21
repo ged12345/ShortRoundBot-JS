@@ -25,7 +25,7 @@ https://tradingsim.com/blog/relative-strength-index/
 */
 
 const util = require("util");
-const sleep = require("../utils/general.js").sleep;
+const sleep = require("../utils/utils.js").sleep;
 const Decimal = require("decimal.js");
 
 class RSICalculations {

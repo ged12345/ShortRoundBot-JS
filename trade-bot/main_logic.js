@@ -2,6 +2,7 @@ const Queuer = require("../utils/queuer.js").Queuer;
 const Queue = require("../utils/queue.js");
 const API = require("../utils/api.js");
 const eventConstants = require("./constants.js").BOT_EVENT;
+const code = require("./constants.js").BOT_CODE["primer"];
 class MainLogic {
     // Need to "lock" bot when new info comes in.
 
@@ -15,9 +16,10 @@ class MainLogic {
     }
 
     async getBotConfig() {
-        /* We need the bot config information to communicate with the exchange so it can do trades*, the bot ID, and max fees for the exchange */
+    /* We need the bot config information to communicate with the exchange so it can do trades*, the bot ID, and max fees for the exchange */
+        let primeCode =
         let config = new Promise(async (resolve, reject) => {
-            API.assignBot(function (config) {
+            API.assignBot(code, function (config) {
                 resolve(config);
             });
         });
