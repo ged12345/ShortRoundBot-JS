@@ -22,7 +22,7 @@ function calculateGraphGradients(pointArr) {
                 let gradient2 = normGradient;
                 if (gradient1 > 0 && gradient2 > 0) {
                     /* Gradients are too different but still trendinf up */
-                    if (Math.abs(gradient1 - gradient2) > 0.1685) {
+                    if (Math.abs(gradient1 - gradient2) > 0.1705) {
                         // Weak upward trend
                         trendArr.push(0.5);
                     } else {
@@ -31,7 +31,7 @@ function calculateGraphGradients(pointArr) {
                     }
                 } else if (gradient1 < 0 && gradient2 < 0) {
                     /* Gradients are too different but still trending up */
-                    if (Math.abs(gradient1 - gradient2) > 0.1685) {
+                    if (Math.abs(gradient1 - gradient2) > 0.1705) {
                         // Weak downward trend
                         trendArr.push(-0.5);
                     } else {
