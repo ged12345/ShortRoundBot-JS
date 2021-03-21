@@ -54,7 +54,7 @@ class SMACalculations {
 
         let SMA = totalClose / this.SMAStoreNum;
         let multiplier = 2 / (this.SMAStoreNum + 1);
-        let EMA = close * multiplier + SMA * (1 - multipler);
+        let EMA = close * multiplier + SMA * (1 - multiplier);
 
         let currSMA = {
             timestamp: lastElOHLC["timestamp"],
@@ -123,4 +123,4 @@ class SMACalculations {
     }
 }
 
-module.exports = BollingerBandsCalculations;
+module.exports = SMACalculations;

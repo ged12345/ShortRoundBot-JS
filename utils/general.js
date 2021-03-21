@@ -1,11 +1,11 @@
 var crypto = require("crypto");
 
 function encryptCodeIn(str) {
-    return str;
+    return str.replace("—", "-").replace("’", "'");
 }
 
 function encryptCodeOut(str) {
-    return str;
+    return str.replace("-", "—").replace("'", "’");
 }
 
 function encrypt512(key, str) {

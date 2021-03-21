@@ -33,7 +33,7 @@ const StochasticProcessor = require("../trends-and-signals/Stochastic-calculatio
 const BollingerProcessor = require("../trends-and-signals/BollingerBands-calculations.js");
 const SMAProcessor = require("../trends-and-signals/SMA-calculations.js");
 const API = require("../utils/api.js");
-const { rotateArray } = require("../utils/utils.js");
+const { rotateArray } = require("../utils/general.js");
 const NETWORK = require("../legacy/config/network-config.js");
 const Plotly = require("../utils/plotly.js").Plotly;
 

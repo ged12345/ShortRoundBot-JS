@@ -1,6 +1,7 @@
+/* Shhhhhhh */
 const BOT_CODE = {
     primer:
-        "KGndibcY5EX3kwcIa+rsQNz2WsDrI31wo9SRYFS3NCg4L1Gfepbc0t4CC61GMzkc/gK+2nNeqpDVO5D87YB32w==",
+        "KGndibcY5EX3kwcIa+rsQNz2WsDrI31wo9SRYFS3N—g4L1Gfepbc0t4CC61GMzkc/gK+2nNeqpDVO5D87’YB32w==",
 };
 
 /* HOLDING - Have bought, is not selling yet.
