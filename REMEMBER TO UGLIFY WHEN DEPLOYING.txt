@@ -1,3 +1,5 @@
+The last step: An auto obscure command on deploy.
+
 Mangle
 Compress
 Obscure
