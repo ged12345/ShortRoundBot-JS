@@ -51,10 +51,15 @@ class SMACalculations {
 
         let lastElOHLC = resultsOHLC[resultsOHLC.length - 1];
         let close = Number(lastElOHLC["close"]);
+        console.log(totalClose);
+        console.log(this.SMAStoreNum);
 
         let SMA = totalClose / this.SMAStoreNum;
         let multiplier = 2 / (this.SMAStoreNum + 1);
         let EMA = close * multiplier + SMA * (1 - multiplier);
+
+        console.log(SMA);
+        console.log(EMA);
 
         let currSMA = {
             timestamp: lastElOHLC["timestamp"],
