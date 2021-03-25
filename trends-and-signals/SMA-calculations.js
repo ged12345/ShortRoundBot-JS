@@ -3,6 +3,7 @@
 */
 
 const util = require("util");
+const calculateGraphGradients = require("../utils/general.js");
 class SMACalculations {
     constructor(mysqlCon, storeNum, totalRecordsNum, unlockKey) {
         this.mysqlCon = mysqlCon;
@@ -25,7 +26,7 @@ class SMACalculations {
             await this.firstSMACalculation(coinId);
         } else {
             //console.log("SMA SECOND: " + coinId);
-            await this.secondSMACalculation2(coinId);
+            await this.secondSMACalculation(coinId);
         }
 
         this.cleanup(coinId);
@@ -61,8 +62,9 @@ class SMACalculations {
             close: close,
             SMA: SMA,
             EMA: EMA,
-            trend: NaN,
-            trend_weighting: NaN /* Like a momentum indicator - how long have we been trending for? */,
+            trend: "NULL",
+            trend_weighting:
+                "NULL" /* Like a momentum indicator - how long have we been trending for? */,
         };
 
         /* Add this to mysql and then cleanup*/
@@ -97,13 +99,23 @@ class SMACalculations {
         let multiplier = 2 / (this.SMAStoreNum + 1);
         let EMA = close * multiplier + prevElSMA["EMA"] * (1 - multipler);
 
+        let arrEMA = resultsSMA.map((el) => {
+            return el.EMA;
+        });
+        arrEMA.push(EMA);
+
+        let trendArr = calculateGraphGradients(arrEMA);
+
+        console.log(trendArr);
+
         let currSMA = {
             timestamp: lastElOHLC["timestamp"],
             close: close,
             SMA: SMA,
             EMA: EMA,
-            trend: NaN,
-            trend_weighting: NaN /* Like a momentum indicator - how long have we been trending for? */,
+            trend: "NULL",
+            trend_weighting:
+                "NULL" /* Like a momentum indicator - how long have we been trending for? */,
         };
 
         /* We calculate the trend here */
