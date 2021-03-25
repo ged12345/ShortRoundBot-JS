@@ -45,29 +45,24 @@ class SMACalculations {
 
         resultsOHLC.forEach((el, index) => {
             if (index < this.totalRecordsNum - 1) {
-                totalClose += el["close"];
+                totalClose += Number(el["close"]);
             }
         });
 
         let lastElOHLC = resultsOHLC[resultsOHLC.length - 1];
         let close = Number(lastElOHLC["close"]);
-        console.log(totalClose);
-        console.log(this.SMAStoreNum);
 
         let SMA = totalClose / this.SMAStoreNum;
         let multiplier = 2 / (this.SMAStoreNum + 1);
         let EMA = close * multiplier + SMA * (1 - multiplier);
-
-        console.log(SMA);
-        console.log(EMA);
 
         let currSMA = {
             timestamp: lastElOHLC["timestamp"],
             close: close,
             SMA: SMA,
             EMA: EMA,
-            trend: null,
-            trend_weighting: null /* Like a momentum indicator - how long have we been trending for? */,
+            trend: NaN,
+            trend_weighting: NaN /* Like a momentum indicator - how long have we been trending for? */,
         };
 
         /* Add this to mysql and then cleanup*/
@@ -90,7 +85,7 @@ class SMACalculations {
 
         resultsOHLC.forEach((el, index) => {
             if (index < this.totalRecordsNum) {
-                totalClose += el["close"];
+                totalClose += Number(el["close"]);
             }
         });
 
@@ -107,8 +102,8 @@ class SMACalculations {
             close: close,
             SMA: SMA,
             EMA: EMA,
-            trend: null,
-            trend_weighting: null /* Like a momentum indicator - how long have we been trending for? */,
+            trend: NaN,
+            trend_weighting: NaN /* Like a momentum indicator - how long have we been trending for? */,
         };
 
         /* We calculate the trend here */
