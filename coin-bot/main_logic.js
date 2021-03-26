@@ -370,6 +370,8 @@ class MainLogic {
 
                 let resultsRSI = await this.mysqlCon.getProcessedRSI(coinId);
 
+                let resultsEMA = await this.mysqlCon.getProcessedSMA(coinId);
+
                 let resultsStochastics = await this.mysqlCon.getProcessedStochastic(
                     coinId
                 );
@@ -383,6 +385,7 @@ class MainLogic {
                     coinName,
                     resultsOHLC,
                     resultsRSI,
+                    resultsEMA,
                     resultsStochastics,
                     resultsBollingerBands
                 );
@@ -395,6 +398,7 @@ class MainLogic {
         coinName,
         resultsOHLC,
         resultsRSI,
+        resultsEMA,
         resultsStochastics,
         resultsBollingerBands
     ) {
@@ -421,6 +425,12 @@ class MainLogic {
         let unfilledAmount = xRSI.length - yRSI.length;
         for (var i = 0; i < unfilledAmount; i++) {
             yRSI.unshift("");
+        }
+
+        let yEMA = resultsEMA.map((el) => Number(el["EMA"]).toFixed(4));
+        let unfilledAmount = xRSI.length - yEMA.length;
+        for (var i = 0; i < unfilledAmount; i++) {
+            yEMA.unshift("");
         }
 
         /* Stochastic kFast and dSlow */
@@ -561,9 +571,16 @@ class MainLogic {
                     `["${xRSI.join('","')}"]`
                 );
 
-                plotString = plotString.replace(
+                /* RSI */
+                /*plotString = plotString.replace(
                     "%rsi_y1%",
                     `["${yRSI.join('","')}"]`
+                );*/
+
+                /* SMA */
+                plotString = plotString.replace(
+                    "%rsi_y1%",
+                    `["${ySMA.join('","')}"]`
                 );
 
                 plotString = plotString.replace(

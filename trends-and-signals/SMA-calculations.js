@@ -3,7 +3,7 @@
 */
 
 const util = require("util");
-const calculateGraphGradients = require("../utils/general.js");
+const { calculateGraphGradients } = require("../utils/math.js");
 class SMACalculations {
     constructor(mysqlCon, storeNum, totalRecordsNum, unlockKey) {
         this.mysqlCon = mysqlCon;
@@ -54,14 +54,14 @@ class SMACalculations {
         let close = Number(lastElOHLC["close"]);
 
         let SMA = totalClose / this.SMAStoreNum;
-        let multiplier = 2 / (this.SMAStoreNum + 1);
-        let EMA = close * multiplier + SMA * (1 - multiplier);
+        //let multiplier = 2 / (this.SMAStoreNum + 1);
+        //let EMA = close * multiplier + SMA * (1 - multiplier);
 
         let currSMA = {
             timestamp: lastElOHLC["timestamp"],
             close: close,
             SMA: SMA,
-            EMA: EMA,
+            EMA: 0,
             trend: "NULL",
             trend_weighting:
                 "NULL" /* Like a momentum indicator - how long have we been trending for? */,
@@ -92,36 +92,41 @@ class SMACalculations {
         });
 
         let lastElOHLC = resultsOHLC[resultsOHLC.length - 1];
-        let prevElSMA = resultsSMA[resultsOHLC.length - 1];
+        let prevElSMA = resultsSMA[resultsSMA.length - 1];
         let close = Number(lastElOHLC["close"]);
         let SMA = totalClose / this.SMAStoreNum;
 
         let multiplier = 2 / (this.SMAStoreNum + 1);
-        let EMA = close * multiplier + prevElSMA["EMA"] * (1 - multipler);
+        let EMA = 0;
+
+        if (resultsSMA.length === 1) {
+            EMA = close * multiplier + prevElSMA["SMA"] * (1 - multiplier);
+        } else {
+            EMA = close * multiplier + prevElSMA["EMA"] * (1 - multiplier);
+        }
 
         let arrEMA = resultsSMA.map((el) => {
-            return el.EMA;
+            return el.ema;
         });
         arrEMA.push(EMA);
 
-        let trendArr = calculateGraphGradients(arrEMA);
-
-        console.log(trendArr);
+        /* We calculate the trend and trend weighting here */
+        let trend = "NULL";
+        let trendArr = [];
+        if (resultsSMA.length > 1) {
+            trendArr = calculateGraphGradients(arrEMA);
+            trend = trendArr[0][trendArr[0].length - 1];
+        }
 
         let currSMA = {
             timestamp: lastElOHLC["timestamp"],
             close: close,
             SMA: SMA,
             EMA: EMA,
-            trend: "NULL",
+            trend: trend,
             trend_weighting:
                 "NULL" /* Like a momentum indicator - how long have we been trending for? */,
         };
-
-        /* We calculate the trend here */
-        let trend = EMA - prevElSMA["EMA"];
-
-        // Grade = trend / 1
 
         // We need at least three EMAS to calculate the trend/grade
 
