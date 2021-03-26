@@ -22,10 +22,10 @@
                 filename: "coin-axes",
                 fileopt: "overwrite",
                 layout: {
-                    plot_bgcolor:"#212529",
+                    plot_bgcolor: "#212529",
                     paper_bgcolor: "#212529",
                     title: {
-                        text:"ShortRoundBot | %coin_name%",
+                        text: "ShortRoundBot | %coin_name%",
                         font: {
                             family: "Avenir Light",
                             size: 36,
@@ -67,11 +67,11 @@
                         gridcolor: "rgba(255,255,255,0.05)",
                     },
                     xaxis2: {
-                        range: [0, 31] , zeroline: false, color: "white", gridcolor: "rgba(255,255,255,0.05)", showgrid: true, showticklabels: false,
+                        range: [0, 31], zeroline: false, color: "white", gridcolor: "rgba(255,255,255,0.05)", showgrid: true, showticklabels: false,
                     },
                     yaxis2: {
-                        range: [-2, 105], domain: [0.3, 0.45], zeroline: false, gridcolor: "rgba(255,255,255,0.05)", color: "white",
-                        title : {
+                        range: [%rsi_y_range_start%, %rsi_y_range_end%], domain: [0.3, 0.45], zeroline: false, gridcolor: "rgba(255,255,255,0.05)", color: "white",
+                        title: {
                             text: "RSI",
                             font: {
                                 family: "Avenir Light",
@@ -83,11 +83,11 @@
                     xaxis3: {
                         range: [0, 31], color: "white", zeroline: false,
                         gridcolor: "rgba(255,255,255,0.05)",
-                        },
+                    },
                     yaxis3: {
                         range: [-2, 105], color: "white", domain: [0.1, 0.25],
                         gridcolor: "rgba(255,255,255,0.05)",
-                        title : {
+                        title: {
                             text: "Stoch. - F",
                             font: {
                                 family: "Avenir Light",
@@ -205,24 +205,24 @@
                 this.data = [
                     {
 
-                       x: %ohlc_x%,
+                        x: %ohlc_x%,
 
-                       close: %ohlc_close%,
+                        close: %ohlc_close%,
 
-                       high: %ohlc_high%,
+                        high: %ohlc_high%,
 
-                       increasing: {line: {color: '#336137', width: 1, dash: "solid"}},
-                       decreasing: {line: {color: 'rgb(226, 65, 93)', width: 1}},
+                        increasing: { line: { color: '#336137', width: 1, dash: "solid" } },
+                        decreasing: { line: { color: 'rgb(226, 65, 93)', width: 1 } },
 
-                       line: {color: 'rgba(31,119,180,1)'},
+                        line: { color: 'rgba(31,119,180,1)' },
 
-                       low: %ohlc_low%,
+                        low: %ohlc_low%,
 
-                       open: %ohlc_open%,
-                       type: 'candlestick',
-                       name: "%coin_name%",
-                       xaxis: 'x1',
-                       yaxis: 'y1'
+                        open: %ohlc_open%,
+                        type: 'candlestick',
+                        name: "%coin_name%",
+                        xaxis: 'x1',
+                        yaxis: 'y1'
                     },
                     {
                         x: %boll_ma_x1%,
@@ -232,7 +232,7 @@
                         type: "scatter",
                         mode: "lines",
                         name: "Boll. MA",
-                        line: { shape: "spline", smoothing: 0.35,color: "rgba(160, 255, 160, 0.6)", dash: "dot", },
+                        line: { shape: "spline", smoothing: 0.35, color: "rgba(160, 255, 160, 0.6)", dash: "dot", },
                     },
                     {
                         x: %boll_u_x1%,
@@ -242,7 +242,7 @@
                         type: "scatter",
                         mode: "lines",
                         name: "Boll. U",
-                        line: { shape: "spline", smoothing: 0.35,color: "rgba(160, 255, 160, 0.7)", dash: "dashed", },
+                        line: { shape: "spline", smoothing: 0.35, color: "rgba(160, 255, 160, 0.7)", dash: "dashed", },
                     },
                     {
                         x: %boll_l_x1%,
@@ -252,7 +252,7 @@
                         type: "scatter",
                         mode: "lines",
                         name: "Boll. U",
-                        line: { shape: "spline", smoothing: 0.35,color: "rgba(160, 255, 160, 0.7)", dash: "dashed", },
+                        line: { shape: "spline", smoothing: 0.35, color: "rgba(160, 255, 160, 0.7)", dash: "dashed", },
                     },
                     {
                         x: %rsi_x1%,
@@ -262,7 +262,7 @@
                         type: "scatter",
                         mode: "lines",
                         name: "RSI",
-                        line: { shape: "spline", smoothing: 0.65,color: "rgba(160, 255, 160, 0.8)" },
+                        line: { shape: "spline", smoothing: 0.65, color: "rgba(160, 255, 160, 0.8)" },
                     },
                     {
                         x: %sto_fast_x1%,
@@ -272,7 +272,7 @@
                         type: "scatter",
                         mode: "lines",
                         name: "S1. kFast",
-                        line: { shape: "spline", smoothing: 0.65,color: "rgba(255, 160, 160, 0.8)" },
+                        line: { shape: "spline", smoothing: 0.65, color: "rgba(255, 160, 160, 0.8)" },
                     },
                     {
                         x: %sto_slow_x2%,
@@ -282,17 +282,17 @@
                         type: "scatter",
                         mode: "lines",
                         name: "S1. dSlow",
-                        line: { shape: "spline", smoothing: 0.65 , color: "rgba(160, 160, 255, 0.8)" },
+                        line: { shape: "spline", smoothing: 0.65, color: "rgba(160, 160, 255, 0.8)" },
                     },
                     {
-                        x: %sto_full_x1%,
-                        y: %sto_full_y1%,
+                        x: % sto_full_x1 %,
+                        y: % sto_full_y1 %,
                         xaxis: "x3",
                         yaxis: "y3",
-                        type:"scatter",
+                        type: "scatter",
                         mode: "lines",
                         name: "S2. kFull",
-                        line: { shape: "spline", smoothing: 0.65,color: "d3a0ffcc" },
+                        line: { shape: "spline", smoothing: 0.65, color: "d3a0ffcc" },
                     },
                     {
                         x: %sto_full_x2%,
@@ -302,7 +302,7 @@
                         type: "scatter",
                         mode: "lines",
                         name: "S2. dFull",
-                        line: { shape: "spline", smoothing: 0.65 , color: "fff0a0cc" },
+                        line: { shape: "spline", smoothing: 0.65, color: "fff0a0cc" },
                     }
                 ];
                 plot();
@@ -317,24 +317,24 @@
             let stoPlot2 = document.querySelectorAll(".cartesianlayer .x3y3 .plot .scatterlayer .trace");
             let stoTitle = document.querySelector(".infolayer .g-y3title text");
 
-            stoPlot2.forEach(function(elem) {
+            stoPlot2.forEach(function (elem) {
                 elem.addEventListener('mouseenter', (e) => {
                     //setTimeout(() => {
-                        console.log("hey");
-                        let hoverText = document.querySelector(".main-svg .hoverlayer .hovertext");
-                        if(!stochasticFast) {
-                            if(hoverText.childNodes[0].innerHTML === "Stoc. - kFast") {
-                                hoverText.childNodes[0].style.visibility = "hidden";
-                                hoverText.childNodes[1].style.visibility = "hidden";
-                            }
-
-                        } else {
-                            stoTitle.innerHTML= "Stoch. - Fast";
-                            if(hoverText.childNodes[0].innerHTML === "Stoc. - kFast") {
-                                hoverText.childNodes[2].style.visibility = "hidden";
-                                hoverText.childNodes[3].style.visibility = "hidden";
-                            }
+                    console.log("hey");
+                    let hoverText = document.querySelector(".main-svg .hoverlayer .hovertext");
+                    if (!stochasticFast) {
+                        if (hoverText.childNodes[0].innerHTML === "Stoc. - kFast") {
+                            hoverText.childNodes[0].style.visibility = "hidden";
+                            hoverText.childNodes[1].style.visibility = "hidden";
                         }
+
+                    } else {
+                        stoTitle.innerHTML = "Stoch. - Fast";
+                        if (hoverText.childNodes[0].innerHTML === "Stoc. - kFast") {
+                            hoverText.childNodes[2].style.visibility = "hidden";
+                            hoverText.childNodes[3].style.visibility = "hidden";
+                        }
+                    }
                     //}, 1000);
                 });
             });
@@ -362,14 +362,14 @@
             document.addEventListener('keydown', (e) => {
 
                 // Only accept 'F'
-                if(e.code !== 'KeyS') {
+                if (e.code !== 'KeyS') {
                     return;
                 }
 
                 /* Show only fast or full Stochastics on keypress */
                 stochasticFast = !stochasticFast;
 
-                if(!stochasticFast) {
+                if (!stochasticFast) {
                     stoPlot.childNodes[0].style.visibility = "hidden";
                     stoPlot.childNodes[1].style.visibility = "hidden";
                     stoPlot.childNodes[2].style.visibility = "visible";
@@ -380,14 +380,14 @@
                     stoPlot.childNodes[1].style.visibility = "visible";
                     stoPlot.childNodes[2].style.visibility = "hidden";
                     stoPlot.childNodes[3].style.visibility = "hidden";
-                    stoTitle.innerHTML= "Stoch. - Fast";
+                    stoTitle.innerHTML = "Stoch. - Fast";
                 }
             });
 
             /* Only have fast k and slow d showing initially */
             stoPlot.childNodes[2].style.visibility = "hidden";
             stoPlot.childNodes[3].style.visibility = "hidden";
-            stoTitle.innerHTML= "Stoch. - Fast";
+            stoTitle.innerHTML = "Stoch. - Fast";
         </script>
     </body>
 </html>

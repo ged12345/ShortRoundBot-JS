@@ -106,7 +106,7 @@ class SMACalculations {
         }
 
         let arrEMA = resultsSMA.map((el) => {
-            return el.ema;
+            return el["EMA"];
         });
         arrEMA.push(EMA);
 

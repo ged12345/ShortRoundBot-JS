@@ -421,6 +421,10 @@ class Mysql {
             hour12: false,
         });
 
+        console.log(
+            `INSERT INTO coin_processed_sma VALUES (${coin_id}, '${stampFullTime}', '${stampFullDate}','${timestamp}',${results["close"]},${results["SMA"]},${results["EMA"]},${results["trend"]},${results["trend_weighting"]}) ON DUPLICATE KEY UPDATE close=${results["close"]},SMA=${results["SMA"]}, EMA=${results["EMA"]},trend=\"${results["trend"]}\",trend_weighting=\"${results["trend_weighting"]}\"`
+        );
+
         const [rows, fields] = await this.connection.query(
             `INSERT INTO coin_processed_sma VALUES (${coin_id}, '${stampFullTime}', '${stampFullDate}','${timestamp}',${results["close"]},${results["SMA"]},${results["EMA"]},${results["trend"]},${results["trend_weighting"]}) ON DUPLICATE KEY UPDATE close=${results["close"]},SMA=${results["SMA"]}, EMA=${results["EMA"]},trend=\"${results["trend"]}\",trend_weighting=\"${results["trend_weighting"]}\"`
         );

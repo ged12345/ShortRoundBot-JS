@@ -428,7 +428,7 @@ class MainLogic {
         }
 
         let yEMA = resultsEMA.map((el) => Number(el["EMA"]).toFixed(4));
-        let unfilledAmount = xRSI.length - yEMA.length;
+        unfilledAmount = xRSI.length - yEMA.length;
         for (var i = 0; i < unfilledAmount; i++) {
             yEMA.unshift("");
         }
@@ -459,6 +459,9 @@ class MainLogic {
         /* We use the Bollinger bands for the range of the candle graph of large than the above */
         let highestYBOLU = y2Bollinger.reduce((a, b) => Math.max(a, b));
         let lowestYBOLD = y3Bollinger.reduce((a, b) => Math.min(a, b));
+
+        let highestYEMA = yEMA.reduce((a, b) => Math.max(a, b));
+        let lowestYEMA = yEMA.reduce((a, b) => Math.min(a, b));
 
         let highestCandleY =
             highestYOHLC < highestYBOLU ? highestYBOLU : highestYOHLC;
@@ -536,6 +539,7 @@ class MainLogic {
                     `["${yClose.join('","')}"]`
                 );
 
+                /* Bollinger */
                 plotString = plotString.replace(
                     "%boll_ma_x1%",
                     `["${dbDateTimeFormat.join('","')}"]`
@@ -577,12 +581,36 @@ class MainLogic {
                     `["${yRSI.join('","')}"]`
                 );*/
 
+                //RSI Range
+                // [-2, 105]
+                /*plotString = plotString.replace(
+                    "%rsi_y_range_start%",
+                    `-2`
+                );
+
+                plotString = plotString.replace(
+                    "%rsi_y_range_end%",
+                    `105`
+                );*/
+
                 /* SMA */
                 plotString = plotString.replace(
                     "%rsi_y1%",
-                    `["${ySMA.join('","')}"]`
+                    `["${yEMA.join('","')}"]`
                 );
 
+                // SMA Range
+                plotString = plotString.replace(
+                    "%rsi_y_range_start%",
+                    `${lowestYEMA}`
+                );
+
+                plotString = plotString.replace(
+                    "%rsi_y_range_end%",
+                    `${highestYEMA}`
+                );
+
+                /* Stochastics */
                 plotString = plotString.replace(
                     "%sto_fast_x1%",
                     `["${xRSI.join('","')}"]`

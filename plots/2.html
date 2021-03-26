@@ -1,393 +1,391 @@
 <!DOCTYPE html>
 <html>
-    <head>
-        <script src="js/plotly-latest.min.js"></script>
-        <meta charset="utf-8" />
-        <title>SRBot | Etherium</title>
-        <link
-            href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.0-beta2/dist/css/bootstrap.min.css"
-            rel="stylesheet"
-            integrity="sha384-BmbxuPwQa2lc/FVzBcNJ7UAyJxM6wuqIj61tLrc4wSX0szH/Ev+nYRRuWlolflfl"
-            crossorigin="anonymous"
-        />
-    </head>
 
-    <body style="background: #212529; overflow: hidden">
-        <div id="plotDiv1" class="mt-3" style="width: 100%; height: 1000px">
-            <!-- Plotly chart will be drawn inside this DIV -->
-        </div>
-        <script id="javascript">
+<head>
+    <script src="js/plotly-latest.min.js"></script>
+    <meta charset="utf-8" />
+    <title>SRBot | Etherium</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.0-beta2/dist/css/bootstrap.min.css" rel="stylesheet"
+        integrity="sha384-BmbxuPwQa2lc/FVzBcNJ7UAyJxM6wuqIj61tLrc4wSX0szH/Ev+nYRRuWlolflfl" crossorigin="anonymous" />
+</head>
 
-            graphOptions = {
-                filename: "coin-axes",
-                fileopt: "overwrite",
-                layout: {
-                    plot_bgcolor:"#212529",
-                    paper_bgcolor: "#212529",
+<body style="background: #212529; overflow: hidden">
+    <div id="plotDiv1" class="mt-3" style="width: 100%; height: 1000px">
+        <!-- Plotly chart will be drawn inside this DIV -->
+    </div>
+    <script id="javascript">
+
+        graphOptions = {
+            filename: "coin-axes",
+            fileopt: "overwrite",
+            layout: {
+                plot_bgcolor: "#212529",
+                paper_bgcolor: "#212529",
+                title: {
+                    text: "ShortRoundBot | Etherium",
+                    font: {
+                        family: "Avenir Light",
+                        size: 36,
+                        color: "white"
+                    },
+                },
+                legend: {
+                    font: {
+                        family: "Avenir Light",
+                        size: 14,
+                        color: "white",
+                    },
+                    visible: false,
+                },
+                grid: {
+                    rows: 3,
+                    columns: 1,
+                    pattern: "independent",
+                    roworder: "top to bottom",
+                },
+                xaxis: {
+                    visible: true,
+                    range: [0, 31],
+                    rangeslider: {
+                        visible: false
+                    },
+                    showgrid: false,
+                    showticklabels: false,
+                    color: "white",
+                    gridcolor: "rgba(255,255,255,0.05)",
+                },
+                yaxis: {
+                    autorange: false,
+                    range: [% ohlc_y_range_start %, % ohlc_y_range_end %],
+                    domain: [0.5, 1],
+                    type: 'linear',
+                    color: "white",
+                    showgrid: true,
+                    gridcolor: "rgba(255,255,255,0.05)",
+                },
+                xaxis2: {
+                    range: [0, 31], zeroline: false, color: "white", gridcolor: "rgba(255,255,255,0.05)", showgrid: true, showticklabels: false,
+                },
+                yaxis2: {
+                    range: [% rsi_y_range_start %, % rsi_y_range_end %], domain: [0.3, 0.45], zeroline: false, gridcolor: "rgba(255,255,255,0.05)", color: "white",
                     title: {
-                        text:"ShortRoundBot | Etherium",
+                        text: "RSI",
                         font: {
                             family: "Avenir Light",
-                            size: 36,
+                            size: 24,
                             color: "white"
                         },
                     },
-                    legend: {
+                },
+                xaxis3: {
+                    range: [0, 31], color: "white", zeroline: false,
+                    gridcolor: "rgba(255,255,255,0.05)",
+                },
+                yaxis3: {
+                    range: [-2, 105], color: "white", domain: [0.1, 0.25],
+                    gridcolor: "rgba(255,255,255,0.05)",
+                    title: {
+                        text: "Stoch. - F",
                         font: {
                             family: "Avenir Light",
-                            size: 14,
-                            color: "white",
-                        },
-                        visible: false,
-                    },
-                    grid: {
-                        rows: 3,
-                        columns: 1,
-                        pattern: "independent",
-                        roworder: "top to bottom",
-                    },
-                    xaxis: {
-                        visible: true,
-                        range: [0, 31],
-                        rangeslider: {
-                            visible: false
-                        },
-                        showgrid: false,
-                        showticklabels: false,
-                        color: "white",
-                        gridcolor: "rgba(255,255,255,0.05)",
-                    },
-                    yaxis: {
-                        autorange: false,
-                        range: [1612.51, 1626.12598762269480000000],
-                        domain: [0.5, 1],
-                        type: 'linear',
-                        color: "white",
-                        showgrid: true,
-                        gridcolor: "rgba(255,255,255,0.05)",
-                    },
-                    xaxis2: {
-                        range: [0, 31] , zeroline: false, color: "white", gridcolor: "rgba(255,255,255,0.05)", showgrid: true, showticklabels: false,
-                    },
-                    yaxis2: {
-                        range: [-2, 105], domain: [0.3, 0.45], zeroline: false, gridcolor: "rgba(255,255,255,0.05)", color: "white",
-                        title : {
-                            text: "RSI",
-                            font: {
-                                family: "Avenir Light",
-                                size: 24,
-                                color: "white"
-                            },
+                            size: 24,
+                            color: "white"
                         },
                     },
-                    xaxis3: {
-                        range: [0, 31], color: "white", zeroline: false,
-                        gridcolor: "rgba(255,255,255,0.05)",
-                        },
-                    yaxis3: {
-                        range: [-2, 105], color: "white", domain: [0.1, 0.25],
-                        gridcolor: "rgba(255,255,255,0.05)",
-                        title : {
-                            text: "Stoch. - F",
-                            font: {
-                                family: "Avenir Light",
-                                size: 24,
-                                color: "white"
-                            },
-                        },
-                    },
-                    shapes: [
-                        {
-                            type: "line",
-                            xref: "paper",
-                            yref: "y2",
-                            x0: 0,
-                            y0: 50.0,
-                            x1: 1,
-                            y1: 50.0,
-                            line: {
-                                color: "rgba(0, 0, 255, 0.4)",
-                                width: 2,
-                                dash: "dot",
-                            },
-                            opacity: 0.5,
-                            layer: "below",
-                        },
-                        {
-                            type: "line",
-                            xref: "paper",
-                            yref: "y2",
-                            x0: 0,
-                            y0: 66.66,
-                            x1: 1,
-                            y1: 66.66,
-                            line: {
-                                color: "rgb(255, 0, 0)",
-                                width: 2,
-                                dash: "dot",
-                            },
-                            opacity: 0.5,
-                            layer: "below",
-                        },
-                        {
-                            type: "line",
-                            xref: "paper",
-                            yref: "y2",
-                            x0: 0,
-                            y0: 33.33,
-                            x1: 1,
-                            y1: 33.33,
-                            line: {
-                                color: "rgb(255, 0, 0)",
-                                width: 2,
-                                dash: "dot",
-                            },
-                            opacity: 0.5,
-                            layer: "below",
-                        },
-                        {
-                            type: "line",
-                            xref: "paper",
-                            yref: "y3",
-                            x0: 0,
-                            y0: 20,
-                            x1: 1,
-                            y1: 20,
-                            line: {
-                                color: "rgb(255, 0, 0)",
-                                width: 2,
-                                dash: "dot",
-                            },
-                            opacity: 0.5,
-                            layer: "below",
-                        },
-                        {
-                            type: "line",
-                            xref: "paper",
-                            yref: "y3",
-                            x0: 0,
-                            y0: 80,
-                            x1: 1,
-                            y1: 80,
-                            line: {
-                                color: "rgb(255, 0, 0)",
-                                width: 2,
-                                dash: "dot",
-                            },
-                            opacity: 0.5,
-                            layer: "below",
-                        },
-                        {
-                            type: "line",
-                            xref: "paper",
-                            yref: "y3",
-                            x0: 0,
-                            y0: 50.0,
-                            x1: 1,
-                            y1: 50.0,
-                            line: {
-                                color: "rgba(0, 0, 255, 0.4)",
-                                width: 2,
-                                dash: "dot",
-                            },
-                            opacity: 0.5,
-                            layer: "below",
-                        },
-                    ],
                 },
-            };
-
-            init();
-
-            function init(
-            ) {
-
-                this.data = [
+                shapes: [
                     {
-
-                       x: ["22:42:00","22:43:00","22:44:00","22:45:00","22:46:00","22:47:00","22:48:00","22:49:00","22:50:00","22:51:00","22:52:00","22:53:00","22:54:00","22:55:00","22:56:00","22:57:00","22:58:00","22:59:00","23:00:00","23:01:00","23:02:00","23:03:00","23:04:00","23:05:00","23:06:00","23:07:00","23:08:00","23:09:00","23:10:00","23:11:00","23:12:00","23:13:00"],
-
-                       close: ["1621.83000000","1621.84000000","1623.07000000","1624.00000000","1624.70000000","1622.00000000","1618.78000000","1618.55000000","1618.92000000","1618.00000000","1617.65000000","1619.56000000","1618.93000000","1616.71000000","1619.20000000","1619.98000000","1617.85000000","1615.24000000","1614.18000000","1619.26000000","1621.37000000","1620.60000000","1622.36000000","1621.95000000","1620.00000000","1621.45000000","1621.07000000","1622.00000000","1623.57000000","1624.26000000","1624.83000000","1625.74000000"],
-
-                       high: ["1621.83000000","1621.84000000","1623.44000000","1624.00000000","1625.46000000","1623.94000000","1621.06000000","1620.09000000","1619.30000000","1618.31000000","1617.65000000","1619.68000000","1620.89000000","1618.28000000","1619.20000000","1619.98000000","1618.10000000","1616.67000000","1618.15000000","1619.50000000","1621.37000000","1621.08000000","1622.36000000","1622.46000000","1620.00000000","1621.45000000","1621.91000000","1622.00000000","1623.57000000","1624.39000000","1624.83000000","1625.74000000"],
-
-                       increasing: {line: {color: '#336137', width: 1, dash: "solid"}},
-                       decreasing: {line: {color: 'rgb(226, 65, 93)', width: 1}},
-
-                       line: {color: 'rgba(31,119,180,1)'},
-
-                       low: ["1620.22000000","1621.07000000","1622.87000000","1623.07000000","1623.99000000","1622.00000000","1618.64000000","1617.89000000","1618.61000000","1618.00000000","1617.04000000","1617.04000000","1618.93000000","1615.86000000","1617.17000000","1619.34000000","1617.85000000","1615.24000000","1612.51000000","1615.47000000","1619.50000000","1620.46000000","1620.88000000","1621.22000000","1620.00000000","1620.45000000","1620.75000000","1621.87000000","1622.50000000","1623.58000000","1624.01000000","1625.17000000"],
-
-                       open: ["1620.22000000","1621.65000000","1622.87000000","1623.07000000","1625.46000000","1623.90000000","1621.06000000","1618.79000000","1619.30000000","1618.31000000","1617.04000000","1617.04000000","1619.68000000","1618.28000000","1617.17000000","1619.34000000","1617.86000000","1616.67000000","1617.66000000","1615.47000000","1619.50000000","1620.58000000","1620.94000000","1622.15000000","1620.00000000","1620.79000000","1620.75000000","1621.87000000","1622.50000000","1623.58000000","1624.38000000","1625.19000000"],
-                       type: 'candlestick',
-                       name: "Etherium",
-                       xaxis: 'x1',
-                       yaxis: 'y1'
+                        type: "line",
+                        xref: "paper",
+                        yref: "y2",
+                        x0: 0,
+                        y0: 50.0,
+                        x1: 1,
+                        y1: 50.0,
+                        line: {
+                            color: "rgba(0, 0, 255, 0.4)",
+                            width: 2,
+                            dash: "dot",
+                        },
+                        opacity: 0.5,
+                        layer: "below",
                     },
                     {
-                        x: ["22:42:00","22:43:00","22:44:00","22:45:00","22:46:00","22:47:00","22:48:00","22:49:00","22:50:00","22:51:00","22:52:00","22:53:00","22:54:00","22:55:00","22:56:00","22:57:00","22:58:00","22:59:00","23:00:00","23:01:00","23:02:00","23:03:00","23:04:00","23:05:00","23:06:00","23:07:00","23:08:00","23:09:00","23:10:00","23:11:00","23:12:00","23:13:00"],
-                        y: ["","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","1620.34158730158720000000"],
-                        xaxis: "x1",
-                        yaxis: "y1",
-                        type: "scatter",
-                        mode: "lines",
-                        name: "Boll. MA",
-                        line: { shape: "spline", smoothing: 0.35,color: "rgba(160, 255, 160, 0.6)", dash: "dot", },
+                        type: "line",
+                        xref: "paper",
+                        yref: "y2",
+                        x0: 0,
+                        y0: 66.66,
+                        x1: 1,
+                        y1: 66.66,
+                        line: {
+                            color: "rgb(255, 0, 0)",
+                            width: 2,
+                            dash: "dot",
+                        },
+                        opacity: 0.5,
+                        layer: "below",
                     },
                     {
-                        x: ["22:42:00","22:43:00","22:44:00","22:45:00","22:46:00","22:47:00","22:48:00","22:49:00","22:50:00","22:51:00","22:52:00","22:53:00","22:54:00","22:55:00","22:56:00","22:57:00","22:58:00","22:59:00","23:00:00","23:01:00","23:02:00","23:03:00","23:04:00","23:05:00","23:06:00","23:07:00","23:08:00","23:09:00","23:10:00","23:11:00","23:12:00","23:13:00"],
-                        y: ["","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","1626.12598762269480000000"],
-                        xaxis: "x1",
-                        yaxis: "y1",
-                        type: "scatter",
-                        mode: "lines",
-                        name: "Boll. U",
-                        line: { shape: "spline", smoothing: 0.35,color: "rgba(160, 255, 160, 0.7)", dash: "dashed", },
+                        type: "line",
+                        xref: "paper",
+                        yref: "y2",
+                        x0: 0,
+                        y0: 33.33,
+                        x1: 1,
+                        y1: 33.33,
+                        line: {
+                            color: "rgb(255, 0, 0)",
+                            width: 2,
+                            dash: "dot",
+                        },
+                        opacity: 0.5,
+                        layer: "below",
                     },
                     {
-                        x: ["22:42:00","22:43:00","22:44:00","22:45:00","22:46:00","22:47:00","22:48:00","22:49:00","22:50:00","22:51:00","22:52:00","22:53:00","22:54:00","22:55:00","22:56:00","22:57:00","22:58:00","22:59:00","23:00:00","23:01:00","23:02:00","23:03:00","23:04:00","23:05:00","23:06:00","23:07:00","23:08:00","23:09:00","23:10:00","23:11:00","23:12:00","23:13:00"],
-                        y: ["","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","1614.55718698047960000000"],
-                        xaxis: "x1",
-                        yaxis: "y1",
-                        type: "scatter",
-                        mode: "lines",
-                        name: "Boll. U",
-                        line: { shape: "spline", smoothing: 0.35,color: "rgba(160, 255, 160, 0.7)", dash: "dashed", },
+                        type: "line",
+                        xref: "paper",
+                        yref: "y3",
+                        x0: 0,
+                        y0: 20,
+                        x1: 1,
+                        y1: 20,
+                        line: {
+                            color: "rgb(255, 0, 0)",
+                            width: 2,
+                            dash: "dot",
+                        },
+                        opacity: 0.5,
+                        layer: "below",
                     },
                     {
-                        x: ["22:42:00","22:43:00","22:44:00","22:45:00","22:46:00","22:47:00","22:48:00","22:49:00","22:50:00","22:51:00","22:52:00","22:53:00","22:54:00","22:55:00","22:56:00","22:57:00","22:58:00","22:59:00","23:00:00","23:01:00","23:02:00","23:03:00","23:04:00","23:05:00","23:06:00","23:07:00","23:08:00","23:09:00","23:10:00","23:11:00","23:12:00","23:13:00"],
-                        y: ["0.0000","0.0000","0.0000","0.0000","0.0000","0.0000","0.0000","0.0000","0.0000","0.0000","0.0000","0.0000","0.0000","33.3982","43.2645","45.9649","40.3211","34.6989","32.7044","48.1008","52.9189","51.0561","54.9589","53.8810","48.9626","52.4392","51.4501","53.7494","57.4159","58.9560","60.2353","62.2579"],
-                        xaxis: "x2",
-                        yaxis: "y2",
-                        type: "scatter",
-                        mode: "lines",
-                        name: "RSI",
-                        line: { shape: "spline", smoothing: 0.65,color: "rgba(160, 255, 160, 0.8)" },
+                        type: "line",
+                        xref: "paper",
+                        yref: "y3",
+                        x0: 0,
+                        y0: 80,
+                        x1: 1,
+                        y1: 80,
+                        line: {
+                            color: "rgb(255, 0, 0)",
+                            width: 2,
+                            dash: "dot",
+                        },
+                        opacity: 0.5,
+                        layer: "below",
                     },
                     {
-                        x: ["22:42:00","22:43:00","22:44:00","22:45:00","22:46:00","22:47:00","22:48:00","22:49:00","22:50:00","22:51:00","22:52:00","22:53:00","22:54:00","22:55:00","22:56:00","22:57:00","22:58:00","22:59:00","23:00:00","23:01:00","23:02:00","23:03:00","23:04:00","23:05:00","23:06:00","23:07:00","23:08:00","23:09:00","23:10:00","23:11:00","23:12:00","23:13:00"],
-                        y: ["","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","100.000000000000000000000000"],
-                        xaxis: "x3",
-                        yaxis: "y3",
-                        type: "scatter",
-                        mode: "lines",
-                        name: "S1. kFast",
-                        line: { shape: "spline", smoothing: 0.65,color: "rgba(255, 160, 160, 0.8)" },
+                        type: "line",
+                        xref: "paper",
+                        yref: "y3",
+                        x0: 0,
+                        y0: 50.0,
+                        x1: 1,
+                        y1: 50.0,
+                        line: {
+                            color: "rgba(0, 0, 255, 0.4)",
+                            width: 2,
+                            dash: "dot",
+                        },
+                        opacity: 0.5,
+                        layer: "below",
                     },
-                    {
-                        x: ["22:42:00","22:43:00","22:44:00","22:45:00","22:46:00","22:47:00","22:48:00","22:49:00","22:50:00","22:51:00","22:52:00","22:53:00","22:54:00","22:55:00","22:56:00","22:57:00","22:58:00","22:59:00","23:00:00","23:01:00","23:02:00","23:03:00","23:04:00","23:05:00","23:06:00","23:07:00","23:08:00","23:09:00","23:10:00","23:11:00","23:12:00","23:13:00"],
-                        y: ["","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","-1.000000000000000000000000"],
-                        xaxis: "x3",
-                        yaxis: "y3",
-                        type: "scatter",
-                        mode: "lines",
-                        name: "S1. dSlow",
-                        line: { shape: "spline", smoothing: 0.65 , color: "rgba(160, 160, 255, 0.8)" },
-                    },
-                    {
-                        x: ["22:42:00","22:43:00","22:44:00","22:45:00","22:46:00","22:47:00","22:48:00","22:49:00","22:50:00","22:51:00","22:52:00","22:53:00","22:54:00","22:55:00","22:56:00","22:57:00","22:58:00","22:59:00","23:00:00","23:01:00","23:02:00","23:03:00","23:04:00","23:05:00","23:06:00","23:07:00","23:08:00","23:09:00","23:10:00","23:11:00","23:12:00","23:13:00"],
-                        y: ["","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","-1.000000000000000000000000"],
-                        xaxis: "x3",
-                        yaxis: "y3",
-                        type:"scatter",
-                        mode: "lines",
-                        name: "S2. kFull",
-                        line: { shape: "spline", smoothing: 0.65,color: "d3a0ffcc" },
-                    },
-                    {
-                        x: ["22:42:00","22:43:00","22:44:00","22:45:00","22:46:00","22:47:00","22:48:00","22:49:00","22:50:00","22:51:00","22:52:00","22:53:00","22:54:00","22:55:00","22:56:00","22:57:00","22:58:00","22:59:00","23:00:00","23:01:00","23:02:00","23:03:00","23:04:00","23:05:00","23:06:00","23:07:00","23:08:00","23:09:00","23:10:00","23:11:00","23:12:00","23:13:00"],
-                        y: ["","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","-1.000000000000000000000000"],
-                        xaxis: "x3",
-                        yaxis: "y3",
-                        type: "scatter",
-                        mode: "lines",
-                        name: "S2. dFull",
-                        line: { shape: "spline", smoothing: 0.65 , color: "fff0a0cc" },
-                    }
-                ];
-                plot();
-            }
+                ],
+            },
+        };
 
-            function plot() {
-                Plotly.newPlot("plotDiv1", this.data, this.graphOptions["layout"]);
-            }
+        init();
 
-            var stochasticFast = true;
-            let stoPlot = document.querySelector(".cartesianlayer .x3y3 .plot .scatterlayer");
-            let stoPlot2 = document.querySelectorAll(".cartesianlayer .x3y3 .plot .scatterlayer .trace");
-            let stoTitle = document.querySelector(".infolayer .g-y3title text");
+        function init(
+        ) {
 
-            stoPlot2.forEach(function(elem) {
-                elem.addEventListener('mouseenter', (e) => {
-                    //setTimeout(() => {
-                        console.log("hey");
-                        let hoverText = document.querySelector(".main-svg .hoverlayer .hovertext");
-                        if(!stochasticFast) {
-                            if(hoverText.childNodes[0].innerHTML === "Stoc. - kFast") {
-                                hoverText.childNodes[0].style.visibility = "hidden";
-                                hoverText.childNodes[1].style.visibility = "hidden";
-                            }
+            this.data = [
+                {
 
-                        } else {
-                            stoTitle.innerHTML= "Stoch. - Fast";
-                            if(hoverText.childNodes[0].innerHTML === "Stoc. - kFast") {
-                                hoverText.childNodes[2].style.visibility = "hidden";
-                                hoverText.childNodes[3].style.visibility = "hidden";
-                            }
-                        }
-                    //}, 1000);
-                });
-            });
+                    x: % ohlc_x %,
 
-            /*stoPlot.addEventListener('mouseenter', (e) => {
+                    close: % ohlc_close %,
+
+                    high: % ohlc_high %,
+
+                    increasing: { line: { color: '#336137', width: 1, dash: "solid" } },
+                    decreasing: { line: { color: 'rgb(226, 65, 93)', width: 1 } },
+
+                    line: { color: 'rgba(31,119,180,1)' },
+
+                    low: % ohlc_low %,
+
+                    open: % ohlc_open %,
+                    type: 'candlestick',
+                    name: "Etherium",
+                    xaxis: 'x1',
+                    yaxis: 'y1'
+                },
+                {
+                    x: % boll_ma_x1 %,
+                    y: % boll_ma_y1 %,
+                    xaxis: "x1",
+                    yaxis: "y1",
+                    type: "scatter",
+                    mode: "lines",
+                    name: "Boll. MA",
+                    line: { shape: "spline", smoothing: 0.35, color: "rgba(160, 255, 160, 0.6)", dash: "dot", },
+                },
+                {
+                    x: % boll_u_x1 %,
+                    y: % boll_u_y1 %,
+                    xaxis: "x1",
+                    yaxis: "y1",
+                    type: "scatter",
+                    mode: "lines",
+                    name: "Boll. U",
+                    line: { shape: "spline", smoothing: 0.35, color: "rgba(160, 255, 160, 0.7)", dash: "dashed", },
+                },
+                {
+                    x: % boll_l_x1 %,
+                    y: % boll_l_y1 %,
+                    xaxis: "x1",
+                    yaxis: "y1",
+                    type: "scatter",
+                    mode: "lines",
+                    name: "Boll. U",
+                    line: { shape: "spline", smoothing: 0.35, color: "rgba(160, 255, 160, 0.7)", dash: "dashed", },
+                },
+                {
+                    x: % rsi_x1 %,
+                    y: % rsi_y1 %,
+                    xaxis: "x2",
+                    yaxis: "y2",
+                    type: "scatter",
+                    mode: "lines",
+                    name: "RSI",
+                    line: { shape: "spline", smoothing: 0.65, color: "rgba(160, 255, 160, 0.8)" },
+                },
+                {
+                    x: % sto_fast_x1 %,
+                    y: % sto_fast_y1 %,
+                    xaxis: "x3",
+                    yaxis: "y3",
+                    type: "scatter",
+                    mode: "lines",
+                    name: "S1. kFast",
+                    line: { shape: "spline", smoothing: 0.65, color: "rgba(255, 160, 160, 0.8)" },
+                },
+                {
+                    x: % sto_slow_x2 %,
+                    y: % sto_slow_y2 %,
+                    xaxis: "x3",
+                    yaxis: "y3",
+                    type: "scatter",
+                    mode: "lines",
+                    name: "S1. dSlow",
+                    line: { shape: "spline", smoothing: 0.65, color: "rgba(160, 160, 255, 0.8)" },
+                },
+                {
+                    x: % sto_full_x1 %,
+                    y: % sto_full_y1 %,
+                    xaxis: "x3",
+                    yaxis: "y3",
+                    type: "scatter",
+                    mode: "lines",
+                    name: "S2. kFull",
+                    line: { shape: "spline", smoothing: 0.65, color: "d3a0ffcc" },
+                },
+                {
+                    x: % sto_full_x2 %,
+                    y: % sto_full_y2 %,
+                    xaxis: "x3",
+                    yaxis: "y3",
+                    type: "scatter",
+                    mode: "lines",
+                    name: "S2. dFull",
+                    line: { shape: "spline", smoothing: 0.65, color: "fff0a0cc" },
+                }
+            ];
+            plot();
+        }
+
+        function plot() {
+            Plotly.newPlot("plotDiv1", this.data, this.graphOptions["layout"]);
+        }
+
+        var stochasticFast = true;
+        let stoPlot = document.querySelector(".cartesianlayer .x3y3 .plot .scatterlayer");
+        let stoPlot2 = document.querySelectorAll(".cartesianlayer .x3y3 .plot .scatterlayer .trace");
+        let stoTitle = document.querySelector(".infolayer .g-y3title text");
+
+        stoPlot2.forEach(function (elem) {
+            elem.addEventListener('mouseenter', (e) => {
                 //setTimeout(() => {
-                    console.log("hey");
-                    let hoverText = document.querySelector(".main-svg .hoverlayer .hovertext");
-                    if(!stochasticFast) {
-                        if(hoverText.childNodes[0].innerHTML === "Stoc. - kFast") {
-                            hoverText.childNodes[0].style.visibility = "hidden";
-                            hoverText.childNodes[1].style.visibility = "hidden";
-                        }
-
-                    } else {
-                        stoTitle.innerHTML= "Stoch. - Fast";
-                        if(hoverText.childNodes[0].innerHTML === "Stoc. - kFast") {
-                            hoverText.childNodes[2].style.visibility = "hidden";
-                            hoverText.childNodes[3].style.visibility = "hidden";
-                        }
+                console.log("hey");
+                let hoverText = document.querySelector(".main-svg .hoverlayer .hovertext");
+                if (!stochasticFast) {
+                    if (hoverText.childNodes[0].innerHTML === "Stoc. - kFast") {
+                        hoverText.childNodes[0].style.visibility = "hidden";
+                        hoverText.childNodes[1].style.visibility = "hidden";
                     }
-                //}, 1000);
-            });*/
 
-            document.addEventListener('keydown', (e) => {
-
-                // Only accept 'F'
-                if(e.code !== 'KeyS') {
-                    return;
-                }
-
-                /* Show only fast or full Stochastics on keypress */
-                stochasticFast = !stochasticFast;
-
-                if(!stochasticFast) {
-                    stoPlot.childNodes[0].style.visibility = "hidden";
-                    stoPlot.childNodes[1].style.visibility = "hidden";
-                    stoPlot.childNodes[2].style.visibility = "visible";
-                    stoPlot.childNodes[3].style.visibility = "visible";
-                    stoTitle.innerHTML = "Stoch. - Full";
                 } else {
-                    stoPlot.childNodes[0].style.visibility = "visible";
-                    stoPlot.childNodes[1].style.visibility = "visible";
-                    stoPlot.childNodes[2].style.visibility = "hidden";
-                    stoPlot.childNodes[3].style.visibility = "hidden";
-                    stoTitle.innerHTML= "Stoch. - Fast";
+                    stoTitle.innerHTML = "Stoch. - Fast";
+                    if (hoverText.childNodes[0].innerHTML === "Stoc. - kFast") {
+                        hoverText.childNodes[2].style.visibility = "hidden";
+                        hoverText.childNodes[3].style.visibility = "hidden";
+                    }
                 }
+                //}, 1000);
             });
+        });
 
-            /* Only have fast k and slow d showing initially */
-            stoPlot.childNodes[2].style.visibility = "hidden";
-            stoPlot.childNodes[3].style.visibility = "hidden";
-            stoTitle.innerHTML= "Stoch. - Fast";
-        </script>
-    </body>
+        /*stoPlot.addEventListener('mouseenter', (e) => {
+            //setTimeout(() => {
+                console.log("hey");
+                let hoverText = document.querySelector(".main-svg .hoverlayer .hovertext");
+                if(!stochasticFast) {
+                    if(hoverText.childNodes[0].innerHTML === "Stoc. - kFast") {
+                        hoverText.childNodes[0].style.visibility = "hidden";
+                        hoverText.childNodes[1].style.visibility = "hidden";
+                    }
+
+                } else {
+                    stoTitle.innerHTML= "Stoch. - Fast";
+                    if(hoverText.childNodes[0].innerHTML === "Stoc. - kFast") {
+                        hoverText.childNodes[2].style.visibility = "hidden";
+                        hoverText.childNodes[3].style.visibility = "hidden";
+                    }
+                }
+            //}, 1000);
+        });*/
+
+        document.addEventListener('keydown', (e) => {
+
+            // Only accept 'F'
+            if (e.code !== 'KeyS') {
+                return;
+            }
+
+            /* Show only fast or full Stochastics on keypress */
+            stochasticFast = !stochasticFast;
+
+            if (!stochasticFast) {
+                stoPlot.childNodes[0].style.visibility = "hidden";
+                stoPlot.childNodes[1].style.visibility = "hidden";
+                stoPlot.childNodes[2].style.visibility = "visible";
+                stoPlot.childNodes[3].style.visibility = "visible";
+                stoTitle.innerHTML = "Stoch. - Full";
+            } else {
+                stoPlot.childNodes[0].style.visibility = "visible";
+                stoPlot.childNodes[1].style.visibility = "visible";
+                stoPlot.childNodes[2].style.visibility = "hidden";
+                stoPlot.childNodes[3].style.visibility = "hidden";
+                stoTitle.innerHTML = "Stoch. - Fast";
+            }
+        });
+
+        /* Only have fast k and slow d showing initially */
+        stoPlot.childNodes[2].style.visibility = "hidden";
+        stoPlot.childNodes[3].style.visibility = "hidden";
+        stoTitle.innerHTML = "Stoch. - Fast";
+    </script>
+</body>
+
 </html>
