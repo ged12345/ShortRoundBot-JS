@@ -1,391 +1,393 @@
 <!DOCTYPE html>
 <html>
+    <head>
+        <script src="js/plotly-latest.min.js"></script>
+        <meta charset="utf-8" />
+        <title>SRBot | Polkadot</title>
+        <link
+            href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.0-beta2/dist/css/bootstrap.min.css"
+            rel="stylesheet"
+            integrity="sha384-BmbxuPwQa2lc/FVzBcNJ7UAyJxM6wuqIj61tLrc4wSX0szH/Ev+nYRRuWlolflfl"
+            crossorigin="anonymous"
+        />
+    </head>
 
-<head>
-    <script src="js/plotly-latest.min.js"></script>
-    <meta charset="utf-8" />
-    <title>SRBot | Polkadot</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.0-beta2/dist/css/bootstrap.min.css" rel="stylesheet"
-        integrity="sha384-BmbxuPwQa2lc/FVzBcNJ7UAyJxM6wuqIj61tLrc4wSX0szH/Ev+nYRRuWlolflfl" crossorigin="anonymous" />
-</head>
+    <body style="background: #212529; overflow: hidden">
+        <div id="plotDiv1" class="mt-3" style="width: 100%; height: 1000px">
+            <!-- Plotly chart will be drawn inside this DIV -->
+        </div>
+        <script id="javascript">
 
-<body style="background: #212529; overflow: hidden">
-    <div id="plotDiv1" class="mt-3" style="width: 100%; height: 1000px">
-        <!-- Plotly chart will be drawn inside this DIV -->
-    </div>
-    <script id="javascript">
-
-        graphOptions = {
-            filename: "coin-axes",
-            fileopt: "overwrite",
-            layout: {
-                plot_bgcolor: "#212529",
-                paper_bgcolor: "#212529",
-                title: {
-                    text: "ShortRoundBot | Polkadot",
-                    font: {
-                        family: "Avenir Light",
-                        size: 36,
-                        color: "white"
+            graphOptions = {
+                filename: "coin-axes",
+                fileopt: "overwrite",
+                layout: {
+                    plot_bgcolor: "#212529",
+                    paper_bgcolor: "#212529",
+                    title: {
+                        text: "ShortRoundBot | Polkadot",
+                        font: {
+                            family: "Avenir Light",
+                            size: 36,
+                            color: "white"
+                        },
                     },
-                },
-                legend: {
-                    font: {
-                        family: "Avenir Light",
-                        size: 14,
+                    legend: {
+                        font: {
+                            family: "Avenir Light",
+                            size: 14,
+                            color: "white",
+                        },
+                        visible: false,
+                    },
+                    grid: {
+                        rows: 3,
+                        columns: 1,
+                        pattern: "independent",
+                        roworder: "top to bottom",
+                    },
+                    xaxis: {
+                        visible: true,
+                        range: [0, 31],
+                        rangeslider: {
+                            visible: false
+                        },
+                        showgrid: false,
+                        showticklabels: false,
                         color: "white",
+                        gridcolor: "rgba(255,255,255,0.05)",
                     },
-                    visible: false,
-                },
-                grid: {
-                    rows: 3,
-                    columns: 1,
-                    pattern: "independent",
-                    roworder: "top to bottom",
-                },
-                xaxis: {
-                    visible: true,
-                    range: [0, 31],
-                    rangeslider: {
-                        visible: false
+                    yaxis: {
+                        autorange: false,
+                        range: [43.64855423701489, 44.29278222148185],
+                        domain: [0.5, 1],
+                        type: 'linear',
+                        color: "white",
+                        showgrid: true,
+                        gridcolor: "rgba(255,255,255,0.05)",
                     },
-                    showgrid: false,
-                    showticklabels: false,
-                    color: "white",
-                    gridcolor: "rgba(255,255,255,0.05)",
-                },
-                yaxis: {
-                    autorange: false,
-                    range: [% ohlc_y_range_start %, % ohlc_y_range_end %],
-                    domain: [0.5, 1],
-                    type: 'linear',
-                    color: "white",
-                    showgrid: true,
-                    gridcolor: "rgba(255,255,255,0.05)",
-                },
-                xaxis2: {
-                    range: [0, 31], zeroline: false, color: "white", gridcolor: "rgba(255,255,255,0.05)", showgrid: true, showticklabels: false,
-                },
-                yaxis2: {
-                    range: [% rsi_y_range_start %, % rsi_y_range_end %], domain: [0.3, 0.45], zeroline: false, gridcolor: "rgba(255,255,255,0.05)", color: "white",
-                    title: {
-                        text: "RSI",
-                        font: {
-                            family: "Avenir Light",
-                            size: 24,
-                            color: "white"
+                    xaxis2: {
+                        range: [0, 31], zeroline: false, color: "white", gridcolor: "rgba(255,255,255,0.05)", showgrid: true, showticklabels: false,
+                    },
+                    yaxis2: {
+                        range: [43.9117, 44.0194], domain: [0.3, 0.45], zeroline: false, gridcolor: "rgba(255,255,255,0.05)", color: "white",
+                        title: {
+                            text: "SMA",
+                            font: {
+                                family: "Avenir Light",
+                                size: 24,
+                                color: "white"
+                            },
                         },
                     },
-                },
-                xaxis3: {
-                    range: [0, 31], color: "white", zeroline: false,
-                    gridcolor: "rgba(255,255,255,0.05)",
-                },
-                yaxis3: {
-                    range: [-2, 105], color: "white", domain: [0.1, 0.25],
-                    gridcolor: "rgba(255,255,255,0.05)",
-                    title: {
-                        text: "Stoch. - F",
-                        font: {
-                            family: "Avenir Light",
-                            size: 24,
-                            color: "white"
+                    xaxis3: {
+                        range: [0, 31], color: "white", zeroline: false,
+                        gridcolor: "rgba(255,255,255,0.05)",
+                    },
+                    yaxis3: {
+                        range: [-2, 105], color: "white", domain: [0.1, 0.25],
+                        gridcolor: "rgba(255,255,255,0.05)",
+                        title: {
+                            text: "Stoch. - F",
+                            font: {
+                                family: "Avenir Light",
+                                size: 24,
+                                color: "white"
+                            },
                         },
                     },
+                    shapes: [
+                        {
+                            type: "line",
+                            xref: "paper",
+                            yref: "y2",
+                            x0: 0,
+                            y0: 50.0,
+                            x1: 1,
+                            y1: 50.0,
+                            line: {
+                                color: "rgba(0, 0, 255, 0.4)",
+                                width: 2,
+                                dash: "dot",
+                            },
+                            opacity: 0.5,
+                            layer: "below",
+                        },
+                        {
+                            type: "line",
+                            xref: "paper",
+                            yref: "y2",
+                            x0: 0,
+                            y0: 66.66,
+                            x1: 1,
+                            y1: 66.66,
+                            line: {
+                                color: "rgb(255, 0, 0)",
+                                width: 2,
+                                dash: "dot",
+                            },
+                            opacity: 0.5,
+                            layer: "below",
+                        },
+                        {
+                            type: "line",
+                            xref: "paper",
+                            yref: "y2",
+                            x0: 0,
+                            y0: 33.33,
+                            x1: 1,
+                            y1: 33.33,
+                            line: {
+                                color: "rgb(255, 0, 0)",
+                                width: 2,
+                                dash: "dot",
+                            },
+                            opacity: 0.5,
+                            layer: "below",
+                        },
+                        {
+                            type: "line",
+                            xref: "paper",
+                            yref: "y3",
+                            x0: 0,
+                            y0: 20,
+                            x1: 1,
+                            y1: 20,
+                            line: {
+                                color: "rgb(255, 0, 0)",
+                                width: 2,
+                                dash: "dot",
+                            },
+                            opacity: 0.5,
+                            layer: "below",
+                        },
+                        {
+                            type: "line",
+                            xref: "paper",
+                            yref: "y3",
+                            x0: 0,
+                            y0: 80,
+                            x1: 1,
+                            y1: 80,
+                            line: {
+                                color: "rgb(255, 0, 0)",
+                                width: 2,
+                                dash: "dot",
+                            },
+                            opacity: 0.5,
+                            layer: "below",
+                        },
+                        {
+                            type: "line",
+                            xref: "paper",
+                            yref: "y3",
+                            x0: 0,
+                            y0: 50.0,
+                            x1: 1,
+                            y1: 50.0,
+                            line: {
+                                color: "rgba(0, 0, 255, 0.4)",
+                                width: 2,
+                                dash: "dot",
+                            },
+                            opacity: 0.5,
+                            layer: "below",
+                        },
+                    ],
                 },
-                shapes: [
+            };
+
+            init();
+
+            function init(
+            ) {
+
+                this.data = [
                     {
-                        type: "line",
-                        xref: "paper",
-                        yref: "y2",
-                        x0: 0,
-                        y0: 50.0,
-                        x1: 1,
-                        y1: 50.0,
-                        line: {
-                            color: "rgba(0, 0, 255, 0.4)",
-                            width: 2,
-                            dash: "dot",
-                        },
-                        opacity: 0.5,
-                        layer: "below",
+
+                        x: ["14:34:00","14:35:00","14:36:00","14:37:00","14:38:00","14:39:00","14:40:00","14:41:00","14:42:00","14:43:00","14:44:00","14:45:00","14:46:00","14:47:00","14:48:00","14:49:00","14:50:00","14:51:00","14:52:00","14:53:00","14:54:00","14:55:00","14:56:00","14:57:00","14:58:00","14:59:00","15:00:00","15:01:00","15:02:00","15:03:00","15:04:00","15:05:00"],
+
+                        close: ["43.76000000","43.73670000","43.71950000","43.81320000","43.81700000","43.74820000","43.79950000","43.87020000","44.00640000","44.00280000","43.76170000","43.88530000","43.89310000","44.04050000","43.99450000","43.99450000","43.91470000","43.84320000","43.89070000","43.92040000","43.97580000","43.88460000","43.90950000","43.90950000","44.02320000","43.99000000","44.10060000","44.25010000","44.26930000","44.26350000","44.20140000","44.19890000"],
+
+                        high: ["43.77980000","43.73670000","43.78500000","43.84150000","43.84510000","43.75710000","43.80470000","43.87020000","44.00640000","44.00280000","43.87560000","43.88530000","43.90320000","44.12350000","44.04210000","43.99450000","43.91470000","43.88350000","43.89070000","43.92040000","43.99700000","43.95570000","43.93780000","43.90950000","44.02320000","44.01110000","44.10060000","44.25010000","44.26930000","44.26350000","44.25070000","44.20420000"],
+
+                        increasing: { line: { color: '#336137', width: 1, dash: "solid" } },
+                        decreasing: { line: { color: 'rgb(226, 65, 93)', width: 1 } },
+
+                        line: { color: 'rgba(31,119,180,1)' },
+
+                        low: ["43.76000000","43.73670000","43.71950000","43.73860000","43.81700000","43.70760000","43.78790000","43.80470000","43.90820000","43.97690000","43.76170000","43.88530000","43.89310000","44.04050000","43.99450000","43.99450000","43.91470000","43.84320000","43.82820000","43.91110000","43.95500000","43.88460000","43.90950000","43.90950000","44.00000000","43.99000000","43.96870000","44.20000000","44.26930000","44.26350000","44.20140000","44.19890000"],
+
+                        open: ["43.76890000","43.73670000","43.78500000","43.73860000","43.84510000","43.75710000","43.78790000","43.80470000","43.90820000","43.99030000","43.87350000","43.88530000","43.90320000","44.12350000","44.03950000","43.99450000","43.91470000","43.88350000","43.82820000","43.91110000","43.95500000","43.95570000","43.93780000","43.90950000","44.00000000","44.01110000","43.96870000","44.20000000","44.26930000","44.26350000","44.25070000","44.20420000"],
+                        type: 'candlestick',
+                        name: "Polkadot",
+                        xaxis: 'x1',
+                        yaxis: 'y1'
                     },
                     {
-                        type: "line",
-                        xref: "paper",
-                        yref: "y2",
-                        x0: 0,
-                        y0: 66.66,
-                        x1: 1,
-                        y1: 66.66,
-                        line: {
-                            color: "rgb(255, 0, 0)",
-                            width: 2,
-                            dash: "dot",
-                        },
-                        opacity: 0.5,
-                        layer: "below",
+                        x: ["14:34:00","14:35:00","14:36:00","14:37:00","14:38:00","14:39:00","14:40:00","14:41:00","14:42:00","14:43:00","14:44:00","14:45:00","14:46:00","14:47:00","14:48:00","14:49:00","14:50:00","14:51:00","14:52:00","14:53:00","14:54:00","14:55:00","14:56:00","14:57:00","14:58:00","14:59:00","15:00:00","15:01:00","15:02:00","15:03:00","15:04:00","15:05:00"],
+                        y: ["44.00172222222222000000","43.98973650793651000000","43.97679047619048000000","43.96606507936509000000","43.94916825396826000000","43.92879841269841000000","43.90604126984127500000","43.89261746031746000000","43.88757301587301000000","43.88253333333333500000","43.87061269841269000000","43.86670317460317400000","43.86383015873016000000","43.86747142857144000000","43.87114603174603600000","43.87664285714286000000","43.87547936507937000000","43.87049841269842400000","43.86523174603174600000","43.86728571428572000000","43.87661269841270000000","43.88336031746032000000","43.89203809523809000000","43.90004603174604000000","43.91041269841270000000","43.91853968253969000000","43.93373015873017000000","43.95449365079365000000","43.97453809523809600000","43.98833968253969600000","43.99899047619048000000","44.01808571428571000000"],
+                        xaxis: "x1",
+                        yaxis: "y1",
+                        type: "scatter",
+                        mode: "lines",
+                        name: "Boll. MA",
+                        line: { shape: "spline", smoothing: 0.35, color: "rgba(160, 255, 160, 0.6)", dash: "dot", },
                     },
                     {
-                        type: "line",
-                        xref: "paper",
-                        yref: "y2",
-                        x0: 0,
-                        y0: 33.33,
-                        x1: 1,
-                        y1: 33.33,
-                        line: {
-                            color: "rgb(255, 0, 0)",
-                            width: 2,
-                            dash: "dot",
-                        },
-                        opacity: 0.5,
-                        layer: "below",
+                        x: ["14:34:00","14:35:00","14:36:00","14:37:00","14:38:00","14:39:00","14:40:00","14:41:00","14:42:00","14:43:00","14:44:00","14:45:00","14:46:00","14:47:00","14:48:00","14:49:00","14:50:00","14:51:00","14:52:00","14:53:00","14:54:00","14:55:00","14:56:00","14:57:00","14:58:00","14:59:00","15:00:00","15:01:00","15:02:00","15:03:00","15:04:00","15:05:00"],
+                        y: ["44.24658159025493400000","44.25866432551171000000","44.26806824981197500000","44.26374406365366000000","44.23580606520385000000","44.20904258838193400000","44.14576803418341000000","44.11900162280447000000","44.10434274960057000000","44.08504172346215000000","44.06515603088291000000","44.05753142733535600000","44.05082525027814500000","44.06183649406627000000","44.07159473702175500000","44.08406479765518000000","44.08177533281470000000","44.07154089486871000000","44.06021472732293000000","44.06377734722224000000","44.07343737055678000000","44.07327735818673600000","44.07078406454076000000","44.06183021373535000000","44.07571308189696400000","44.08194680456423000000","44.09670441403191000000","44.15532296946524600000","44.21178996844012000000","44.25559041638196000000","44.28149280808943000000","44.29278222148185000000"],
+                        xaxis: "x1",
+                        yaxis: "y1",
+                        type: "scatter",
+                        mode: "lines",
+                        name: "Boll. U",
+                        line: { shape: "spline", smoothing: 0.35, color: "rgba(160, 255, 160, 0.7)", dash: "dashed", },
                     },
                     {
-                        type: "line",
-                        xref: "paper",
-                        yref: "y3",
-                        x0: 0,
-                        y0: 20,
-                        x1: 1,
-                        y1: 20,
-                        line: {
-                            color: "rgb(255, 0, 0)",
-                            width: 2,
-                            dash: "dot",
-                        },
-                        opacity: 0.5,
-                        layer: "below",
+                        x: ["14:34:00","14:35:00","14:36:00","14:37:00","14:38:00","14:39:00","14:40:00","14:41:00","14:42:00","14:43:00","14:44:00","14:45:00","14:46:00","14:47:00","14:48:00","14:49:00","14:50:00","14:51:00","14:52:00","14:53:00","14:54:00","14:55:00","14:56:00","14:57:00","14:58:00","14:59:00","15:00:00","15:01:00","15:02:00","15:03:00","15:04:00","15:05:00"],
+                        y: ["43.75686285418951000000","43.72080869036132000000","43.68551270256898500000","43.66838609507651400000","43.66253044273267000000","43.64855423701489000000","43.66631450549914000000","43.66623329783045000000","43.67080328214545000000","43.68002494320452000000","43.67606936594247500000","43.67587492187099000000","43.67683506718217500000","43.67310636307661000000","43.67069732647032000000","43.66922091663054000000","43.66918339734404000000","43.66945593052814000000","43.67024876474056000000","43.67079408134920000000","43.67978802626862000000","43.69344327673391000000","43.71329212593542500000","43.73826184975672500000","43.74511231492843400000","43.75513256051514000000","43.77075590342843000000","43.75366433212206000000","43.73728622203607000000","43.72108894869743000000","43.71648814429152500000","43.74338920708957000000"],
+                        xaxis: "x1",
+                        yaxis: "y1",
+                        type: "scatter",
+                        mode: "lines",
+                        name: "Boll. U",
+                        line: { shape: "spline", smoothing: 0.35, color: "rgba(160, 255, 160, 0.7)", dash: "dashed", },
                     },
                     {
-                        type: "line",
-                        xref: "paper",
-                        yref: "y3",
-                        x0: 0,
-                        y0: 80,
-                        x1: 1,
-                        y1: 80,
-                        line: {
-                            color: "rgb(255, 0, 0)",
-                            width: 2,
-                            dash: "dot",
-                        },
-                        opacity: 0.5,
-                        layer: "below",
+                        x: ["14:34:00","14:35:00","14:36:00","14:37:00","14:38:00","14:39:00","14:40:00","14:41:00","14:42:00","14:43:00","14:44:00","14:45:00","14:46:00","14:47:00","14:48:00","14:49:00","14:50:00","14:51:00","14:52:00","14:53:00","14:54:00","14:55:00","14:56:00","14:57:00","14:58:00","14:59:00","15:00:00","15:01:00","15:02:00","15:03:00","15:04:00","15:05:00"],
+                        y: ["43.9815","43.9667","43.9517","43.9433","43.9357","43.9243","43.9167","43.9139","43.9195","43.9246","43.9147","43.9129","43.9117","43.9195","43.9241","43.9283","43.9275","43.9224","43.9205","43.9205","43.9238","43.9214","43.9207","43.9200","43.9263","43.9302","43.9405","43.9593","43.9780","43.9953","44.0078","44.0194"],
+                        xaxis: "x2",
+                        yaxis: "y2",
+                        type: "scatter",
+                        mode: "lines",
+                        name: "%rsi_title%",
+                        line: { shape: "spline", smoothing: 0.65, color: "rgba(160, 255, 160, 0.8)" },
                     },
                     {
-                        type: "line",
-                        xref: "paper",
-                        yref: "y3",
-                        x0: 0,
-                        y0: 50.0,
-                        x1: 1,
-                        y1: 50.0,
-                        line: {
-                            color: "rgba(0, 0, 255, 0.4)",
-                            width: 2,
-                            dash: "dot",
-                        },
-                        opacity: 0.5,
-                        layer: "below",
+                        x: ["14:34:00","14:35:00","14:36:00","14:37:00","14:38:00","14:39:00","14:40:00","14:41:00","14:42:00","14:43:00","14:44:00","14:45:00","14:46:00","14:47:00","14:48:00","14:49:00","14:50:00","14:51:00","14:52:00","14:53:00","14:54:00","14:55:00","14:56:00","14:57:00","14:58:00","14:59:00","15:00:00","15:01:00","15:02:00","15:03:00","15:04:00","15:05:00"],
+                        y: ["0.000000000000000000000000","0.000000000000000000000000","0.000000000000000000000000","28.350983358547655068078700","35.819250551065393093313700","14.290742696233720520943300","33.675338951997068523268600","59.582264565775009160864800","100.000000000000000000000000","98.795180722891566265060200","18.105756358768406961178000","59.471218206157965194109800","62.081659973226238286479300","80.043279634527530656407800","68.982928588603029574416900","68.982928588603029574416900","49.795623948064438566963200","32.603991344073094493868700","44.025006011060351045924500","43.864013266998341625207300","59.176340519624101713654000","33.969043670536207849640700","40.851299060254284134881100","40.851299060254284134881100","66.034541144598713173044400","54.791737216390111750761900","92.245174398916356247883500","100.000000000000000000000000","100.000000000000000000000000","98.685105418272500566764900","84.606665155293584221265000","84.039900249376558603491300"],
+                        xaxis: "x3",
+                        yaxis: "y3",
+                        type: "scatter",
+                        mode: "lines",
+                        name: "S1. kFast",
+                        line: { shape: "spline", smoothing: 0.65, color: "rgba(255, 160, 160, 0.8)" },
                     },
-                ],
-            },
-        };
-
-        init();
-
-        function init(
-        ) {
-
-            this.data = [
-                {
-
-                    x: % ohlc_x %,
-
-                    close: % ohlc_close %,
-
-                    high: % ohlc_high %,
-
-                    increasing: { line: { color: '#336137', width: 1, dash: "solid" } },
-                    decreasing: { line: { color: 'rgb(226, 65, 93)', width: 1 } },
-
-                    line: { color: 'rgba(31,119,180,1)' },
-
-                    low: % ohlc_low %,
-
-                    open: % ohlc_open %,
-                    type: 'candlestick',
-                    name: "Polkadot",
-                    xaxis: 'x1',
-                    yaxis: 'y1'
-                },
-                {
-                    x: % boll_ma_x1 %,
-                    y: % boll_ma_y1 %,
-                    xaxis: "x1",
-                    yaxis: "y1",
-                    type: "scatter",
-                    mode: "lines",
-                    name: "Boll. MA",
-                    line: { shape: "spline", smoothing: 0.35, color: "rgba(160, 255, 160, 0.6)", dash: "dot", },
-                },
-                {
-                    x: % boll_u_x1 %,
-                    y: % boll_u_y1 %,
-                    xaxis: "x1",
-                    yaxis: "y1",
-                    type: "scatter",
-                    mode: "lines",
-                    name: "Boll. U",
-                    line: { shape: "spline", smoothing: 0.35, color: "rgba(160, 255, 160, 0.7)", dash: "dashed", },
-                },
-                {
-                    x: % boll_l_x1 %,
-                    y: % boll_l_y1 %,
-                    xaxis: "x1",
-                    yaxis: "y1",
-                    type: "scatter",
-                    mode: "lines",
-                    name: "Boll. U",
-                    line: { shape: "spline", smoothing: 0.35, color: "rgba(160, 255, 160, 0.7)", dash: "dashed", },
-                },
-                {
-                    x: % rsi_x1 %,
-                    y: % rsi_y1 %,
-                    xaxis: "x2",
-                    yaxis: "y2",
-                    type: "scatter",
-                    mode: "lines",
-                    name: "RSI",
-                    line: { shape: "spline", smoothing: 0.65, color: "rgba(160, 255, 160, 0.8)" },
-                },
-                {
-                    x: % sto_fast_x1 %,
-                    y: % sto_fast_y1 %,
-                    xaxis: "x3",
-                    yaxis: "y3",
-                    type: "scatter",
-                    mode: "lines",
-                    name: "S1. kFast",
-                    line: { shape: "spline", smoothing: 0.65, color: "rgba(255, 160, 160, 0.8)" },
-                },
-                {
-                    x: % sto_slow_x2 %,
-                    y: % sto_slow_y2 %,
-                    xaxis: "x3",
-                    yaxis: "y3",
-                    type: "scatter",
-                    mode: "lines",
-                    name: "S1. dSlow",
-                    line: { shape: "spline", smoothing: 0.65, color: "rgba(160, 160, 255, 0.8)" },
-                },
-                {
-                    x: % sto_full_x1 %,
-                    y: % sto_full_y1 %,
-                    xaxis: "x3",
-                    yaxis: "y3",
-                    type: "scatter",
-                    mode: "lines",
-                    name: "S2. kFull",
-                    line: { shape: "spline", smoothing: 0.65, color: "d3a0ffcc" },
-                },
-                {
-                    x: % sto_full_x2 %,
-                    y: % sto_full_y2 %,
-                    xaxis: "x3",
-                    yaxis: "y3",
-                    type: "scatter",
-                    mode: "lines",
-                    name: "S2. dFull",
-                    line: { shape: "spline", smoothing: 0.65, color: "fff0a0cc" },
-                }
-            ];
-            plot();
-        }
-
-        function plot() {
-            Plotly.newPlot("plotDiv1", this.data, this.graphOptions["layout"]);
-        }
-
-        var stochasticFast = true;
-        let stoPlot = document.querySelector(".cartesianlayer .x3y3 .plot .scatterlayer");
-        let stoPlot2 = document.querySelectorAll(".cartesianlayer .x3y3 .plot .scatterlayer .trace");
-        let stoTitle = document.querySelector(".infolayer .g-y3title text");
-
-        stoPlot2.forEach(function (elem) {
-            elem.addEventListener('mouseenter', (e) => {
-                //setTimeout(() => {
-                console.log("hey");
-                let hoverText = document.querySelector(".main-svg .hoverlayer .hovertext");
-                if (!stochasticFast) {
-                    if (hoverText.childNodes[0].innerHTML === "Stoc. - kFast") {
-                        hoverText.childNodes[0].style.visibility = "hidden";
-                        hoverText.childNodes[1].style.visibility = "hidden";
+                    {
+                        x: ["14:34:00","14:35:00","14:36:00","14:37:00","14:38:00","14:39:00","14:40:00","14:41:00","14:42:00","14:43:00","14:44:00","14:45:00","14:46:00","14:47:00","14:48:00","14:49:00","14:50:00","14:51:00","14:52:00","14:53:00","14:54:00","14:55:00","14:56:00","14:57:00","14:58:00","14:59:00","15:00:00","15:01:00","15:02:00","15:03:00","15:04:00","15:05:00"],
+                        y: ["0.000000000000000000000000","0.000000000000000000000000","0.000000000000000000000000","9.450327786182551689359570","21.390077969871016031104600","26.153658868615589840314400","27.928444066432061174422900","35.849448738001933386955000","64.419201172590692000000000","86.125815096222190755020000","72.300312360553325653726000","58.790718429272647064703300","46.552878179384202762159700","67.198719271303911552136000","70.369289398785603191472300","72.669712270577866524805700","62.587160375090166188987700","50.460847960246854831289700","42.141540434399295015308300","40.164336874043928541735700","49.021786599227597237884700","45.669799152386217616547000","44.665561083471533044960300","38.557213930348259378293700","49.245713088369093724348000","53.892525807081038583587300","71.023817586635062082628000","82.345637205102156666666700","97.415058132972120000000000","99.561701806090833522255000","94.430590191188694740421700","89.110556940980879534497000"],
+                        xaxis: "x3",
+                        yaxis: "y3",
+                        type: "scatter",
+                        mode: "lines",
+                        name: "S1. dSlow",
+                        line: { shape: "spline", smoothing: 0.65, color: "rgba(160, 160, 255, 0.8)" },
+                    },
+                    {
+                        x: ["14:34:00","14:35:00","14:36:00","14:37:00","14:38:00","14:39:00","14:40:00","14:41:00","14:42:00","14:43:00","14:44:00","14:45:00","14:46:00","14:47:00","14:48:00","14:49:00","14:50:00","14:51:00","14:52:00","14:53:00","14:54:00","14:55:00","14:56:00","14:57:00","14:58:00","14:59:00","15:00:00","15:01:00","15:02:00","15:03:00","15:04:00","15:05:00"],
+                        y: ["0.000000000000000000000000","0.000000000000000000000000","0.000000000000000000000000","9.450327786182552000000000","21.390077969871015000000000","26.153658868615590000000000","27.928444066432060000000000","35.849448738001930000000000","64.419201172590690000000000","86.125815096222200000000000","72.300312360553320000000000","58.790718429272644000000000","46.552878179384200000000000","67.198719271303910000000000","70.369289398785600000000000","72.669712270577860000000000","62.587160375090164000000000","50.460847960246850000000000","42.141540434399296000000000","40.164336874043926000000000","49.021786599227596000000000","45.669799152386220000000000","44.665561083471530000000000","38.557213930348260000000000","49.245713088369094000000000","53.892525807081036000000000","71.023817586635060000000000","82.345637205102150000000000","97.415058132972120000000000","99.561701806090840000000000","94.430590191188700000000000","89.110556940980890000000000"],
+                        xaxis: "x3",
+                        yaxis: "y3",
+                        type: "scatter",
+                        mode: "lines",
+                        name: "S2. kFull",
+                        line: { shape: "spline", smoothing: 0.65, color: "d3a0ffcc" },
+                    },
+                    {
+                        x: ["14:34:00","14:35:00","14:36:00","14:37:00","14:38:00","14:39:00","14:40:00","14:41:00","14:42:00","14:43:00","14:44:00","14:45:00","14:46:00","14:47:00","14:48:00","14:49:00","14:50:00","14:51:00","14:52:00","14:53:00","14:54:00","14:55:00","14:56:00","14:57:00","14:58:00","14:59:00","15:00:00","15:01:00","15:02:00","15:03:00","15:04:00","15:05:00"],
+                        y: ["8.635039533915939000000000","2.879213483146067666666670","0.000000000000000000000000","3.150109262060850666666670","10.280135252017855666666700","18.998021541556385666666700","25.157393634972888333333300","29.977183891016526666666700","42.732364659008226666666700","62.131488335604940000000000","74.281776209788736666666700","72.405615295349388000000000","59.214636323070054666666700","57.514105293320251333333300","61.373628949824570000000000","70.079240313555790000000000","68.542054014817874666666700","61.905906868638291333333300","51.729849589912103333333300","44.255575089563357333333300","43.775887969223606000000000","44.951974208552580666666700","46.452382278361782000000000","42.964191388735336666666700","44.156162700729628000000000","47.231817608599463333333300","58.054018827361730000000000","69.087326866272748666666700","83.594837641569776666666700","93.107465714721703333333300","97.135783376750553333333300","94.367616312753476666666700"],
+                        xaxis: "x3",
+                        yaxis: "y3",
+                        type: "scatter",
+                        mode: "lines",
+                        name: "S2. dFull",
+                        line: { shape: "spline", smoothing: 0.65, color: "fff0a0cc" },
                     }
+                ];
+                plot();
+            }
 
-                } else {
-                    stoTitle.innerHTML = "Stoch. - Fast";
-                    if (hoverText.childNodes[0].innerHTML === "Stoc. - kFast") {
-                        hoverText.childNodes[2].style.visibility = "hidden";
-                        hoverText.childNodes[3].style.visibility = "hidden";
+            function plot() {
+                Plotly.newPlot("plotDiv1", this.data, this.graphOptions["layout"]);
+            }
+
+            var stochasticFast = true;
+            let stoPlot = document.querySelector(".cartesianlayer .x3y3 .plot .scatterlayer");
+            let stoPlot2 = document.querySelectorAll(".cartesianlayer .x3y3 .plot .scatterlayer .trace");
+            let stoTitle = document.querySelector(".infolayer .g-y3title text");
+
+            stoPlot2.forEach(function (elem) {
+                elem.addEventListener('mouseenter', (e) => {
+                    //setTimeout(() => {
+                    console.log("hey");
+                    let hoverText = document.querySelector(".main-svg .hoverlayer .hovertext");
+                    if (!stochasticFast) {
+                        if (hoverText.childNodes[0].innerHTML === "Stoc. - kFast") {
+                            hoverText.childNodes[0].style.visibility = "hidden";
+                            hoverText.childNodes[1].style.visibility = "hidden";
+                        }
+
+                    } else {
+                        stoTitle.innerHTML = "Stoch. - Fast";
+                        if (hoverText.childNodes[0].innerHTML === "Stoc. - kFast") {
+                            hoverText.childNodes[2].style.visibility = "hidden";
+                            hoverText.childNodes[3].style.visibility = "hidden";
+                        }
                     }
-                }
-                //}, 1000);
+                    //}, 1000);
+                });
             });
-        });
 
-        /*stoPlot.addEventListener('mouseenter', (e) => {
-            //setTimeout(() => {
-                console.log("hey");
-                let hoverText = document.querySelector(".main-svg .hoverlayer .hovertext");
-                if(!stochasticFast) {
-                    if(hoverText.childNodes[0].innerHTML === "Stoc. - kFast") {
-                        hoverText.childNodes[0].style.visibility = "hidden";
-                        hoverText.childNodes[1].style.visibility = "hidden";
-                    }
+            /*stoPlot.addEventListener('mouseenter', (e) => {
+                //setTimeout(() => {
 
-                } else {
-                    stoTitle.innerHTML= "Stoch. - Fast";
-                    if(hoverText.childNodes[0].innerHTML === "Stoc. - kFast") {
-                        hoverText.childNodes[2].style.visibility = "hidden";
-                        hoverText.childNodes[3].style.visibility = "hidden";
+                    let hoverText = document.querySelector(".main-svg .hoverlayer .hovertext");
+                    if(!stochasticFast) {
+                        if(hoverText.childNodes[0].innerHTML === "Stoc. - kFast") {
+                            hoverText.childNodes[0].style.visibility = "hidden";
+                            hoverText.childNodes[1].style.visibility = "hidden";
+                        }
+
+                    } else {
+                        stoTitle.innerHTML= "Stoch. - Fast";
+                        if(hoverText.childNodes[0].innerHTML === "Stoc. - kFast") {
+                            hoverText.childNodes[2].style.visibility = "hidden";
+                            hoverText.childNodes[3].style.visibility = "hidden";
+                        }
                     }
+                //}, 1000);
+            });*/
+
+            document.addEventListener('keydown', (e) => {
+
+                // Only accept 'F'
+                if (e.code !== 'KeyS') {
+                    return;
                 }
-            //}, 1000);
-        });*/
 
-        document.addEventListener('keydown', (e) => {
+                /* Show only fast or full Stochastics on keypress */
+                stochasticFast = !stochasticFast;
 
-            // Only accept 'F'
-            if (e.code !== 'KeyS') {
-                return;
-            }
+                if (!stochasticFast) {
+                    stoPlot.childNodes[0].style.visibility = "hidden";
+                    stoPlot.childNodes[1].style.visibility = "hidden";
+                    stoPlot.childNodes[2].style.visibility = "visible";
+                    stoPlot.childNodes[3].style.visibility = "visible";
+                    stoTitle.innerHTML = "Stoch. - Full";
+                } else {
+                    stoPlot.childNodes[0].style.visibility = "visible";
+                    stoPlot.childNodes[1].style.visibility = "visible";
+                    stoPlot.childNodes[2].style.visibility = "hidden";
+                    stoPlot.childNodes[3].style.visibility = "hidden";
+                    stoTitle.innerHTML = "Stoch. - Fast";
+                }
+            });
 
-            /* Show only fast or full Stochastics on keypress */
-            stochasticFast = !stochasticFast;
-
-            if (!stochasticFast) {
-                stoPlot.childNodes[0].style.visibility = "hidden";
-                stoPlot.childNodes[1].style.visibility = "hidden";
-                stoPlot.childNodes[2].style.visibility = "visible";
-                stoPlot.childNodes[3].style.visibility = "visible";
-                stoTitle.innerHTML = "Stoch. - Full";
-            } else {
-                stoPlot.childNodes[0].style.visibility = "visible";
-                stoPlot.childNodes[1].style.visibility = "visible";
-                stoPlot.childNodes[2].style.visibility = "hidden";
-                stoPlot.childNodes[3].style.visibility = "hidden";
-                stoTitle.innerHTML = "Stoch. - Fast";
-            }
-        });
-
-        /* Only have fast k and slow d showing initially */
-        stoPlot.childNodes[2].style.visibility = "hidden";
-        stoPlot.childNodes[3].style.visibility = "hidden";
-        stoTitle.innerHTML = "Stoch. - Fast";
-    </script>
-</body>
-
+            /* Only have fast k and slow d showing initially */
+            stoPlot.childNodes[2].style.visibility = "hidden";
+            stoPlot.childNodes[3].style.visibility = "hidden";
+            stoTitle.innerHTML = "Stoch. - Fast";
+        </script>
+    </body>
 </html>

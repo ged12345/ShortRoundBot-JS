@@ -576,24 +576,22 @@ class MainLogic {
                 );
 
                 /* RSI */
-                /*plotString = plotString.replace(
+                plotString = plotString.replace("%rsi_title%", `RSI`);
+
+                plotString = plotString.replace(
                     "%rsi_y1%",
                     `["${yRSI.join('","')}"]`
-                );*/
+                );
 
                 //RSI Range
                 // [-2, 105]
-                /*plotString = plotString.replace(
-                    "%rsi_y_range_start%",
-                    `-2`
-                );
+                plotString = plotString.replace("%rsi_y_range_start%", `-2`);
 
-                plotString = plotString.replace(
-                    "%rsi_y_range_end%",
-                    `105`
-                );*/
+                plotString = plotString.replace("%rsi_y_range_end%", `105`);
 
                 /* SMA */
+                /*plotString = plotString.replace("%rsi_title%", `SMA`);
+
                 plotString = plotString.replace(
                     "%rsi_y1%",
                     `["${yEMA.join('","')}"]`
@@ -608,7 +606,7 @@ class MainLogic {
                 plotString = plotString.replace(
                     "%rsi_y_range_end%",
                     `${highestYEMA}`
-                );
+                );*/
 
                 /* Stochastics */
                 plotString = plotString.replace(

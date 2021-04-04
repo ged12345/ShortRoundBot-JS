@@ -72,7 +72,7 @@
                     yaxis2: {
                         range: [%rsi_y_range_start%, %rsi_y_range_end%], domain: [0.3, 0.45], zeroline: false, gridcolor: "rgba(255,255,255,0.05)", color: "white",
                         title: {
-                            text: "RSI",
+                            text: "%rsi_title%",
                             font: {
                                 family: "Avenir Light",
                                 size: 24,
@@ -261,7 +261,7 @@
                         yaxis: "y2",
                         type: "scatter",
                         mode: "lines",
-                        name: "RSI",
+                        name: "%rsi_title%",
                         line: { shape: "spline", smoothing: 0.65, color: "rgba(160, 255, 160, 0.8)" },
                     },
                     {
@@ -285,8 +285,8 @@
                         line: { shape: "spline", smoothing: 0.65, color: "rgba(160, 160, 255, 0.8)" },
                     },
                     {
-                        x: % sto_full_x1 %,
-                        y: % sto_full_y1 %,
+                        x: %sto_full_x1%,
+                        y: %sto_full_y1%,
                         xaxis: "x3",
                         yaxis: "y3",
                         type: "scatter",
@@ -341,7 +341,7 @@
 
             /*stoPlot.addEventListener('mouseenter', (e) => {
                 //setTimeout(() => {
-                    console.log("hey");
+
                     let hoverText = document.querySelector(".main-svg .hoverlayer .hovertext");
                     if(!stochasticFast) {
                         if(hoverText.childNodes[0].innerHTML === "Stoc. - kFast") {
