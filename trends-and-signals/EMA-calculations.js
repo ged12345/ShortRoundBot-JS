@@ -1,38 +1,36 @@
 /*
-
-*/
-
+ */
 const util = require("util");
 const { calculateGraphGradients } = require("../utils/math.js");
-class SMACalculations {
+class EMACalculations {
     constructor(mysqlCon, storeNum, totalRecordsNum, unlockKey) {
         this.mysqlCon = mysqlCon;
-        this.SMAStoreNum = storeNum;
+        this.EMAStoreNum = storeNum;
         this.totalRecordsNum = totalRecordsNum;
         this.unlockKey = unlockKey;
     }
 
     async cleanup(coinId) {
         /* Cleanup the processed RSI and limit */
-        await this.mysqlCon.cleanupProcessedSMA(coinId, this.totalRecordsNum);
+        await this.mysqlCon.cleanupProcessedEMA(coinId, this.totalRecordsNum);
         /* Unlock the coin for processing */
-        this.unlockKey("SMA");
+        this.unlockKey("EMA");
     }
 
     async calculate(coinId) {
-        let resultsSMA = await this.mysqlCon.getProcessedSMA(coinId);
-        if (resultsSMA.length === 0) {
-            //console.log("SMA FIRST: " + coinId);
-            await this.firstSMACalculation(coinId);
+        let resultsEMA = await this.mysqlCon.getProcessedEMA(coinId);
+        if (resultsEMA.length === 0) {
+            //console.log("EMA FIRST: " + coinId);
+            await this.firstEMACalculation(coinId);
         } else {
-            //console.log("SMA SECOND: " + coinId);
-            await this.secondSMACalculation(coinId);
+            //console.log("EMA SECOND: " + coinId);
+            await this.secondEMACalculation(coinId);
         }
 
         this.cleanup(coinId);
     }
 
-    async firstSMACalculation(coinId) {
+    async firstEMACalculation(coinId) {
         let resultsOHLC = await this.mysqlCon.getCoinOHLC(coinId);
 
         /* No acquired OHLC results yet */
@@ -40,7 +38,6 @@ class SMACalculations {
 
         /* 1. Iterate through 32 OHLC entries, and calculate the SMA. */
         let totalOHLCResults = resultsOHLC.length;
-
         let totalClose = 0;
         /* Everything but the last value. We calculate the SMA first but calculate the EMA of the last OHLC value (the SMA being the EMA for yesterday) */
 
@@ -53,11 +50,11 @@ class SMACalculations {
         let lastElOHLC = resultsOHLC[resultsOHLC.length - 1];
         let close = Number(lastElOHLC["close"]);
 
-        let SMA = totalClose / this.SMAStoreNum;
-        //let multiplier = 2 / (this.SMAStoreNum + 1);
+        let SMA = totalClose / this.EMAStoreNum;
+        //let multiplier = 2 / (this.EMAStoreNum + 1);
         //let EMA = close * multiplier + SMA * (1 - multiplier);
 
-        let currSMA = {
+        let currEMA = {
             timestamp: lastElOHLC["timestamp"],
             close: close,
             SMA: SMA,
@@ -68,17 +65,17 @@ class SMACalculations {
         };
 
         /* Add this to mysql and then cleanup*/
-        await this.mysqlCon.storeProcessedSMA(coinId, currSMA);
+        await this.mysqlCon.storeProcessedEMA(coinId, currEMA);
         this.cleanup(coinId);
     }
 
-    async secondSMACalculation(coinId) {
+    async secondEMACalculation(coinId) {
         let resultsOHLC = await this.mysqlCon.getCoinOHLC(coinId);
 
         /* No acquired OHLC results yet */
         if (resultsOHLC.length === 0) return;
 
-        let resultsSMA = await this.mysqlCon.getProcessedSMA(coinId);
+        let resultsSMA = await this.mysqlCon.getProcessedEMA(coinId);
 
         if (resultsSMA.length === 0) return;
 
@@ -94,9 +91,9 @@ class SMACalculations {
         let lastElOHLC = resultsOHLC[resultsOHLC.length - 1];
         let prevElSMA = resultsSMA[resultsSMA.length - 1];
         let close = Number(lastElOHLC["close"]);
-        let SMA = totalClose / this.SMAStoreNum;
+        let SMA = totalClose / this.EMAStoreNum;
 
-        let multiplier = 2 / (this.SMAStoreNum + 1);
+        let multiplier = 2 / (this.EMAStoreNum + 1);
         let EMA = 0;
 
         if (resultsSMA.length === 1) {
@@ -118,7 +115,7 @@ class SMACalculations {
             trend = trendArr[0][trendArr[0].length - 1];
         }
 
-        let currSMA = {
+        let currEMA = {
             timestamp: lastElOHLC["timestamp"],
             close: close,
             SMA: SMA,
@@ -133,11 +130,11 @@ class SMACalculations {
         /* Here we look back and see if a similar trend has occurred and for how long, then we calculate the weighting (1 + N periods/10, which we can use to multiply probability of trend/buy?) */
 
         /* Add this to mysql and then cleanup*/
-        await this.mysqlCon.storeProcessedSMA(coinId, currSMA);
-        await this.mysqlCon.cleanupProcessedSMA(coinId, this.SMAStoreNum);
+        await this.mysqlCon.storeProcessedEMA(coinId, currEMA);
+        await this.mysqlCon.cleanupProcessedEMA(coinId, this.EMAStoreNum);
 
         this.cleanup(coinId);
     }
 }
 
-module.exports = SMACalculations;
+module.exports = EMACalculations;

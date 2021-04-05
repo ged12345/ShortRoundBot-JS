@@ -31,7 +31,7 @@ const ProcessLocks = require("../utils/process-locks.js");
 const RSIProcessor = require("../trends-and-signals/RSI-calculations.js");
 const StochasticProcessor = require("../trends-and-signals/Stochastic-calculations.js");
 const BollingerProcessor = require("../trends-and-signals/BollingerBands-calculations.js");
-const SMAProcessor = require("../trends-and-signals/SMA-calculations.js");
+const EMAProcessor = require("../trends-and-signals/EMA-calculations.js");
 const API = require("../utils/api.js");
 const { rotateArray } = require("../utils/general.js");
 const NETWORK = require("../legacy/config/network-config.js");
@@ -54,13 +54,13 @@ class MainLogic {
         this.RSIStoreNum = 15; // 14 for calculations plus the latest
         this.StochasticStoreNum = 14; // 14 time periods
         this.BollingerStoreNum = 21; // 21 time periods
-        this.SMAStoreNum = this.graphPeriod;
+        this.EMAStoreNum = this.graphPeriod;
         this.processLocks = new ProcessLocks([
             "OHLC",
             "RSI",
             "Stochastic",
             "Bollinger",
-            "SMA",
+            "EMA",
         ]);
         //this.state = eventConstants.SEEKING_COIN;
 
@@ -82,9 +82,9 @@ class MainLogic {
             this.graphPeriod,
             this.processLocks.unlock
         );
-        this.SMAProcessor = new SMAProcessor(
+        this.EMAProcessor = new EMAProcessor(
             this.mysqlCon,
-            this.SMAStoreNum,
+            this.EMAStoreNum,
             this.graphPeriod,
             this.processLocks.unlock
         );
@@ -108,7 +108,7 @@ class MainLogic {
         await this.mysqlCon.emptyProcessRSI();
         await this.mysqlCon.emptyProcessStochastic();
         await this.mysqlCon.emptyProcessBollinger();
-        await this.mysqlCon.emptyProcessSMA();
+        await this.mysqlCon.emptyProcessEMA();
     }
 
     async setupKraken() {
@@ -151,7 +151,7 @@ class MainLogic {
         this.RSIProcessingQueue = new Queue();
         this.StochasticProcessingQueue = new Queue();
         this.BollingerProcessingQueue = new Queue();
-        this.SMAProcessingQueue = new Queue();
+        this.EMAProcessingQueue = new Queue();
         this.setupTrendsAndSignalsProcessingQueue();
 
         /* We up this for each trend/signal we calculate, and for each coin */
@@ -186,7 +186,7 @@ class MainLogic {
         );
 
         this.coinTrendsAndSignalsProcessingQueuer.enqueueQueue(
-            this.SMAProcessingQueue,
+            this.EMAProcessingQueue,
             trendsAndSignalsFrequency /* We only acquire this info once a minute */,
             true,
             true,
@@ -232,7 +232,7 @@ class MainLogic {
         this.setupRSIProcessingQueue();
         this.setupStochasticProcessingQueue();
         this.setupBollingerProcessingQueue();
-        this.setupSMAProcessingQueue();
+        this.setupEMAProcessingQueue();
     }
 
     setupTrendsAndSignalsGraphingQueue() {
@@ -327,15 +327,15 @@ class MainLogic {
         });
     }
 
-    async setupSMAProcessingQueue() {
+    async setupEMAProcessingQueue() {
         /* We do processing in the same way we did previously, a BollingerBand for each coin. */
 
         this.coinConfigArr.forEach((coin) => {
-            let trend = "SMA";
+            let trend = "EMA";
             this.BollingerProcessingQueue.enqueue(async () => {
                 console.log(`Processing ${trend}: ${coin["coin_id_kraken"]}`);
 
-                this.processTrendWithLock(this.SMAProcessor, trend, coin["id"]);
+                this.processTrendWithLock(this.EMAProcessor, trend, coin["id"]);
             });
         });
     }
@@ -370,7 +370,7 @@ class MainLogic {
 
                 let resultsRSI = await this.mysqlCon.getProcessedRSI(coinId);
 
-                let resultsEMA = await this.mysqlCon.getProcessedSMA(coinId);
+                let resultsEMA = await this.mysqlCon.getProcessedEMA(coinId);
 
                 let resultsStochastics = await this.mysqlCon.getProcessedStochastic(
                     coinId
@@ -465,10 +465,20 @@ class MainLogic {
 
         let highestCandleY =
             highestYOHLC < highestYBOLU ? highestYBOLU : highestYOHLC;
+        /* Now we have to take into account EMA */
+        highestCandleY =
+            highestYEMA > highestCandleY ? highestYEMA : highestCandleY;
+
         let lowestCandleY =
             lowestYOHLC < lowestYBOLD || lowestYBOLD === 0
                 ? lowestYOHLC
                 : lowestYBOLD;
+
+        /* Now we have to take into account EMA */
+        if (lowestYEMA !== 0) {
+            lowestCandleY =
+                lowestYEMA < lowestCandleY ? lowestYEMA : lowestCandleY;
+        }
 
         /* We let the size of the RSI drive how many xaxis entries we have */
         unfilledAmount = xRSI.length - y1Bollinger.length;
@@ -570,13 +580,25 @@ class MainLogic {
                     `["${y3Bollinger.join('","')}"]`
                 );
 
+                /* EMA */
+
+                plotString = plotString.replace(
+                    "%ema_x1%",
+                    `["${dbDateTimeFormat.join('","')}"]`
+                );
+
+                plotString = plotString.replace(
+                    "%ema_y1%",
+                    `["${yEMA.join('","')}"]`
+                );
+
+                /* RSI */
                 plotString = plotString.replace(
                     "%rsi_x1%",
                     `["${xRSI.join('","')}"]`
                 );
 
-                /* RSI */
-                plotString = plotString.replace("%rsi_title%", `RSI`);
+                plotString = plotString.replace(/%rsi_title%/g, `RSI`);
 
                 plotString = plotString.replace(
                     "%rsi_y1%",
@@ -588,25 +610,6 @@ class MainLogic {
                 plotString = plotString.replace("%rsi_y_range_start%", `-2`);
 
                 plotString = plotString.replace("%rsi_y_range_end%", `105`);
-
-                /* SMA */
-                /*plotString = plotString.replace("%rsi_title%", `SMA`);
-
-                plotString = plotString.replace(
-                    "%rsi_y1%",
-                    `["${yEMA.join('","')}"]`
-                );
-
-                // SMA Range
-                plotString = plotString.replace(
-                    "%rsi_y_range_start%",
-                    `${lowestYEMA}`
-                );
-
-                plotString = plotString.replace(
-                    "%rsi_y_range_end%",
-                    `${highestYEMA}`
-                );*/
 
                 /* Stochastics */
                 plotString = plotString.replace(

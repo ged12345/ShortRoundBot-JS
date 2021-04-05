@@ -399,7 +399,7 @@ class Mysql {
     }
 
     /* Coin Processing functions */
-    async getProcessedSMA(coin_id) {
+    async getProcessedEMA(coin_id) {
         const [rows, fields] = await this.connection.query(
             `SELECT * from coin_processed_sma WHERE coin_id=${mysqlCon.escape(
                 coin_id
@@ -408,7 +408,7 @@ class Mysql {
         return rows;
     }
 
-    async storeProcessedSMA(coin_id, results) {
+    async storeProcessedEMA(coin_id, results) {
         let timestamp = results["timestamp"];
         let timestampDate = new Date(timestamp * 1000);
         let stampFullDate = timestampDate
@@ -421,16 +421,16 @@ class Mysql {
             hour12: false,
         });
 
-        console.log(
+        /*console.log(
             `INSERT INTO coin_processed_sma VALUES (${coin_id}, '${stampFullTime}', '${stampFullDate}','${timestamp}',${results["close"]},${results["SMA"]},${results["EMA"]},${results["trend"]},${results["trend_weighting"]}) ON DUPLICATE KEY UPDATE close=${results["close"]},SMA=${results["SMA"]}, EMA=${results["EMA"]},trend=\"${results["trend"]}\",trend_weighting=\"${results["trend_weighting"]}\"`
-        );
+        );*/
 
         const [rows, fields] = await this.connection.query(
             `INSERT INTO coin_processed_sma VALUES (${coin_id}, '${stampFullTime}', '${stampFullDate}','${timestamp}',${results["close"]},${results["SMA"]},${results["EMA"]},${results["trend"]},${results["trend_weighting"]}) ON DUPLICATE KEY UPDATE close=${results["close"]},SMA=${results["SMA"]}, EMA=${results["EMA"]},trend=\"${results["trend"]}\",trend_weighting=\"${results["trend_weighting"]}\"`
         );
     }
 
-    async cleanupProcessedSMA(coin_id, limitNum) {
+    async cleanupProcessedEMA(coin_id, limitNum) {
         const [rows, fields] = await this.connection.query(
             `DELETE FROM coin_processed_sma
             WHERE timestamp IN
@@ -448,7 +448,7 @@ class Mysql {
         );
     }
 
-    async emptyProcessSMA() {
+    async emptyProcessEMA() {
         const [rows, fields] = await this.connection.query(
             "TRUNCATE TABLE coin_processed_sma"
         );
