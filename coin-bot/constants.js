@@ -13,12 +13,21 @@ WOBBLING_DOWN is when the coin has dropped by a small amount over a period of ti
 
 */
 
-const COIN_STATUS = [
-    "CRASHING",
-    "SPIKING",
-    "LEVEL_OUT",
-    "WOBBLING_UP",
-    "WOBBLING_DOWN ",
-];
+const COIN_STATUS = {
+    CRASHING: "crashing",
+    SPIKING: "spiking",
+    SIDEWAYS: "sideways",
+    WOBBLING_UP: "wobbling_up",
+    WOBBLING_DOWN: "wobbling_down",
+};
 
-module.exports = [COIN_STATUS];
+const COIN_ADVICE = {
+    DEFINITE_BUY: "definite_buy",
+    POSSIBLE_BUY: "possible_buy",
+    IMMEDIATE_SELL: "immediate_sell",
+    DEFINITE_SELL: "definite_sell",
+    POSSIBLE_SELL: "possible_sell",
+    HOLD: "hold",
+};
+
+module.exports = { COIN_STATUS, COIN_ADVICE };

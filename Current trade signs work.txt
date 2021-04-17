@@ -47,6 +47,7 @@ a. One way to set it is 6% less than the current price. I think this a good star
 b. We can also set it by determining the support level.
 
 Later questions:
+What about when the candles go above and below the band?
 How to determine support + resistance from the indicators I have?
 
 Todo:

@@ -23,9 +23,11 @@ const BOT_EVENT = {
     SHAKING_HANDS: "shaking_hands", // Lock token exchange
     TRADE_LOCKED: "trade_locked",
     PREPARING_TRADE: "preparing_trade",
+    FINALISING_TRADE: "finalising_trade",
     LOOKING_TO_BUY: "looking_to_buy",
     HOLDING: "holding",
-    LOOKING_TO_SELL: "looking_to_sell", // For "CRASHING" - we just shortcut and sell at whatevr price
+    LOOKING_TO_SELL: "looking_to_sell",
+    // For "IMMEDIATE_SELL" - we just shortcut and sell at whatever price
     IMMEDIATE_SELL: "immediate_sell",
     WAITING_FOR_ORDER: "waiting_for_order", // Waiting for an order to go through and finish.
 };

@@ -31,6 +31,7 @@ const ProcessLocks = require("../utils/process-locks.js");
 const RSIProcessor = require("../trends-and-signals/RSI-calculations.js");
 const StochasticProcessor = require("../trends-and-signals/Stochastic-calculations.js");
 const BollingerProcessor = require("../trends-and-signals/BollingerBands-calculations.js");
+const GeneralAdviceProcessor = require("../advice-processing/General-advice.js");
 const EMAProcessor = require("../trends-and-signals/EMA-calculations.js");
 const API = require("../utils/api.js");
 const { rotateArray } = require("../utils/general.js");
@@ -61,6 +62,7 @@ class MainLogic {
             "Stochastic",
             "Bollinger",
             "EMA",
+            "Advice",
         ]);
         //this.state = eventConstants.SEEKING_COIN;
 
@@ -84,6 +86,16 @@ class MainLogic {
         );
         this.EMAProcessor = new EMAProcessor(
             this.mysqlCon,
+            this.EMAStoreNum,
+            this.graphPeriod,
+            this.processLocks.unlock
+        );
+
+        this.GeneralAdviceProcessor = new GeneralAdviceProcessor(
+            this.mysqlCon,
+            this.BollingerStoreNum,
+            this.RSIStoreNum,
+            this.StochasticStoreNum,
             this.EMAStoreNum,
             this.graphPeriod,
             this.processLocks.unlock
@@ -205,6 +217,19 @@ class MainLogic {
             true,
             true,
             30000
+        );
+
+        /* Calculating general advice info */
+        this.GeneralAdviceQueue = new Queue();
+        this.setupGeneralCoinAdviceQueue();
+
+        this.coinAdviceGenerationQueuer.enqueueQueue(
+            this.GeneralAdviceQueue,
+            trendsAndSignalsFrequency /* We only acquire this info once a minute */,
+            true,
+            true,
+            true,
+            40000
         );
 
         this.queueSetupComplete = true;
@@ -340,17 +365,23 @@ class MainLogic {
         });
     }
 
-    /* Generic processor lock and then wait for function to finish to unlock */
-    async processTrendWithLock(processor, trend, coinId) {
-        this.processLocks.lock(trend, coinId);
-        processor.calculate(coinId);
-        let unlocked = this.processLocks.awaitLock(trend, coinId);
+    setupGeneralCoinAdviceQueue() {
+        this.setupGeneralAdviceQueue();
+    }
 
-        if (unlocked === false) {
-            console.log(
-                `Error: ${trend} lock for ${coinId} is not for the current coin!`
-            );
-        }
+    setupGeneralAdviceQueue() {
+        this.coinConfigArr.forEach((coin) => {
+            let trend = "Advice";
+            this.GeneralAdviceQueue.enqueue(async () => {
+                console.log(`Processing ${trend}: ${coin["coin_id_kraken"]}`);
+
+                this.calculateAdviceWithLock(
+                    this.GeneralAdviceProcessor,
+                    trend,
+                    coin["id"]
+                );
+            });
+        });
     }
 
     setupPlotlyGraphingQueue() {
@@ -427,7 +458,7 @@ class MainLogic {
             yRSI.unshift("");
         }
 
-        let yEMA = resultsEMA.map((el) => Number(el["EMA"]).toFixed(4));
+        let yEMA = resultsEMA.map((el) => Number(el["SMA"]).toFixed(4));
         unfilledAmount = xRSI.length - yEMA.length;
         for (var i = 0; i < unfilledAmount; i++) {
             yEMA.unshift("");
@@ -657,6 +688,33 @@ class MainLogic {
                 });
             }
         );
+    }
+
+    /* Generic processor lock and then wait for function to finish to unlock */
+    async processTrendWithLock(processor, trend, coinId) {
+        this.processLocks.lock(trend, coinId);
+        processor.calculate(coinId);
+        let unlocked = this.processLocks.awaitLock(trend, coinId);
+
+        if (unlocked === false) {
+            console.log(
+                `Error: ${trend} lock for ${coinId} is not for the current coin!`
+            );
+        }
+    }
+
+    async calculateAdviceWithLock(advisor, trend, coinId) {
+        this.processLocks.lock(trend, coinId);
+        if (coinId === 1) {
+            console.log(await advisor.advise(coinId));
+        }
+        let unlocked = this.processLocks.awaitLock(trend, coinId);
+
+        if (unlocked === false) {
+            console.log(
+                `Error: ${trend} lock for ${coinId} is not for the current coin!`
+            );
+        }
     }
 }
 

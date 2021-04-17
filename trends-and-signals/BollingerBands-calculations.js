@@ -44,6 +44,9 @@ class BollingerBandsCalculations {
 
     async calculate(coinId) {
         let resultsOHLC = await this.mysqlCon.getCoinOHLC(coinId);
+        let resultsHistoricBoll = await this.mysqlCon.getHistoricBollinger(
+            coinId
+        );
 
         /* Could be 1.5 for scalping */
         let numOfSDs = 2;
@@ -108,7 +111,7 @@ class BollingerBandsCalculations {
         };
 
         currBollinger["bWidth"] =
-            (currBollinger["bolU"] - currBollinger["bolD"] / MA) * 100;
+            ((currBollinger["bolU"] - currBollinger["bolD"]) / MA) * 100;
 
         currBollinger["perB"] =
             (close - currBollinger["bolD"]) /
@@ -116,8 +119,35 @@ class BollingerBandsCalculations {
 
         /* Add this to mysql and then cleanup*/
         await this.mysqlCon.storeProcessedBollinger(coinId, currBollinger);
-
         this.cleanup(coinId);
+
+        let squeeze = 0;
+        let expansion = 0;
+        let bandWidth = Number(currBollinger["bWidth"]);
+
+        if (resultsHistoricBoll.length > 0) {
+            squeeze = Number(resultsHistoricBoll["b_hist_squeeze"]);
+            expansion = Number(resultsHistoricBoll["b_hist_expansion"]);
+
+            /* Getting the average of the previous historic high.low and the current means that anomalies are smoothed out? */
+            if (bandWidth < squeeze) {
+                squeeze = (bandWidth + squeeze) / 2.0;
+            } else if (bandWidth > expansion) {
+                expansion = (bandWidth + expansion) / 2.0;
+            }
+        } else {
+            /* First time, so we're just discovering the values */
+            squeeze = bandWidth;
+            expansion = bandWidth;
+        }
+
+        let currHistBollinger = {
+            timestamp: lastElOHLC["timestamp"],
+            close: close,
+            b_hist_squeeze: squeeze,
+            b_hist_expansion: expansion,
+        };
+        await this.mysqlCon.storeHistoricBollinger(coinId, currHistBollinger);
     }
 }
 

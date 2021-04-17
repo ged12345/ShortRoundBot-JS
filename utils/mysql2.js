@@ -453,6 +453,48 @@ class Mysql {
             "TRUNCATE TABLE coin_processed_sma"
         );
     }
+
+    async getHistoricBollinger(coin_id) {
+        const [rows, fields] = await this.connection.query(
+            `SELECT * from coin_historical_bollinger WHERE coin_id=${mysqlCon.escape(
+                coin_id
+            )}`
+        );
+
+        //console.log("Data received from Db:");
+        //console.log(rows);
+
+        return rows;
+    }
+
+    async storeHistoricBollinger(coin_id, results) {
+        /* Remove old historic entry */
+        await this.connection.query(
+            `DELETE FROM coin_historical_bollinger WHERE coin_id = ${mysqlCon.escape(
+                coin_id
+            )}`
+        );
+
+        let timestamp = results["timestamp"];
+        let timestampDate = new Date(timestamp * 1000);
+        let stampFullDate = timestampDate
+            .toLocaleDateString("en-AU")
+            .slice(0, 10)
+            .split("/")
+            .reverse()
+            .join("-");
+        let stampFullTime = timestampDate.toLocaleTimeString("en-AU", {
+            hour12: false,
+        });
+
+        console.log(
+            `INSERT INTO coin_historical_bollinger VALUES (${coin_id}, '${stampFullTime}', '${stampFullDate}','${timestamp}',${results["close"]},${results["b_hist_squeeze"]},${results["b_hist_expansion"]}) ON DUPLICATE KEY UPDATE close=${results["close"]},historic_squeeze=${results["b_hist_squeeze"]}, historic_expansion=${results["b_hist_expansion"]}`
+        );
+
+        const [rows, fields] = await this.connection.query(
+            `INSERT INTO coin_historical_bollinger VALUES (${coin_id}, '${stampFullTime}', '${stampFullDate}','${timestamp}',${results["close"]},${results["b_hist_squeeze"]},${results["b_hist_expansion"]}) ON DUPLICATE KEY UPDATE close=${results["close"]},historic_squeeze=${results["b_hist_squeeze"]}, historic_expansion=${results["b_hist_expansion"]}`
+        );
+    }
 }
 
 module.exports = {

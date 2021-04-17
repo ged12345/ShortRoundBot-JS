@@ -75,9 +75,9 @@ class EMACalculations {
         /* No acquired OHLC results yet */
         if (resultsOHLC.length === 0) return;
 
-        let resultsSMA = await this.mysqlCon.getProcessedEMA(coinId);
+        let resultsEMA = await this.mysqlCon.getProcessedEMA(coinId);
 
-        if (resultsSMA.length === 0) return;
+        if (resultsEMA.length === 0) return;
 
         /* 1. Iterate through 32 OHLC entries, and calculate the SMA. */ let totalClose = 0;
         /* Everything but the last value. We calculate the SMA first but calculate the EMA of the last OHLC value (the SMA being the EMA for yesterday) */
@@ -89,20 +89,20 @@ class EMACalculations {
         });
 
         let lastElOHLC = resultsOHLC[resultsOHLC.length - 1];
-        let prevElSMA = resultsSMA[resultsSMA.length - 1];
+        let prevElSMA = resultsEMA[resultsEMA.length - 1];
         let close = Number(lastElOHLC["close"]);
         let SMA = totalClose / this.EMAStoreNum;
 
         let multiplier = 2 / (this.EMAStoreNum + 1);
         let EMA = 0;
 
-        if (resultsSMA.length === 1) {
+        if (resultsEMA.length === 1) {
             EMA = close * multiplier + prevElSMA["SMA"] * (1 - multiplier);
         } else {
             EMA = close * multiplier + prevElSMA["EMA"] * (1 - multiplier);
         }
 
-        let arrEMA = resultsSMA.map((el) => {
+        let arrEMA = resultsEMA.map((el) => {
             return el["EMA"];
         });
         arrEMA.push(EMA);
@@ -110,7 +110,7 @@ class EMACalculations {
         /* We calculate the trend and trend weighting here */
         let trend = "NULL";
         let trendArr = [];
-        if (resultsSMA.length > 1) {
+        if (resultsEMA.length > 1) {
             trendArr = calculateGraphGradients(arrEMA);
             trend = trendArr[0][trendArr[0].length - 1];
         }

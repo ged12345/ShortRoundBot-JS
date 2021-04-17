@@ -14,6 +14,18 @@ class MainLogic {
         this.lockCoinId = 0;
         this.state = eventConstants.SEEKING_COIN;
         this.queueSetupComplete = false;
+
+        /* 1 dollar when testing */
+        this.currentFloat = 1.0;
+
+        /* We keep track of how much we've gained or lost here */
+        this.totalInitialFloat = this.currentFloat;
+        this.totalCurrentFloat = this.currentFloat;
+
+        /* If our loss count variable >= 3, or the total loss is more than 33% of the float, stop the bot. */
+        this.lossCount = 0;
+        this.totalLoss = 0.0;
+
         this.getBotConfig();
         this.setupQueues();
     }
@@ -115,9 +127,12 @@ class MainLogic {
             if (this.state === eventConstants.TRADE_LOCKED) {
                 this.getLockedAdvice();
             } else if (this.state === eventConstants.PREPARING_TRADE) {
-                /* Here we perform the actual trade order: bracketed or otherwise */
+                /* Here we perform the actual trade order (can't do bracketed via API */ */
                 console.log("Status: Preparing trade!");
                 /* We format a kraken trade order */
+                prepareOrder(0, 0, 0);
+                /* After we prepare the trade order, we go back to being locked */
+                this.state = eventConstants.PREPARING_TRADE;
             }
         }
     }
@@ -143,10 +158,14 @@ class MainLogic {
             this.advice = advice;
             /* Here we will calculate the best option from
             the advice supplied, including probability. Hard coded for testing. */
-            this.state = eventConstants.SHAKING_HANDS;
-            this.lockCoinId = 1;
+            /* DEBUG: UNCOMMENT THIS AFTER DEBUGGING */
+            //this.state = eventConstants.SHAKING_HANDS;
+            //this.lockCoinId = 1;
+
+            /* Once we get this advice, we need to determine whether to buy or sell and then move to locked advice */
 
             console.log("Status: Shaking hands and getting advice!");
+            console.log(this.advice);
         });
     }
 
@@ -155,11 +174,42 @@ class MainLogic {
             this.advice = advice;
             /* Here we will calculate the best option from
             the advice supplied, including probability. Hard coded for testing. */
-            this.state = eventConstants.PREPARING_TRADE;
-            this.lockCoinId = 1;
+            if (this.state !== eventConstants.TRADE_LOCKED) {
+                this.state = eventConstants.PREPARING_TRADE;
+                /* DEBUG: We focus on Bitcoin for now */
+                this.lockCoinId = 1;
+            }
+
+            /* Here we check the locked advice to see if we sell or not */
 
             console.log("Status: Getting locked trading advice!");
         });
+    }
+
+    prepareOrder(buyAtPrice, stopLossPrice, sellAtPrice) {
+        console.log(`Prepare order: ${buyAtPrice} ${stopLossPrice} ${sellAtPrice}`);
+    }
+
+    finaliseTrade() {
+        if (!this.hasLowProfitability()) {
+            /* DEBUG: Here we go back to SEEKING_COIN  - Uncomment this out */
+            //this.state = eventConstants.SEEKING_COIN;
+        }
+    }
+
+    hasLowProfitability() {
+        /* If we lose money too many times and the loss is too great (33%), immediately shutdown */
+        if (this.lossCount >= 3 && this.totalLoss >= this.currentFloat / 3.0) {
+            this.shutdown();
+            return true;
+        } else {
+            return false;
+        }
+    }
+
+    shutdown() {
+        this.cleanup((didUnassigned) => {});
+        process.exit();
     }
 
     cleanup(cb) {
