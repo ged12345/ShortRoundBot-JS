@@ -113,30 +113,30 @@ class GeneralTrendAdvice {
             /* Do not buy. Trend is too downward atm. Send results back immediately, which should be to sell this coin immediately. */
             tradeSellPercentage = 1;
 
-            return [
-                tradeBuyPercentage,
-                tradeSellPercentage,
-                COIN_STATUS.CRASHING,
-                COIN_ADVICE.IMMEDIATE_SELL,
-                currClosePrice,
-            ];
+            return {
+                tradeBuy: tradeBuyPercentage,
+                tradeSell: tradeSellPercentage,
+                coinStatus: COIN_STATUS.CRASHING,
+                coinAdvice: COIN_ADVICE.IMMEDIATE_SELL,
+                initialClose: currClosePrice,
+            };
         } else if (trendCalculator < -5) {
             /* If we're somehow holding onto coin, we need to tell the bot to sell if we haven't already. This would only come into play if we were holding onto coin long-term despite a decent dip, a rise, and then another dip. Usually, stop loss should take care of this. */
 
             tradeSellPercentage = 0.75;
-            return [
-                tradeBuyPercentage,
-                tradeSellPercentage,
-                COIN_STATUS.WOBBLING_DOWN,
-                COIN_ADVICE.DEFINITE_SELL,
-                currClosePrice,
-            ];
+            return {
+                tradeBuy: tradeBuyPercentage,
+                tradeSell: tradeSellPercentage,
+                coinStatus: COIN_STATUS.WOBBLING_DOWN,
+                coinAdvice: COIN_ADVICE.DEFINITE_SELL,
+                initialClose: currClosePrice,
+            };
         }
 
         /*
             We've taken care of the gradient trend and then worst case scenarios.
 
-            The next prt is the Bollinger band width.
+            The next prat is the Bollinger band width.
         */
 
         let coin_advice = null;
@@ -156,13 +156,13 @@ class GeneralTrendAdvice {
             coin_advice = COIN_ADVICE.DEFINITE_BUY;
         }
 
-        return [
-            tradeBuyPercentage,
-            tradeSellPercentage,
-            coin_status,
-            coin_advice,
-            currClosePrice,
-        ];
+        return {
+            tradeBuy: tradeBuyPercentage,
+            tradeSell: tradeSellPercentage,
+            coinStatus: coin_status,
+            coinAdvice: coin_advice,
+            initialClose: currClosePrice,
+        };
     }
 }
 module.exports = GeneralTrendAdvice;

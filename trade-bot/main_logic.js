@@ -5,6 +5,7 @@ const { encryptCodeIn, encrypt512 } = require("../utils/general.js");
 const eventConstants = require("./constants.js").BOT_EVENT;
 const code = require("./constants.js").BOT_CODE["primer"];
 const botNames = require("./constants.js").BOT_NAMES;
+const { calculateSellUrgencyFactor } = require("../utils/math.js");
 class MainLogic {
     // Need to "lock" bot when new info comes in.
 
@@ -21,10 +22,17 @@ class MainLogic {
         /* We keep track of how much we've gained or lost here */
         this.totalInitialFloat = this.currentFloat;
         this.totalCurrentFloat = this.currentFloat;
+        this.initialTradeTimestamp = null;
+        this.initialTradeClosePrice = 0.0;
+        /* This factor increased per minute */
+        this.minCoinAppreciationPercentPerMin = 0.05;
 
         /* If our loss count variable >= 3, or the total loss is more than 33% of the float, stop the bot. */
         this.lossCount = 0;
         this.totalLoss = 0.0;
+
+        /* The maximum amount of time we hold onto a trade. If the close price hasn't risen appreciably in this time, best to sell */
+        this.maxTradeTime = 60000 * 10;
 
         this.getBotConfig();
         this.setupQueues();
@@ -127,8 +135,9 @@ class MainLogic {
             if (this.state === eventConstants.TRADE_LOCKED) {
                 this.getLockedAdvice();
             } else if (this.state === eventConstants.PREPARING_TRADE) {
-                /* Here we perform the actual trade order (can't do bracketed via API */ */
+                /* Here we perform the actual trade order (can't do bracketed via API */
                 console.log("Status: Preparing trade!");
+                this.initialTradeClosePrice = this.advice["initialClose"];
                 /* We format a kraken trade order */
                 prepareOrder(0, 0, 0);
                 /* After we prepare the trade order, we go back to being locked */
@@ -180,17 +189,48 @@ class MainLogic {
                 this.lockCoinId = 1;
             }
 
-            /* Here we check the locked advice to see if we sell or not */
+            /* Here we check the locked advice to see if we sell or not from this advice */
+            if (this.checkAdvice()) {
+                this.finaliseTrade();
+            }
 
             console.log("Status: Getting locked trading advice!");
         });
     }
 
     prepareOrder(buyAtPrice, stopLossPrice, sellAtPrice) {
-        console.log(`Prepare order: ${buyAtPrice} ${stopLossPrice} ${sellAtPrice}`);
+        console.log(
+            `Prepare order: ${buyAtPrice} ${stopLossPrice} ${sellAtPrice}`
+        );
+
+        this.initialTradeTimestamp = Date.now();
+    }
+
+    checkAdvice() {
+        /* Here we calculate whether we hold onto this coin based on the advice.
+        NOTE: We also have to build in a timelimit, so we let a coin go after 5-10 mins*/
+
+        if (this.initialTradeTimestamp != null) {
+            return false;
+        }
+
+        let currentTimestamp = Date.now();
+        let urgencyFactor = calculateSellUrgencyFactor(
+            this.initialTradeClosePrice,
+            this.initialTradeTimestamp,
+            Date.now(),
+            this.maxTradeTime / 1000.0
+        );
+
+        /* We need to determine if we sell early based on max trade time and whether the coin has appreciated in price by a certain margin in a certain time */
+
+        return true;
     }
 
     finaliseTrade() {
+        /* Wipe out current trade timestamp at end of trade */
+        this.currentTradeTimestamp = null;
+
         if (!this.hasLowProfitability()) {
             /* DEBUG: Here we go back to SEEKING_COIN  - Uncomment this out */
             //this.state = eventConstants.SEEKING_COIN;

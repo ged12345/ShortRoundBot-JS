@@ -60,4 +60,47 @@ function calculateGraphGradients(pointArr) {
     return [gradientArr, trendArr];
 }
 
-module.exports = { calculateGraphGradients };
+/* We're basically calculating a profit heuristic. If we're not profitting enough, sell coin and move on. We should, however, hold onto a coin for a minimum amount of time, otherwise we're just selling over and over without taking a little risk. We only definitey sell when the coin value has dropped. */
+function calculateSellUrgencyFactor(
+    initialClose,
+    currentClose,
+    initialTimestamp,
+    currTimestamp,
+    minCoinAppreciationPercentPerMin,
+    maxTradeTime
+) {
+    /* We return a sell urgency factor here, from 0.0 to 1.0 */
+    let sellUrgencyFactor = 0.0;
+    let closeInterval = currentClose - initialClose;
+    let timestampInterval = currTimestamp - initialTimestamp;
+    let timePassedInSecs = timestampInterval / 1000.0;
+
+    /* We let the price go into the negative briefly, but not too deeply. We have our stop-loss set as a just in case, but we my want to sell if there is a clear downtrend establishing */
+    if (closeInterval < 0 && timePassedInSecs <= 60) {
+        sellUrgencyFactor = 0.25;
+    } else if (
+        closeInterval < 0 &&
+        timePassedInSecs > 60 &&
+        timePassedInSecs <= 120
+    ) {
+        sellUrgencyFactor = 0.55;
+    } else if (closeInterval < 0 && timePassedInSecs > 120) {
+        sellUrgencyFactor = 0.75;
+    } else if (
+        closeInterval > 0 &&
+        closeInterval <
+            initialClose +
+                initialClose *
+                    minCoinAppreciationPercentPerMin *
+                    (timePassedInSecs / 60.0)
+    ) {
+        sellUrgencyFactor = 0.5;
+    } else if (closeInterval > 0 && timePassedInSecs > maxTradeTime) {
+        /* Sell, as we've held onto this coin too long */
+        sellUrgencyFactor = 1.0;
+    }
+
+    return sellUrgencyFactor;
+}
+
+module.exports = { calculateGraphGradients, calculateSellUrgencyFactor };
