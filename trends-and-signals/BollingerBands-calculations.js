@@ -126,13 +126,23 @@ class BollingerBandsCalculations {
         let bandWidth = Number(currBollinger["bWidth"]);
 
         if (resultsHistoricBoll.length > 0) {
-            squeeze = Number(resultsHistoricBoll["b_hist_squeeze"]);
-            expansion = Number(resultsHistoricBoll["b_hist_expansion"]);
+            //console.log(resultsHistoricBoll);
+            squeeze = Number(resultsHistoricBoll[0]["historic_squeeze"]);
+            expansion = Number(resultsHistoricBoll[0]["historic_expansion"]);
 
-            /* Getting the average of the previous historic high.low and the current means that anomalies are smoothed out? */
-            if (bandWidth < squeeze) {
+            /* Getting the average of the previous historic high/low and the current means that anomalies are smoothed out? */
+            // Bandwidth is mutiplied by 100, and the values seem to swing between 0-5
+            const bandwidthFactor = 0.5;
+            if (
+                bandWidth < squeeze ||
+                Math.abs(bandWidth - squeeze) < bandwidthFactor
+            ) {
                 squeeze = (bandWidth + squeeze) / 2.0;
-            } else if (bandWidth > expansion) {
+            }
+            if (
+                bandWidth > expansion ||
+                Math.abs(bandWidth - expansion) < bandwidthFactor
+            ) {
                 expansion = (bandWidth + expansion) / 2.0;
             }
         } else {
@@ -147,6 +157,8 @@ class BollingerBandsCalculations {
             b_hist_squeeze: squeeze,
             b_hist_expansion: expansion,
         };
+
+        //console.log(currHistBollinger);
         await this.mysqlCon.storeHistoricBollinger(coinId, currHistBollinger);
     }
 }

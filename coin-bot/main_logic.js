@@ -403,13 +403,11 @@ class MainLogic {
 
                 let resultsEMA = await this.mysqlCon.getProcessedEMA(coinId);
 
-                let resultsStochastics = await this.mysqlCon.getProcessedStochastic(
-                    coinId
-                );
+                let resultsStochastics =
+                    await this.mysqlCon.getProcessedStochastic(coinId);
 
-                let resultsBollingerBands = await this.mysqlCon.getProcessedBollinger(
-                    coinId
-                );
+                let resultsBollingerBands =
+                    await this.mysqlCon.getProcessedBollinger(coinId);
 
                 this.plotGraph(
                     coinId,
@@ -706,6 +704,7 @@ class MainLogic {
     async calculateAdviceWithLock(advisor, trend, coinId) {
         this.processLocks.lock(trend, coinId);
         if (coinId === 1) {
+            console.log("Advice?");
             console.log(await advisor.advise(coinId));
         }
         let unlocked = this.processLocks.awaitLock(trend, coinId);

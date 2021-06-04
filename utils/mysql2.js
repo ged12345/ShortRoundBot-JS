@@ -487,9 +487,9 @@ class Mysql {
             hour12: false,
         });
 
-        console.log(
+        /*console.log(
             `INSERT INTO coin_historical_bollinger VALUES (${coin_id}, '${stampFullTime}', '${stampFullDate}','${timestamp}',${results["close"]},${results["b_hist_squeeze"]},${results["b_hist_expansion"]}) ON DUPLICATE KEY UPDATE close=${results["close"]},historic_squeeze=${results["b_hist_squeeze"]}, historic_expansion=${results["b_hist_expansion"]}`
-        );
+        );*/
 
         const [rows, fields] = await this.connection.query(
             `INSERT INTO coin_historical_bollinger VALUES (${coin_id}, '${stampFullTime}', '${stampFullDate}','${timestamp}',${results["close"]},${results["b_hist_squeeze"]},${results["b_hist_expansion"]}) ON DUPLICATE KEY UPDATE close=${results["close"]},historic_squeeze=${results["b_hist_squeeze"]}, historic_expansion=${results["b_hist_expansion"]}`
