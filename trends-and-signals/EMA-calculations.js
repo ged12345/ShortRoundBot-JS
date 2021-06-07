@@ -108,12 +108,13 @@ class EMACalculations {
         arrEMA.push(EMA);
 
         /* We calculate the trend and trend weighting here */
-        let trend = "NULL";
+        let trend = 0;
         let trendArr = [];
-        if (resultsEMA.length > 1) {
+        /* NOTE: We currently don't use this */
+        /*if (resultsEMA.length > 1) {
             trendArr = calculateGraphGradients(arrEMA);
             trend = trendArr[0][trendArr[0].length - 1];
-        }
+        }*/
 
         let currEMA = {
             timestamp: lastElOHLC["timestamp"],
@@ -121,8 +122,7 @@ class EMACalculations {
             SMA: SMA,
             EMA: EMA,
             trend: trend,
-            trend_weighting:
-                "NULL" /* Like a momentum indicator - how long have we been trending for? */,
+            trend_weighting: 0 /* Like a momentum indicator - how long have we been trending for? */,
         };
 
         // We need at least three EMAS to calculate the trend/grade

@@ -20,35 +20,7 @@ function calculateGraphGradients(pointArr) {
             if (gradientArr.length > 1) {
                 let gradient1 = gradientArr[gradientArr.length - 2];
                 let gradient2 = normGradient;
-                if (gradient1 > 0 && gradient2 > 0) {
-                    /* Gradients are too different but still trendinf up */
-                    if (Math.abs(gradient1 - gradient2) > 0.1705) {
-                        // Weak upward trend
-                        trendArr.push(0.5);
-                    } else {
-                        // Strong upward trend
-                        trendArr.push(1);
-                    }
-                } else if (gradient1 < 0 && gradient2 < 0) {
-                    /* Gradients are too different but still trending up */
-                    if (Math.abs(gradient1 - gradient2) > 0.1705) {
-                        // Weak downward trend
-                        trendArr.push(-0.5);
-                    } else {
-                        // Strong downward trend
-                        trendArr.push(-1);
-                    }
-                } else if (
-                    /* If we're very close to a horizontal line here */
-                    Math.abs(gradient1) < 0.3 &&
-                    Math.abs(gradient2) < 0.3
-                ) {
-                    // Sideways trend
-                    trendArr.push(0);
-                } else {
-                    // No trend
-                    trendArr.push(null);
-                }
+                calculateGradientValues(gradient1, gradient2, trendArr);
             }
         }
     });
@@ -58,6 +30,50 @@ function calculateGraphGradients(pointArr) {
     Once we've calulated all the normalised gradients, we should perhaps create a second array with 3 values that indicates from constant whether sloping up, sloping down, or sideways/straight horizontal. Or perhaps a grouping function? Perhaps create a helped function elsewhere?
     */
     return [gradientArr, trendArr];
+}
+
+function calculateGradientValues(gradient1, gradient2, trendArr) {
+    if (gradient1 > 0 && gradient2 > 0) {
+        /* Gradients are too different but still trending up */
+        if (gradient1 + gradient2 > 0.05375) {
+            // Weakest upward trend
+            trendArr.push(0.25);
+        } else if (Math.abs(gradient1 - gradient2) > 0.1705) {
+            // Weakish upward trend
+            trendArr.push(0.5);
+        } else if (Math.abs(gradient1 - gradient2) > 0.215) {
+            // Less strong upward trend
+            trendArr.push(0.75);
+        } else {
+            // Strong upward trend
+            trendArr.push(1);
+        }
+    } else if (gradient1 < 0 && gradient2 < 0) {
+        /* Gradients are too different but still trending down */
+        if (Math.abs(gradient1 - gradient2) > 0.05375) {
+            // Weak downward trend
+            trendArr.push(-0.25);
+        } else if (Math.abs(gradient1 - gradient2) > 0.1705) {
+            // Weak downward trend
+            trendArr.push(-0.5);
+        } else if (Math.abs(gradient1 - gradient2) > 0.215) {
+            // Weak downward trend
+            trendArr.push(-0.75);
+        } else {
+            // Strong downward trend
+            trendArr.push(-1);
+        }
+    } else if (
+        /* If we're very close to a horizontal line here */
+        Math.abs(gradient1) < 0.3 &&
+        Math.abs(gradient2) < 0.3
+    ) {
+        // Sideways trend
+        trendArr.push(0);
+    } else {
+        // No trend
+        trendArr.push(0);
+    }
 }
 
 /* We're basically calculating a profit heuristic. If we're not profitting enough, sell coin and move on. We should, however, hold onto a coin for a minimum amount of time, otherwise we're just selling over and over without taking a little risk. We only definitey sell when the coin value has dropped. */

@@ -101,9 +101,8 @@ class RSICalculations {
                     let currElRSIClose = new Decimal(
                         arrRSI[offsetIndexOHLC]["close"]
                     );
-                    arrRSI[offsetIndexOHLC][
-                        "lossOrGain"
-                    ] = currElRSIClose.minus(prevElRSIClose);
+                    arrRSI[offsetIndexOHLC]["lossOrGain"] =
+                        currElRSIClose.minus(prevElRSIClose);
                     let lossOrGain = arrRSI[offsetIndexOHLC]["lossOrGain"];
 
                     if (lossOrGain > 0) {
@@ -199,6 +198,11 @@ class RSICalculations {
             let elLastOHLC = resultsOHLC[currIndex];
 
             if (
+                Number(lastResult["timestamp"]) ===
+                Number(elLastOHLC["timestamp"])
+            ) {
+                /*console.log("Second run through.");*/
+            } else if (
                 Number(lastResult["timestamp"]) + 60 !==
                 Number(elLastOHLC["timestamp"])
             ) {

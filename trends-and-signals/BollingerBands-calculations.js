@@ -114,8 +114,9 @@ class BollingerBandsCalculations {
             ((currBollinger["bolU"] - currBollinger["bolD"]) / MA) * 100;
 
         currBollinger["perB"] =
-            (close - currBollinger["bolD"]) /
-            (currBollinger["bolU"] - currBollinger["bolD"]);
+            ((close - currBollinger["bolD"]) /
+                (currBollinger["bolU"] - currBollinger["bolD"])) *
+            100;
 
         /* Add this to mysql and then cleanup*/
         await this.mysqlCon.storeProcessedBollinger(coinId, currBollinger);

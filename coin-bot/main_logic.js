@@ -34,6 +34,7 @@ const BollingerProcessor = require("../trends-and-signals/BollingerBands-calcula
 const GeneralAdviceProcessor = require("../advice-processing/General-advice.js");
 const EMAProcessor = require("../trends-and-signals/EMA-calculations.js");
 const API = require("../utils/api.js");
+const { calculateGraphGradients } = require("../utils/math.js");
 const { rotateArray } = require("../utils/general.js");
 const NETWORK = require("../legacy/config/network-config.js");
 
@@ -176,7 +177,16 @@ class MainLogic {
             true,
             true,
             true,
-            25000
+            23000
+        );
+
+        this.coinTrendsAndSignalsProcessingQueuer.enqueueQueue(
+            this.RSIProcessingQueue,
+            trendsAndSignalsFrequency /* We only acquire this info once a minute */,
+            true,
+            true,
+            true,
+            43000
         );
 
         this.coinTrendsAndSignalsProcessingQueuer.enqueueQueue(
@@ -185,11 +195,38 @@ class MainLogic {
             true,
             true,
             true,
-            25500
+            24000
+        );
+
+        this.coinTrendsAndSignalsProcessingQueuer.enqueueQueue(
+            this.StochasticProcessingQueue,
+            trendsAndSignalsFrequency /* We only acquire this info once a minute */,
+            true,
+            true,
+            true,
+            44000
         );
 
         this.coinTrendsAndSignalsProcessingQueuer.enqueueQueue(
             this.BollingerProcessingQueue,
+            trendsAndSignalsFrequency /* We only acquire this info once a minute */,
+            true,
+            true,
+            true,
+            25000
+        );
+
+        this.coinTrendsAndSignalsProcessingQueuer.enqueueQueue(
+            this.BollingerProcessingQueue,
+            trendsAndSignalsFrequency /* We only acquire this info once a minute */,
+            true,
+            true,
+            true,
+            45000
+        );
+
+        this.coinTrendsAndSignalsProcessingQueuer.enqueueQueue(
+            this.EMAProcessingQueue,
             trendsAndSignalsFrequency /* We only acquire this info once a minute */,
             true,
             true,
@@ -203,20 +240,7 @@ class MainLogic {
             true,
             true,
             true,
-            26000
-        );
-
-        /* Plotting graphs to compare calculations with online */
-        this.PlotlyGraphingQueue = new Queue();
-        this.setupTrendsAndSignalsGraphingQueue();
-
-        this.coinTrendsAndSignalsGraphingQueuer.enqueueQueue(
-            this.PlotlyGraphingQueue,
-            trendsAndSignalsFrequency /* We only acquire this info once a minute */,
-            true,
-            true,
-            true,
-            30000
+            46000
         );
 
         /* Calculating general advice info */
@@ -229,7 +253,29 @@ class MainLogic {
             true,
             true,
             true,
-            40000
+            30000
+        );
+
+        this.coinAdviceGenerationQueuer.enqueueQueue(
+            this.GeneralAdviceQueue,
+            trendsAndSignalsFrequency /* We only acquire this info once a minute */,
+            true,
+            true,
+            true,
+            50000
+        );
+
+        /* Plotting graphs to compare calculations with online */
+        this.PlotlyGraphingQueue = new Queue();
+        this.setupTrendsAndSignalsGraphingQueue();
+
+        this.coinTrendsAndSignalsGraphingQueuer.enqueueQueue(
+            this.PlotlyGraphingQueue,
+            trendsAndSignalsFrequency /* We only acquire this info once a minute */,
+            true,
+            true,
+            true,
+            55000
         );
 
         this.queueSetupComplete = true;
@@ -291,6 +337,10 @@ class MainLogic {
                 /* This gets the result array in the proper order */
                 let ohlcDesc = result[coinPair].reverse();
 
+                if (coinId == 1) {
+                    this.calculateOHLCTrends(ohlcDesc);
+                }
+
                 let limiterIndex = 0;
                 for (const ohlcEl of ohlcDesc) {
                     await this.mysqlCon.storeCoinOHLC(coinId, ohlcEl);
@@ -303,6 +353,23 @@ class MainLogic {
                 this.processLocks.unlock("OHLC");
             })
             .catch((err) => console.error(err));
+    }
+
+    calculateOHLCTrends(ohlcArr) {
+        /* Here we calculate the trends for each value of the OHLC then add them to our ohlcEl array */
+
+        let closeArr = ohlcArr.map((el) => {
+            // Close value in array
+            return el[4];
+        });
+
+        const close_t1to3 = calculateGraphGradients(
+            closeArr.slice(0, 4).reverse()
+        );
+
+        console.log("CLOSE TRENDS: ");
+        console.log(closeArr.slice(0, 4).reverse());
+        console.log(close_t1to3);
     }
 
     async setupRSIProcessingQueue() {
