@@ -1,3 +1,6 @@
+const { TREND_SHAPE } = require('../coin-bot/constants');
+const { calculateTrendShape } = require('./trend');
+
 function calculateGraphGradients(pointArr) {
     if (pointArr.length <= 1) {
         return null;
@@ -5,6 +8,7 @@ function calculateGraphGradients(pointArr) {
 
     let gradientArr = [];
     let trendArr = [];
+    let shape = TREND_SHAPE.FLAT;
 
     pointArr.forEach((currPt, index) => {
         if (index > 0) {
@@ -25,23 +29,25 @@ function calculateGraphGradients(pointArr) {
         }
     });
 
+    shape = calculateTrendShape(trendArr);
+
     /*
     TO-DO:
     Once we've calulated all the normalised gradients, we should perhaps create a second array with 3 values that indicates from constant whether sloping up, sloping down, or sideways/straight horizontal. Or perhaps a grouping function? Perhaps create a helped function elsewhere?
     */
-    return [gradientArr, trendArr];
+    return [gradientArr, trendArr, shape];
 }
 
 function calculateGradientValues(gradient1, gradient2, trendArr) {
     if (gradient1 > 0 && gradient2 > 0) {
         /* Gradients are too different but still trending up */
-        if (gradient1 + gradient2 > 0.05375) {
+        if ((gradient1 + gradient2) / 2 <= 0.25) {
             // Weakest upward trend
             trendArr.push(0.25);
-        } else if (Math.abs(gradient1 - gradient2) > 0.1705) {
+        } else if ((gradient1 - gradient2) / 2 <= 0.5) {
             // Weakish upward trend
             trendArr.push(0.5);
-        } else if (Math.abs(gradient1 - gradient2) > 0.215) {
+        } else if ((gradient1 - gradient2) / 2 <= 0.75) {
             // Less strong upward trend
             trendArr.push(0.75);
         } else {
@@ -50,13 +56,13 @@ function calculateGradientValues(gradient1, gradient2, trendArr) {
         }
     } else if (gradient1 < 0 && gradient2 < 0) {
         /* Gradients are too different but still trending down */
-        if (Math.abs(gradient1 - gradient2) > 0.05375) {
+        if ((gradient1 + gradient2) / 2 >= -0.25) {
             // Weak downward trend
             trendArr.push(-0.25);
-        } else if (Math.abs(gradient1 - gradient2) > 0.1705) {
+        } else if ((gradient1 + gradient2) / 2 >= -0.5) {
             // Weak downward trend
             trendArr.push(-0.5);
-        } else if (Math.abs(gradient1 - gradient2) > 0.215) {
+        } else if ((gradient1 + gradient2) / 2 >= -0.75) {
             // Weak downward trend
             trendArr.push(-0.75);
         } else {
@@ -70,9 +76,12 @@ function calculateGradientValues(gradient1, gradient2, trendArr) {
     ) {
         // Sideways trend
         trendArr.push(0);
-    } else {
-        // No trend
-        trendArr.push(0);
+    } else if (gradient1 < 0 && gradient2 > 0) {
+        // No trend - probably an upward u-bend shape
+        trendArr.push(Number.MAX_SAFE_INTEGER);
+    } else if (gradient1 > 0 && gradient2 < 0) {
+        // No trend - probably a downward u-bend shape
+        trendArr.push(Number.MIN_SAFE_INTEGER);
     }
 }
 
