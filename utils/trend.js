@@ -64,13 +64,13 @@ function calculateTrendShape(trendArr) {
         }
     } else if ((basicTrendArr[0] + basicTrendArr[1]) / 2.0 >= 0.75) {
         return TREND_SHAPE.SPIKING_UP;
-    } else if ((basicTrendArr[0] + basicTrendArr[1]) / 2.0 >= 0.25) {
+    } else if ((basicTrendArr[0] + basicTrendArr[1]) / 2.0 > 0) {
         return TREND_SHAPE.SLOPING_UP;
     } else if ((basicTrendArr[0] + basicTrendArr[1]) / 2.0 <= -0.85) {
         return TREND_SHAPE.CRASHING;
     } else if ((basicTrendArr[0] + basicTrendArr[1]) / 2.0 <= -0.5) {
         return TREND_SHAPE.DROPPING_DOWN;
-    } else if ((basicTrendArr[0] + basicTrendArr[1]) / 2.0 <= -0.25) {
+    } else if ((basicTrendArr[0] + basicTrendArr[1]) / 2.0 < 0) {
         return TREND_SHAPE.SLOPING_DOWN;
     }
 }

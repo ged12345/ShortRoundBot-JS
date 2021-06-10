@@ -25,21 +25,21 @@ How do we get 10 mins and 1 hour ago?
 
 /* If we're going to return general advice */
 
-const Queuer = require("../utils/queuer.js").Queuer;
-const Queue = require("../utils/queue.js");
-const ProcessLocks = require("../utils/process-locks.js");
-const RSIProcessor = require("../trends-and-signals/RSI-calculations.js");
-const StochasticProcessor = require("../trends-and-signals/Stochastic-calculations.js");
-const BollingerProcessor = require("../trends-and-signals/BollingerBands-calculations.js");
-const GeneralAdviceProcessor = require("../advice-processing/General-advice.js");
-const EMAProcessor = require("../trends-and-signals/EMA-calculations.js");
-const API = require("../utils/api.js");
-const { calculateGraphGradients } = require("../utils/math.js");
-const { rotateArray } = require("../utils/general.js");
-const NETWORK = require("../legacy/config/network-config.js");
+const Queuer = require('../utils/queuer.js').Queuer;
+const Queue = require('../utils/queue.js');
+const ProcessLocks = require('../utils/process-locks.js');
+const RSIProcessor = require('../trends-and-signals/RSI-calculations.js');
+const StochasticProcessor = require('../trends-and-signals/Stochastic-calculations.js');
+const BollingerProcessor = require('../trends-and-signals/BollingerBands-calculations.js');
+const GeneralAdviceProcessor = require('../advice-processing/General-advice.js');
+const EMAProcessor = require('../trends-and-signals/EMA-calculations.js');
+const API = require('../utils/api.js');
+const { calculateGraphGradientsTrendsPerChange } = require('../utils/math.js');
+const { rotateArray } = require('../utils/general.js');
+const NETWORK = require('../legacy/config/network-config.js');
 
-const fs = require("fs");
-const write = require("write");
+const fs = require('fs');
+const write = require('write');
 
 class MainLogic {
     // Need to "lock" bot when new info comes in.
@@ -58,12 +58,12 @@ class MainLogic {
         this.BollingerStoreNum = 21; // 21 time periods
         this.EMAStoreNum = this.graphPeriod;
         this.processLocks = new ProcessLocks([
-            "OHLC",
-            "RSI",
-            "Stochastic",
-            "Bollinger",
-            "EMA",
-            "Advice",
+            'OHLC',
+            'RSI',
+            'Stochastic',
+            'Bollinger',
+            'EMA',
+            'Advice',
         ]);
         //this.state = eventConstants.SEEKING_COIN;
 
@@ -126,7 +126,7 @@ class MainLogic {
 
     async setupKraken() {
         /* Initialise Kraken API */
-        this.kraken = require("kraken-api-wrapper")(
+        this.kraken = require('kraken-api-wrapper')(
             NETWORK.config.apiKey,
             NETWORK.config.privateApiKey
         );
@@ -159,6 +159,15 @@ class MainLogic {
             true,
             true,
             20000 /* Just after the close */
+        );
+
+        this.coinDataAcquisitionQueuer.enqueueQueue(
+            this.OHLCAcquisitionQueue,
+            OHLCFrequency /* We only acquire this info once a minute */,
+            true,
+            true,
+            true,
+            40000 /* Just after the close */
         );
 
         this.RSIProcessingQueue = new Queue();
@@ -316,10 +325,10 @@ class MainLogic {
 
         this.coinConfigArr.forEach((coin) => {
             this.OHLCAcquisitionQueue.enqueue(async () => {
-                this.processLocks.lock("OHLC", coin["id"]);
+                this.processLocks.lock('OHLC', coin['id']);
                 this.getOHLC(
-                    coin["id"],
-                    coin["coin_id_kraken"],
+                    coin['id'],
+                    coin['coin_id_kraken'],
                     this.OHLCStoreNum
                 );
             });
@@ -338,7 +347,7 @@ class MainLogic {
                 let ohlcDesc = result[coinPair].reverse();
 
                 if (coinId == 1) {
-                    this.calculateOHLCTrends(ohlcDesc);
+                    this.calculateOHLCTrends(coinId, ohlcDesc);
                 }
 
                 let limiterIndex = 0;
@@ -350,37 +359,41 @@ class MainLogic {
                 }
                 await this.mysqlCon.cleanupCoinOHLC(coinId, storeNum);
                 /* Unlock ohlc here so we can do calculations on this element - do we need this per coin? */
-                this.processLocks.unlock("OHLC");
+                this.processLocks.unlock('OHLC');
             })
             .catch((err) => console.error(err));
     }
 
-    calculateOHLCTrends(ohlcArr) {
+    calculateOHLCTrends(coinId, ohlcArr) {
         /* Here we calculate the trends for each value of the OHLC then add them to our ohlcEl array */
 
-        let closeArr = ohlcArr.map((el) => {
+        const timestamp = ohlcArr[ohlcArr.length - 1][0];
+
+        const closeArr = ohlcArr.map((el) => {
             // Close value in array
             return el[4];
         });
 
-        const close_t1to3 = calculateGraphGradients(
+        const close_t1to3 = calculateGraphGradientsTrendsPerChange(
             closeArr.slice(0, 4).reverse()
         );
 
-        console.log("CLOSE TRENDS: ");
+        console.log('CLOSE TRENDS: ');
         console.log(closeArr.slice(0, 4).reverse());
         console.log(close_t1to3);
+
+        this.mysqlCon.storeTrends(coinId, timestamp, close_t1to3, 'close');
     }
 
     async setupRSIProcessingQueue() {
         /* We do processing in the same way we did previously, an RSI for each coin. */
 
         this.coinConfigArr.forEach((coin) => {
-            let trend = "RSI";
+            let trend = 'RSI';
             this.RSIProcessingQueue.enqueue(async () => {
-                console.log(`Processing ${trend}: ${coin["coin_id_kraken"]}`);
+                console.log(`Processing ${trend}: ${coin['coin_id_kraken']}`);
 
-                this.processTrendWithLock(this.RSIProcessor, trend, coin["id"]);
+                this.processTrendWithLock(this.RSIProcessor, trend, coin['id']);
             });
         });
     }
@@ -389,14 +402,14 @@ class MainLogic {
         /* We do processing in the same way we did previously, a Stochastic for each coin. */
 
         this.coinConfigArr.forEach((coin) => {
-            let trend = "Stochastic";
+            let trend = 'Stochastic';
             this.StochasticProcessingQueue.enqueue(async () => {
-                console.log(`Processing ${trend}: ${coin["coin_id_kraken"]}`);
+                console.log(`Processing ${trend}: ${coin['coin_id_kraken']}`);
 
                 this.processTrendWithLock(
                     this.StochasticProcessor,
                     trend,
-                    coin["id"]
+                    coin['id']
                 );
             });
         });
@@ -406,14 +419,14 @@ class MainLogic {
         /* We do processing in the same way we did previously, a BollingerBand for each coin. */
 
         this.coinConfigArr.forEach((coin) => {
-            let trend = "Bollinger";
+            let trend = 'Bollinger';
             this.BollingerProcessingQueue.enqueue(async () => {
-                console.log(`Processing ${trend}: ${coin["coin_id_kraken"]}`);
+                console.log(`Processing ${trend}: ${coin['coin_id_kraken']}`);
 
                 this.processTrendWithLock(
                     this.BollingerProcessor,
                     trend,
-                    coin["id"]
+                    coin['id']
                 );
             });
         });
@@ -423,11 +436,11 @@ class MainLogic {
         /* We do processing in the same way we did previously, a BollingerBand for each coin. */
 
         this.coinConfigArr.forEach((coin) => {
-            let trend = "EMA";
+            let trend = 'EMA';
             this.BollingerProcessingQueue.enqueue(async () => {
-                console.log(`Processing ${trend}: ${coin["coin_id_kraken"]}`);
+                console.log(`Processing ${trend}: ${coin['coin_id_kraken']}`);
 
-                this.processTrendWithLock(this.EMAProcessor, trend, coin["id"]);
+                this.processTrendWithLock(this.EMAProcessor, trend, coin['id']);
             });
         });
     }
@@ -438,14 +451,14 @@ class MainLogic {
 
     setupGeneralAdviceQueue() {
         this.coinConfigArr.forEach((coin) => {
-            let trend = "Advice";
+            let trend = 'Advice';
             this.GeneralAdviceQueue.enqueue(async () => {
-                console.log(`Processing ${trend}: ${coin["coin_id_kraken"]}`);
+                console.log(`Processing ${trend}: ${coin['coin_id_kraken']}`);
 
                 this.calculateAdviceWithLock(
                     this.GeneralAdviceProcessor,
                     trend,
-                    coin["id"]
+                    coin['id']
                 );
             });
         });
@@ -453,16 +466,16 @@ class MainLogic {
 
     setupPlotlyGraphingQueue() {
         this.coinConfigArr.forEach((coin) => {
-            let trend = "Plotly";
+            let trend = 'Plotly';
             this.PlotlyGraphingQueue.enqueue(async () => {
-                let coinId = coin["id"];
-                let coinName = coin["coin_name"];
+                let coinId = coin['id'];
+                let coinName = coin['coin_name'];
 
                 /* We only draw this for Bitcoin for now */
                 //if (coinId !== 1) {
                 //    return;
                 //}
-                console.log(`Plotting ${trend}: ${coin["coin_id_kraken"]}`);
+                console.log(`Plotting ${trend}: ${coin['coin_id_kraken']}`);
 
                 let resultsOHLC = await this.mysqlCon.getCoinOHLC(coinId);
 
@@ -503,52 +516,52 @@ class MainLogic {
         }
 
         /* Coin candle indicators */
-        let yOpen = resultsOHLC.map((el) => el["open"]);
-        let yClose = resultsOHLC.map((el) => el["close"]);
-        let yLow = resultsOHLC.map((el) => el["low"]);
-        let yHigh = resultsOHLC.map((el) => el["high"]);
+        let yOpen = resultsOHLC.map((el) => el['open']);
+        let yClose = resultsOHLC.map((el) => el['close']);
+        let yLow = resultsOHLC.map((el) => el['low']);
+        let yHigh = resultsOHLC.map((el) => el['high']);
 
         /* RSI lines */
         let xRSI = resultsOHLC.map((el) => {
             /*let date = new Date(el["date"]);
             date = date.toLocaleDateString("en-AU");
             return `${el["time"]} ${date}`;*/
-            return `${el["time"].split(".")[0]}`;
+            return `${el['time'].split('.')[0]}`;
         });
         /* Need toFixed as value is too precise */
-        let yRSI = resultsRSI.map((el) => Number(el["RSI"]).toFixed(4));
+        let yRSI = resultsRSI.map((el) => Number(el['RSI']).toFixed(4));
 
         let unfilledAmount = xRSI.length - yRSI.length;
         for (var i = 0; i < unfilledAmount; i++) {
-            yRSI.unshift("");
+            yRSI.unshift('');
         }
 
-        let yEMA = resultsEMA.map((el) => Number(el["SMA"]).toFixed(4));
+        let yEMA = resultsEMA.map((el) => Number(el['SMA']).toFixed(4));
         unfilledAmount = xRSI.length - yEMA.length;
         for (var i = 0; i < unfilledAmount; i++) {
-            yEMA.unshift("");
+            yEMA.unshift('');
         }
 
         /* Stochastic kFast and dSlow */
-        let ykFastStochastic = resultsStochastics.map((el) => el["k_fast"]);
-        let ydSlowStochastic = resultsStochastics.map((el) => el["d_slow"]);
+        let ykFastStochastic = resultsStochastics.map((el) => el['k_fast']);
+        let ydSlowStochastic = resultsStochastics.map((el) => el['d_slow']);
 
         /* Stochastic kFull and dFull */
-        let ykFullStochastic = resultsStochastics.map((el) => el["k_full"]);
-        let ydFullStochastic = resultsStochastics.map((el) => el["d_full"]);
+        let ykFullStochastic = resultsStochastics.map((el) => el['k_full']);
+        let ydFullStochastic = resultsStochastics.map((el) => el['d_full']);
 
         /* We let the size of the RSI drive how many xaxis entries we have */
         unfilledAmount = xRSI.length - ykFastStochastic.length;
         for (var i = 0; i < unfilledAmount; i++) {
-            ykFastStochastic.unshift("");
-            ydSlowStochastic.unshift("");
-            ykFullStochastic.unshift("");
-            ydFullStochastic.unshift("");
+            ykFastStochastic.unshift('');
+            ydSlowStochastic.unshift('');
+            ykFullStochastic.unshift('');
+            ydFullStochastic.unshift('');
         }
 
-        let y1Bollinger = resultsBollingerBands.map((el) => el["bol_ma"]);
-        let y2Bollinger = resultsBollingerBands.map((el) => el["bol_u"]);
-        let y3Bollinger = resultsBollingerBands.map((el) => el["bol_d"]);
+        let y1Bollinger = resultsBollingerBands.map((el) => el['bol_ma']);
+        let y2Bollinger = resultsBollingerBands.map((el) => el['bol_u']);
+        let y3Bollinger = resultsBollingerBands.map((el) => el['bol_d']);
 
         let highestYOHLC = yHigh.reduce((a, b) => Math.max(a, b));
         let lowestYOHLC = yLow.reduce((a, b) => Math.min(a, b));
@@ -580,171 +593,171 @@ class MainLogic {
         unfilledAmount = xRSI.length - y1Bollinger.length;
 
         for (var i = 0; i < unfilledAmount; i++) {
-            y1Bollinger.unshift("");
-            y2Bollinger.unshift("");
-            y3Bollinger.unshift("");
+            y1Bollinger.unshift('');
+            y2Bollinger.unshift('');
+            y3Bollinger.unshift('');
         }
 
         /* Open template file */
         fs.readFile(
-            "../plots/template/plotGenerator.html",
-            "utf8",
+            '../plots/template/plotGenerator.html',
+            'utf8',
             function (err, data) {
                 let plotString = data;
                 plotString = plotString.replace(/%coin_name%/g, `${coinName}`);
 
                 plotString = plotString.replace(
-                    "%ohlc_x_range_start%",
+                    '%ohlc_x_range_start%',
                     `${xRSI[0]}`
                 );
 
                 plotString = plotString.replace(
-                    "%ohlc_x_range_end%",
+                    '%ohlc_x_range_end%',
                     `${xRSI[xRSI.length - 1]}`
                 );
 
                 plotString = plotString.replace(
-                    "%ohlc_y_range_start%",
+                    '%ohlc_y_range_start%',
                     `${lowestCandleY}`
                 );
 
                 plotString = plotString.replace(
-                    "%ohlc_y_range_end%",
+                    '%ohlc_y_range_end%',
                     `${highestCandleY}`
                 );
 
                 let dbDateTimeFormat = xRSI.map((el) => {
-                    let changedFormat = el.replace(/\//g, "-");
+                    let changedFormat = el.replace(/\//g, '-');
                     return `${changedFormat}`;
                     //let splitFormat = changedFormat.split(" ");
                     //return `${splitFormat[1]} ${splitFormat[0]}`;
                 });
 
                 plotString = plotString.replace(
-                    "%ohlc_x%",
+                    '%ohlc_x%',
                     `["${dbDateTimeFormat.join('","')}"]`
                 );
 
                 plotString = plotString.replace(
-                    "%ohlc_low%",
+                    '%ohlc_low%',
                     `["${yLow.join('","')}"]`
                 );
 
                 plotString = plotString.replace(
-                    "%ohlc_high%",
+                    '%ohlc_high%',
                     `["${yHigh.join('","')}"]`
                 );
 
                 plotString = plotString.replace(
-                    "%ohlc_open%",
+                    '%ohlc_open%',
                     `["${yOpen.join('","')}"]`
                 );
 
                 plotString = plotString.replace(
-                    "%ohlc_close%",
+                    '%ohlc_close%',
                     `["${yClose.join('","')}"]`
                 );
 
                 /* Bollinger */
                 plotString = plotString.replace(
-                    "%boll_ma_x1%",
+                    '%boll_ma_x1%',
                     `["${dbDateTimeFormat.join('","')}"]`
                 );
 
                 plotString = plotString.replace(
-                    "%boll_ma_y1%",
+                    '%boll_ma_y1%',
                     `["${y1Bollinger.join('","')}"]`
                 );
 
                 plotString = plotString.replace(
-                    "%boll_u_x1%",
+                    '%boll_u_x1%',
                     `["${dbDateTimeFormat.join('","')}"]`
                 );
 
                 plotString = plotString.replace(
-                    "%boll_u_y1%",
+                    '%boll_u_y1%',
                     `["${y2Bollinger.join('","')}"]`
                 );
 
                 plotString = plotString.replace(
-                    "%boll_l_x1%",
+                    '%boll_l_x1%',
                     `["${dbDateTimeFormat.join('","')}"]`
                 );
 
                 plotString = plotString.replace(
-                    "%boll_l_y1%",
+                    '%boll_l_y1%',
                     `["${y3Bollinger.join('","')}"]`
                 );
 
                 /* EMA */
 
                 plotString = plotString.replace(
-                    "%ema_x1%",
+                    '%ema_x1%',
                     `["${dbDateTimeFormat.join('","')}"]`
                 );
 
                 plotString = plotString.replace(
-                    "%ema_y1%",
+                    '%ema_y1%',
                     `["${yEMA.join('","')}"]`
                 );
 
                 /* RSI */
                 plotString = plotString.replace(
-                    "%rsi_x1%",
+                    '%rsi_x1%',
                     `["${xRSI.join('","')}"]`
                 );
 
                 plotString = plotString.replace(/%rsi_title%/g, `RSI`);
 
                 plotString = plotString.replace(
-                    "%rsi_y1%",
+                    '%rsi_y1%',
                     `["${yRSI.join('","')}"]`
                 );
 
                 //RSI Range
                 // [-2, 105]
-                plotString = plotString.replace("%rsi_y_range_start%", `-2`);
+                plotString = plotString.replace('%rsi_y_range_start%', `-2`);
 
-                plotString = plotString.replace("%rsi_y_range_end%", `105`);
+                plotString = plotString.replace('%rsi_y_range_end%', `105`);
 
                 /* Stochastics */
                 plotString = plotString.replace(
-                    "%sto_fast_x1%",
+                    '%sto_fast_x1%',
                     `["${xRSI.join('","')}"]`
                 );
 
                 plotString = plotString.replace(
-                    "%sto_fast_y1%",
+                    '%sto_fast_y1%',
                     `["${ykFastStochastic.join('","')}"]`
                 );
 
                 plotString = plotString.replace(
-                    "%sto_slow_x2%",
+                    '%sto_slow_x2%',
                     `["${xRSI.join('","')}"]`
                 );
 
                 plotString = plotString.replace(
-                    "%sto_slow_y2%",
+                    '%sto_slow_y2%',
                     `["${ydSlowStochastic.join('","')}"]`
                 );
 
                 plotString = plotString.replace(
-                    "%sto_full_x1%",
+                    '%sto_full_x1%',
                     `["${xRSI.join('","')}"]`
                 );
 
                 plotString = plotString.replace(
-                    "%sto_full_y1%",
+                    '%sto_full_y1%',
                     `["${ykFullStochastic.join('","')}"]`
                 );
 
                 plotString = plotString.replace(
-                    "%sto_full_x2%",
+                    '%sto_full_x2%',
                     `["${xRSI.join('","')}"]`
                 );
 
                 plotString = plotString.replace(
-                    "%sto_full_y2%",
+                    '%sto_full_y2%',
                     `["${ydFullStochastic.join('","')}"]`
                 );
 
@@ -771,7 +784,7 @@ class MainLogic {
     async calculateAdviceWithLock(advisor, trend, coinId) {
         this.processLocks.lock(trend, coinId);
         if (coinId === 1) {
-            console.log("Advice?");
+            console.log('Advice?');
             console.log(await advisor.advise(coinId));
         }
         let unlocked = this.processLocks.awaitLock(trend, coinId);

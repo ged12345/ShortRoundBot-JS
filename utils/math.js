@@ -1,7 +1,7 @@
 const { TREND_SHAPE } = require('../coin-bot/constants');
 const { calculateTrendShape } = require('./trend');
 
-function calculateGraphGradients(pointArr) {
+function calculateGraphGradientsTrendsPerChange(pointArr) {
     if (pointArr.length <= 1) {
         return null;
     }
@@ -29,17 +29,27 @@ function calculateGraphGradients(pointArr) {
         }
     });
 
-    shape = calculateTrendShape(trendArr);
+    currShape = calculateTrendShape(trendArr);
+    perChangeArr = [];
+
+    perChangeArr[0] = ((pointArr[1] - pointArr[0]) / pointArr[0]) * 100;
+    perChangeArr[1] = ((pointArr[2] - pointArr[1]) / pointArr[1]) * 100;
+    perChangeArr[2] = ((pointArr[3] - pointArr[2]) / pointArr[2]) * 100;
 
     /*
     TO-DO:
     Once we've calulated all the normalised gradients, we should perhaps create a second array with 3 values that indicates from constant whether sloping up, sloping down, or sideways/straight horizontal. Or perhaps a grouping function? Perhaps create a helped function elsewhere?
     */
-    return [gradientArr, trendArr, shape];
+    return [gradientArr, trendArr, currShape, perChangeArr];
 }
 
 function calculateGradientValues(gradient1, gradient2, trendArr) {
-    if (gradient1 > 0 && gradient2 > 0) {
+    /* we need to cover flat gradient and then slope too (hence the two additional checks below */
+    if (
+        (gradient1 > 0 && gradient2 > 0) ||
+        (gradient1 === 0 && gradient2 > 0) ||
+        (gradient1 > 0 && gradient2 === 0)
+    ) {
         /* Gradients are too different but still trending up */
         if ((gradient1 + gradient2) / 2 <= 0.25) {
             // Weakest upward trend
@@ -54,7 +64,11 @@ function calculateGradientValues(gradient1, gradient2, trendArr) {
             // Strong upward trend
             trendArr.push(1);
         }
-    } else if (gradient1 < 0 && gradient2 < 0) {
+    } else if (
+        (gradient1 < 0 && gradient2 < 0) ||
+        (gradient1 === 0 && gradient2 < 0) ||
+        (gradient1 < 0 && gradient2 === 0)
+    ) {
         /* Gradients are too different but still trending down */
         if ((gradient1 + gradient2) / 2 >= -0.25) {
             // Weak downward trend
@@ -128,4 +142,7 @@ function calculateSellUrgencyFactor(
     return sellUrgencyFactor;
 }
 
-module.exports = { calculateGraphGradients, calculateSellUrgencyFactor };
+module.exports = {
+    calculateGraphGradientsTrendsPerChange,
+    calculateSellUrgencyFactor,
+};
