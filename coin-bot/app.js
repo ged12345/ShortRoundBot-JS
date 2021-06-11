@@ -1,26 +1,29 @@
-const NETWORK = require("../legacy/config/network-config.js");
+const NETWORK = require('../legacy/config/network-config.js');
 //const coin = require("./coin/main_logic.js");
-const MainLogic = require("./main_logic.js").MainLogic;
-const queue = require("../utils/queue.js");
+const MainLogic = require('./main_logic.js').MainLogic;
+const queue = require('../utils/queue.js');
 const {
     generateRandomToken,
     encryptCodeOut,
     encrypt512,
-} = require("../utils/general.js");
-const logger = require("../utils/logger.js").logger;
-const MysqlCon = require("../utils/mysql2.js").Mysql;
+} = require('../utils/general.js');
+const logger = require('../utils/logger.js').logger;
+const MysqlCon = require('../utils/mysql2.js').Mysql;
 
-const express = require("express");
+const express = require('express');
 const app = express();
 
-const bodyParser = require("body-parser");
+const bodyParser = require('body-parser');
 app.use(bodyParser.json()); // support json encoded bodies
 app.use(bodyParser.urlencoded({ extended: true })); // support encoded bodies
 
 const mysql = new MysqlCon();
 
+const exchangeName = 'kraken';
+//const exchangeName = 'binance';
+
 /* Initialise Kraken API */
-const kraken = require("kraken-api-wrapper")(
+const kraken = require('kraken-api-wrapper')(
     NETWORK.config.apiKey,
     NETWORK.config.privateApiKey
 );
@@ -31,10 +34,10 @@ const checkDebug = (argv, logger) => {
     // Check for command-line arguments
     if (argv.length > 3) {
         let debug = false;
-        let debugSplitArr = argv[2].split("=");
+        let debugSplitArr = argv[2].split('=');
 
-        if (debugSplitArr[0].toLowerCase() === "debug") {
-            debug = debugSplitArr[1] === "true";
+        if (debugSplitArr[0].toLowerCase() === 'debug') {
+            debug = debugSplitArr[1] === 'true';
         }
         /* Turn off console.log */
         if (debug === false) {
@@ -99,10 +102,10 @@ async function init() {
 
 /* REST API Endpoints */
 app.listen(1408, () => {
-    console.log("Server running on port 1408");
+    console.log('Server running on port 1408');
 });
 
-app.get("/api/advice", async (req, res, next) => {
+app.get('/api/advice', async (req, res, next) => {
     // Here we return a json array of coins, probabilities, stance, and advice.
     let code = req.query.code;
     let name = req.query.name;
@@ -128,7 +131,11 @@ app.get("/api/advice", async (req, res, next) => {
             let adviceArr = await mysql.getCoinAdvice(el.id);
             // If we found advice for the array
             if (adviceArr) {
-                resolve([el.coin_name, adviceArr]);
+                resolve([
+                    el.coin_name,
+                    el[`coin_id_${exchangeName}`],
+                    adviceArr,
+                ]);
             } else {
                 resolve();
             }
@@ -149,7 +156,7 @@ app.get("/api/advice", async (req, res, next) => {
     });
 });
 
-app.get("/api/locked_advice", (req, res, next) => {
+app.get('/api/locked_advice', (req, res, next) => {
     let botId = req.query.botId;
     let token = req.query.token;
 
@@ -165,18 +172,18 @@ app.get("/api/locked_advice", (req, res, next) => {
     });
 });
 
-app.get("/api/num_assigned_bots", async (req, res, next) => {
+app.get('/api/num_assigned_bots', async (req, res, next) => {
     let code = req.query.code;
     /* Here we unassign the bot */
     let numAssignedBots = await mysql.getNumberOfBots();
 
     res.json({
-        numOfBots: numAssignedBots["count"],
+        numOfBots: numAssignedBots['count'],
         response: 200,
     });
 });
 
-app.post("/api/assign_bot", async (req, res, next) => {
+app.post('/api/assign_bot', async (req, res, next) => {
     /* Here we find a bot that hasn't been assigned, and supply the id, api config, and fees */
     let code = req.body.code;
     let name = req.body.name;
@@ -219,7 +226,7 @@ app.post("/api/assign_bot", async (req, res, next) => {
     console.log(`Status: Bot ${name} successfully authenticated and assigned.`);
 });
 
-app.post("/api/unassign_bot", async (req, res, next) => {
+app.post('/api/unassign_bot', async (req, res, next) => {
     let botId = req.body.botId;
     /* Here we unassign the bot */
     await mysql.unassignBot(botId);
@@ -229,7 +236,7 @@ app.post("/api/unassign_bot", async (req, res, next) => {
     });
 });
 
-app.post("/api/lock_bot", async (req, res, next) => {
+app.post('/api/lock_bot', async (req, res, next) => {
     let botId = req.body.botId;
     let coinId = req.body.coinId;
     let tradeBotToken = generateRandomToken();
@@ -250,14 +257,14 @@ app.post("/api/lock_bot", async (req, res, next) => {
         });
     } else {
         res.json({
-            token: "",
+            token: '',
             // Conflict, already exists
             response: 409,
         });
     }
 });
 
-app.post("/api/release_bot", async (req, res, next) => {
+app.post('/api/release_bot', async (req, res, next) => {
     let botId = req.body.botId;
     let token = req.body.token;
 
@@ -280,4 +287,28 @@ app.post("/api/release_bot", async (req, res, next) => {
             response: 410,
         });
     }
+});
+
+app.get('/api/get_bot_info', async (req, res, next) => {
+    let botId = req.query.botId;
+    let botInfo = await mysql.getBotInformation(botId);
+
+    res.json({
+        botInfo: botInfo,
+        response: 200,
+    });
+});
+
+app.post('/api/set_bot_info', async (req, res, next) => {
+    let botId = req.body.botId;
+    let botInfo = req.body.botInfo;
+
+    if (botId === undefined || botInfo === undefined) {
+        res.json({
+            response: 400,
+        });
+        return;
+    }
+
+    mysql.storeBotInformation(botId, botInfo);
 });

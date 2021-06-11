@@ -122,6 +122,7 @@ class MainLogic {
         await this.mysqlCon.emptyProcessStochastic();
         await this.mysqlCon.emptyProcessBollinger();
         await this.mysqlCon.emptyProcessEMA();
+        await this.mysqlCon.emptyTrends();
     }
 
     async setupKraken() {
@@ -367,7 +368,7 @@ class MainLogic {
     calculateOHLCTrends(coinId, ohlcArr) {
         /* Here we calculate the trends for each value of the OHLC then add them to our ohlcEl array */
 
-        const timestamp = ohlcArr[ohlcArr.length - 1][0];
+        const timestamp = ohlcArr[0][0];
 
         const closeArr = ohlcArr.map((el) => {
             // Close value in array
@@ -771,7 +772,8 @@ class MainLogic {
     /* Generic processor lock and then wait for function to finish to unlock */
     async processTrendWithLock(processor, trend, coinId) {
         this.processLocks.lock(trend, coinId);
-        processor.calculate(coinId);
+        await processor.calculate(coinId);
+        await processor.findTrends(coinId);
         let unlocked = this.processLocks.awaitLock(trend, coinId);
 
         if (unlocked === false) {

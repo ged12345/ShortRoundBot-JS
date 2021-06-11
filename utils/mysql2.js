@@ -19,6 +19,23 @@ class Mysql {
         });*/
     }
 
+    async getBotInformation(coinId) {
+        const [rsows, fields] = await this.connection.query(
+            `SELECT * FROM bot WHERE coin_id = '${coinId}'`
+        );
+
+        //console.log("Data received from Db:");
+        //console.log(rows[0]);
+
+        return rows[0];
+    }
+
+    async storeBotInformation(botId, results) {
+        const [rows, fields] = await this.connection.query(
+            `UPDATE bot SET float_usd=${results['floatUSD']},current_account_total_usd=${results['currentAccountTotalUSD']}, status=${results['status']}, goal_price=${results['goalPrice']}, goal_txid=${results['goalTXID']}, stop_loss_price=${results['stopLossPrice']}, stop_loss_txid=${results['stopLossTXID']} WHERE bot_id=${botId}`
+        );
+    }
+
     async getNumberOfBots() {
         const [rows, fields] = await this.connection.query(
             `SELECT COUNT(*) as count FROM bot WHERE assigned = 1`
@@ -544,6 +561,12 @@ class Mysql {
                         LIMIT 20,60
                     ) a
             )`
+        );
+    }
+
+    async emptyTrends() {
+        const [rows, fields] = await this.connection.query(
+            'TRUNCATE TABLE coin_trends'
         );
     }
 }

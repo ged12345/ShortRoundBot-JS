@@ -23,7 +23,8 @@ Note: We need to keep BOLU, BOLD, *and* the MA(TP,n), which is the middle of the
 https://www.investopedia.com/terms/b/bollingerbands.asp
 */
 
-const util = require("util");
+const util = require('util');
+const { calculateGraphGradientsTrendsPerChange } = require('../utils/math.js');
 class BollingerBandsCalculations {
     constructor(mysqlCon, storeNum, totalRecordsNum, unlockKey) {
         this.mysqlCon = mysqlCon;
@@ -39,7 +40,7 @@ class BollingerBandsCalculations {
             this.totalRecordsNum
         );
         /* Unlock the coin for processing */
-        this.unlockKey("Bollinger");
+        this.unlockKey('Bollinger');
     }
 
     async calculate(coinId) {
@@ -64,7 +65,7 @@ class BollingerBandsCalculations {
             if (meanIndex < startMeanIndex) {
                 meanIndex++;
             } else {
-                mean += Number(el["close"]);
+                mean += Number(el['close']);
             }
         });
 
@@ -81,12 +82,12 @@ class BollingerBandsCalculations {
                 maAndSDIndex++;
             } else {
                 MA +=
-                    (Number(el["low"]) +
-                        Number(el["high"]) +
-                        Number(el["close"])) /
+                    (Number(el['low']) +
+                        Number(el['high']) +
+                        Number(el['close'])) /
                     3.0;
 
-                SD += (Number(el["close"]) - mean) ** 2;
+                SD += (Number(el['close']) - mean) ** 2;
                 // (sqrt(((xi - mean) * (xi - mean)))
             }
         });
@@ -96,10 +97,10 @@ class BollingerBandsCalculations {
 
         let lastElOHLC = resultsOHLC[resultsOHLC.length - 1];
 
-        let close = Number(lastElOHLC["close"]);
+        let close = Number(lastElOHLC['close']);
 
         let currBollinger = {
-            timestamp: lastElOHLC["timestamp"],
+            timestamp: lastElOHLC['timestamp'],
             close: close,
             mean: mean,
             SD: SD,
@@ -110,12 +111,12 @@ class BollingerBandsCalculations {
             perB: null,
         };
 
-        currBollinger["bWidth"] =
-            ((currBollinger["bolU"] - currBollinger["bolD"]) / MA) * 100;
+        currBollinger['bWidth'] =
+            ((currBollinger['bolU'] - currBollinger['bolD']) / MA) * 100;
 
-        currBollinger["perB"] =
-            ((close - currBollinger["bolD"]) /
-                (currBollinger["bolU"] - currBollinger["bolD"])) *
+        currBollinger['perB'] =
+            ((close - currBollinger['bolD']) /
+                (currBollinger['bolU'] - currBollinger['bolD'])) *
             100;
 
         /* Add this to mysql and then cleanup*/
@@ -124,12 +125,12 @@ class BollingerBandsCalculations {
 
         let squeeze = 0;
         let expansion = 0;
-        let bandWidth = Number(currBollinger["bWidth"]);
+        let bandWidth = Number(currBollinger['bWidth']);
 
         if (resultsHistoricBoll.length > 0) {
             //console.log(resultsHistoricBoll);
-            squeeze = Number(resultsHistoricBoll[0]["historic_squeeze"]);
-            expansion = Number(resultsHistoricBoll[0]["historic_expansion"]);
+            squeeze = Number(resultsHistoricBoll[0]['historic_squeeze']);
+            expansion = Number(resultsHistoricBoll[0]['historic_expansion']);
 
             /* Getting the average of the previous historic high/low and the current means that anomalies are smoothed out? */
             // Bandwidth is mutiplied by 100, and the values seem to swing between 0-5
@@ -153,7 +154,7 @@ class BollingerBandsCalculations {
         }
 
         let currHistBollinger = {
-            timestamp: lastElOHLC["timestamp"],
+            timestamp: lastElOHLC['timestamp'],
             close: close,
             b_hist_squeeze: squeeze,
             b_hist_expansion: expansion,
@@ -161,6 +162,31 @@ class BollingerBandsCalculations {
 
         //console.log(currHistBollinger);
         await this.mysqlCon.storeHistoricBollinger(coinId, currHistBollinger);
+    }
+
+    async findTrends(coinId) {
+        let resultsHistoricBoll = await this.mysqlCon.getHistoricBollinger(
+            coinId
+        );
+
+        if (resultsHistoricBoll.length < 4) {
+            return;
+        }
+
+        let perbArr = resultsHistoricBoll.map((el) => {
+            return el.per_b;
+        });
+
+        let timestamp =
+            resultsHistoricBoll[resultsHistoricBoll.length - 1]['timestamp'];
+
+        console.log('PerB: ' + perbArr.reverse().slice(0, 4));
+
+        const perb_t1to3 = calculateGraphGradientsTrendsPerChange(
+            perbArr.reverse().slice(0, 4)
+        );
+
+        this.mysqlCon.storeTrends(coinId, timestamp, perb_t1to3, 'PerB');
     }
 }
 

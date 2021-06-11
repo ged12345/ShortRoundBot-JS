@@ -32,9 +32,19 @@ function calculateGraphGradientsTrendsPerChange(pointArr) {
     currShape = calculateTrendShape(trendArr);
     perChangeArr = [];
 
-    perChangeArr[0] = ((pointArr[1] - pointArr[0]) / pointArr[0]) * 100;
-    perChangeArr[1] = ((pointArr[2] - pointArr[1]) / pointArr[1]) * 100;
-    perChangeArr[2] = ((pointArr[3] - pointArr[2]) / pointArr[2]) * 100;
+    /* Percentage change between each point in the PointArr */
+    perChangeArr[0] =
+        Number(pointArr[0]) !== Number(0.0)
+            ? ((pointArr[1] - pointArr[0]) / pointArr[0]) * 100
+            : 0;
+    perChangeArr[1] =
+        Number(pointArr[1]) !== Number(0.0)
+            ? ((pointArr[2] - pointArr[1]) / pointArr[1]) * 100
+            : 0;
+    perChangeArr[2] =
+        Number(pointArr[2]) !== Number(0.0)
+            ? ((pointArr[3] - pointArr[2]) / pointArr[2]) * 100
+            : 0;
 
     /*
     TO-DO:

@@ -1,4 +1,4 @@
-const networkCalls = require("./network-calls.js");
+const networkCalls = require('./network-calls.js');
 
 /* Move all the api calls into this one location */
 /* Trade Bot API */
@@ -50,7 +50,7 @@ const getLockedAdvice = async (botId, token, cb) => {
 
 const numAssignedBots = async (code, cb) => {
     networkCalls
-        .apiGet("http://localhost:1408/api/num_assigned_bots", {
+        .apiGet('http://localhost:1408/api/num_assigned_bots', {
             code: code,
         })
         .then((res) => {
@@ -61,7 +61,7 @@ const numAssignedBots = async (code, cb) => {
 
 const assignBot = async (code, name, cb) => {
     networkCalls
-        .apiPost("http://localhost:1408/api/assign_bot", {
+        .apiPost('http://localhost:1408/api/assign_bot', {
             code: code,
             name: name,
         })
@@ -82,6 +82,27 @@ const unassignBot = async (botId, cb) => {
         });
 };
 
+const getBotInfo = async (botId, cb) => {
+    networkCalls
+        .apiGet(`http://localhost:1408/api/get_bot_info?botId=${botId}`)
+        .then((res) => {
+            //console.log(res);
+            cb(true);
+        });
+};
+
+const setBotInfo = async (botId, botInfo, cb) => {
+    networkCalls
+        .apiPost(`http://localhost:1408/api/unassign_bot`, {
+            botId: botId,
+            botInfo: botInfo,
+        })
+        .then((res) => {
+            //console.log(res);
+            cb(true);
+        });
+};
+
 module.exports = {
     lockBot,
     releaseBot,
@@ -90,4 +111,6 @@ module.exports = {
     numAssignedBots,
     assignBot,
     unassignBot,
+    getBotInfo,
+    setBotInfo,
 };

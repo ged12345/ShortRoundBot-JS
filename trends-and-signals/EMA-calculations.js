@@ -1,7 +1,7 @@
 /*
  */
-const util = require("util");
-const { calculateGraphGradients } = require("../utils/math.js");
+const util = require('util');
+const { calculateGraphGradientsTrendsPerChange } = require('../utils/math.js');
 class EMACalculations {
     constructor(mysqlCon, storeNum, totalRecordsNum, unlockKey) {
         this.mysqlCon = mysqlCon;
@@ -14,7 +14,7 @@ class EMACalculations {
         /* Cleanup the processed RSI and limit */
         await this.mysqlCon.cleanupProcessedEMA(coinId, this.totalRecordsNum);
         /* Unlock the coin for processing */
-        this.unlockKey("EMA");
+        this.unlockKey('EMA');
     }
 
     async calculate(coinId) {
@@ -30,6 +30,28 @@ class EMACalculations {
         this.cleanup(coinId);
     }
 
+    async findTrends(coinId) {
+        let resultsEMA = await this.mysqlCon.getProcessedEMA(coinId);
+
+        if (resultsEMA.length < 4) {
+            return;
+        }
+
+        let EMAArr = resultsEMA.map((el) => {
+            return el.EMA;
+        });
+
+        let timestamp = resultsEMA[resultsEMA.length - 1]['timestamp'];
+
+        console.log('EMA: ' + EMAArr.reverse().slice(0, 4));
+
+        const ema_t1to3 = calculateGraphGradientsTrendsPerChange(
+            EMAArr.reverse().slice(0, 4)
+        );
+
+        this.mysqlCon.storeTrends(coinId, timestamp, ema_t1to3, 'EMA');
+    }
+
     async firstEMACalculation(coinId) {
         let resultsOHLC = await this.mysqlCon.getCoinOHLC(coinId);
 
@@ -43,25 +65,25 @@ class EMACalculations {
 
         resultsOHLC.forEach((el, index) => {
             if (index < this.totalRecordsNum - 1) {
-                totalClose += Number(el["close"]);
+                totalClose += Number(el['close']);
             }
         });
 
         let lastElOHLC = resultsOHLC[resultsOHLC.length - 1];
-        let close = Number(lastElOHLC["close"]);
+        let close = Number(lastElOHLC['close']);
 
         let SMA = totalClose / this.EMAStoreNum;
         //let multiplier = 2 / (this.EMAStoreNum + 1);
         //let EMA = close * multiplier + SMA * (1 - multiplier);
 
         let currEMA = {
-            timestamp: lastElOHLC["timestamp"],
+            timestamp: lastElOHLC['timestamp'],
             close: close,
             SMA: SMA,
             EMA: 0,
-            trend: "NULL",
+            trend: 'NULL',
             trend_weighting:
-                "NULL" /* Like a momentum indicator - how long have we been trending for? */,
+                'NULL' /* Like a momentum indicator - how long have we been trending for? */,
         };
 
         /* Add this to mysql and then cleanup*/
@@ -84,26 +106,26 @@ class EMACalculations {
 
         resultsOHLC.forEach((el, index) => {
             if (index < this.totalRecordsNum) {
-                totalClose += Number(el["close"]);
+                totalClose += Number(el['close']);
             }
         });
 
         let lastElOHLC = resultsOHLC[resultsOHLC.length - 1];
         let prevElSMA = resultsEMA[resultsEMA.length - 1];
-        let close = Number(lastElOHLC["close"]);
+        let close = Number(lastElOHLC['close']);
         let SMA = totalClose / this.EMAStoreNum;
 
         let multiplier = 2 / (this.EMAStoreNum + 1);
         let EMA = 0;
 
         if (resultsEMA.length === 1) {
-            EMA = close * multiplier + prevElSMA["SMA"] * (1 - multiplier);
+            EMA = close * multiplier + prevElSMA['SMA'] * (1 - multiplier);
         } else {
-            EMA = close * multiplier + prevElSMA["EMA"] * (1 - multiplier);
+            EMA = close * multiplier + prevElSMA['EMA'] * (1 - multiplier);
         }
 
         let arrEMA = resultsEMA.map((el) => {
-            return el["EMA"];
+            return el['EMA'];
         });
         arrEMA.push(EMA);
 
@@ -117,7 +139,7 @@ class EMACalculations {
         }*/
 
         let currEMA = {
-            timestamp: lastElOHLC["timestamp"],
+            timestamp: lastElOHLC['timestamp'],
             close: close,
             SMA: SMA,
             EMA: EMA,

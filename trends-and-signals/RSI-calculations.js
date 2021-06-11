@@ -24,9 +24,10 @@ Result should be locked between 0 and 100.
 https://tradingsim.com/blog/relative-strength-index/
 */
 
-const util = require("util");
-const sleep = require("../utils/general.js").sleep;
-const Decimal = require("decimal.js");
+const util = require('util');
+const sleep = require('../utils/general.js').sleep;
+const { calculateGraphGradientsTrendsPerChange } = require('../utils/math.js');
+const Decimal = require('decimal.js');
 
 class RSICalculations {
     constructor(mysqlCon, storeNum, totalRecordsNum, unlockKey) {
@@ -64,7 +65,7 @@ class RSICalculations {
         /* Cleanup the processed RSI and limit */
         await this.mysqlCon.cleanupProcessedRSI(coinId, this.totalRecordsNum);
         /* Unlock the coin for processing */
-        this.unlockKey("RSI");
+        this.unlockKey('RSI');
     }
 
     async firstRSICalculation(coinId) {
@@ -83,8 +84,8 @@ class RSICalculations {
             /* Fix this check and make it make more sense */
             if (offsetIndexOHLC < this.RSIStoreNum - 1) {
                 arrRSI.push({
-                    timestamp: el["timestamp"],
-                    close: Number(el["close"]),
+                    timestamp: el['timestamp'],
+                    close: Number(el['close']),
                     lossOrGain: 0,
                     aveGain: 0,
                     aveLoss: 0,
@@ -96,14 +97,14 @@ class RSICalculations {
                     // If we're at the correct first 14 elements, we don't calculate change for the first entry, but the next 13.
                     // Calculate the change for the first 14, and on the 15th, we calculate the aveLoss and aveGain
                     let prevElRSIClose = new Decimal(
-                        arrRSI[offsetIndexOHLC - 1]["close"]
+                        arrRSI[offsetIndexOHLC - 1]['close']
                     );
                     let currElRSIClose = new Decimal(
-                        arrRSI[offsetIndexOHLC]["close"]
+                        arrRSI[offsetIndexOHLC]['close']
                     );
-                    arrRSI[offsetIndexOHLC]["lossOrGain"] =
+                    arrRSI[offsetIndexOHLC]['lossOrGain'] =
                         currElRSIClose.minus(prevElRSIClose);
-                    let lossOrGain = arrRSI[offsetIndexOHLC]["lossOrGain"];
+                    let lossOrGain = arrRSI[offsetIndexOHLC]['lossOrGain'];
 
                     if (lossOrGain > 0) {
                         aveGain = new Decimal(aveGain).plus(lossOrGain);
@@ -113,23 +114,23 @@ class RSICalculations {
 
                     /* 14th entry, so we calculate aveGain, aveLoss, RS, and RSI */
                     if (offsetIndexOHLC === this.RSIStoreNum - 2) {
-                        arrRSI[offsetIndexOHLC]["aveGain"] = new Decimal(
+                        arrRSI[offsetIndexOHLC]['aveGain'] = new Decimal(
                             aveGain
                         ).dividedBy(14.0);
-                        arrRSI[offsetIndexOHLC]["aveLoss"] = new Decimal(
+                        arrRSI[offsetIndexOHLC]['aveLoss'] = new Decimal(
                             aveLoss
                         ).dividedBy(14.0);
 
-                        if (arrRSI[offsetIndexOHLC]["aveLoss"] === 0) {
-                            arrRSI[offsetIndexOHLC]["RSI"] = new Decimal(100);
-                        } else if (arrRSI[offsetIndexOHLC]["aveGain"] === 0) {
-                            arrRSI[offsetIndexOHLC]["RSI"] = new Decimal(0);
+                        if (arrRSI[offsetIndexOHLC]['aveLoss'] === 0) {
+                            arrRSI[offsetIndexOHLC]['RSI'] = new Decimal(100);
+                        } else if (arrRSI[offsetIndexOHLC]['aveGain'] === 0) {
+                            arrRSI[offsetIndexOHLC]['RSI'] = new Decimal(0);
                         } else {
-                            arrRSI[offsetIndexOHLC]["RS"] = new Decimal(
+                            arrRSI[offsetIndexOHLC]['RS'] = new Decimal(
                                 aveGain
                             ).dividedBy(aveLoss);
-                            let RS = arrRSI[offsetIndexOHLC]["RS"];
-                            arrRSI[offsetIndexOHLC]["RSI"] = new Decimal(
+                            let RS = arrRSI[offsetIndexOHLC]['RS'];
+                            arrRSI[offsetIndexOHLC]['RSI'] = new Decimal(
                                 100
                             ).minus(new Decimal(100).dividedBy(RS.plus(1)));
                         }
@@ -198,28 +199,28 @@ class RSICalculations {
             let elLastOHLC = resultsOHLC[currIndex];
 
             if (
-                Number(lastResult["timestamp"]) ===
-                Number(elLastOHLC["timestamp"])
+                Number(lastResult['timestamp']) ===
+                Number(elLastOHLC['timestamp'])
             ) {
                 /*console.log("Second run through.");*/
             } else if (
-                Number(lastResult["timestamp"]) + 60 !==
-                Number(elLastOHLC["timestamp"])
+                Number(lastResult['timestamp']) + 60 !==
+                Number(elLastOHLC['timestamp'])
             ) {
-                console.log("DISCREPANCY1");
+                console.log('DISCREPANCY1');
 
                 console.log(lastResult);
                 console.log(elLastOHLC);
                 console.log(coinId);
                 console.log(currIndex);
-                console.log(elLastOHLC["close"] - lastResult["close"]);
+                console.log(elLastOHLC['close'] - lastResult['close']);
             }
 
             let currRSI = {
-                timestamp: elLastOHLC["timestamp"],
-                close: Number(elLastOHLC["close"]),
-                lossOrGain: new Decimal(elLastOHLC["close"]).minus(
-                    lastResult["close"]
+                timestamp: elLastOHLC['timestamp'],
+                close: Number(elLastOHLC['close']),
+                lossOrGain: new Decimal(elLastOHLC['close']).minus(
+                    lastResult['close']
                 ),
                 aveGain: 0,
                 aveLoss: 0,
@@ -231,19 +232,19 @@ class RSICalculations {
             // Average Loss = [(previous Average Loss) x 13 + current Loss] / 14.
 
             let gain =
-                currRSI["lossOrGain"] > 0
-                    ? new Decimal(currRSI["lossOrGain"])
+                currRSI['lossOrGain'] > 0
+                    ? new Decimal(currRSI['lossOrGain'])
                     : 0;
             let loss =
-                currRSI["lossOrGain"] < 0
-                    ? new Decimal(-currRSI["lossOrGain"])
+                currRSI['lossOrGain'] < 0
+                    ? new Decimal(-currRSI['lossOrGain'])
                     : 0;
 
-            currRSI["aveGain"] = new Decimal(lastResult["ave_gain"])
+            currRSI['aveGain'] = new Decimal(lastResult['ave_gain'])
                 .times(13)
                 .plus(gain)
                 .dividedBy(14.0);
-            currRSI["aveLoss"] = new Decimal(lastResult["ave_loss"])
+            currRSI['aveLoss'] = new Decimal(lastResult['ave_loss'])
                 .times(13)
                 .plus(loss)
                 .dividedBy(14.0);
@@ -256,16 +257,16 @@ class RSICalculations {
                 currRSI["aveLoss"] = 0;
             }*/
 
-            if (currRSI["aveLoss"] === 0) {
-                currRSI["RSI"] = new Decimal(100);
-            } else if (currRSI["aveGain"] === 0) {
-                currRSI["RSI"] = new Decimal(0);
+            if (currRSI['aveLoss'] === 0) {
+                currRSI['RSI'] = new Decimal(100);
+            } else if (currRSI['aveGain'] === 0) {
+                currRSI['RSI'] = new Decimal(0);
             } else {
-                currRSI["RS"] = new Decimal(currRSI["aveGain"]).dividedBy(
-                    currRSI["aveLoss"]
+                currRSI['RS'] = new Decimal(currRSI['aveGain']).dividedBy(
+                    currRSI['aveLoss']
                 );
-                let RS = currRSI["RS"];
-                currRSI["RSI"] = new Decimal(100).minus(
+                let RS = currRSI['RS'];
+                currRSI['RSI'] = new Decimal(100).minus(
                     new Decimal(100).dividedBy(RS.plus(1))
                 );
             }
@@ -273,6 +274,30 @@ class RSICalculations {
             await this.mysqlCon.storeProcessedRSI(coinId, currRSI);
             resolve();
         });
+    }
+
+    async findTrends(coinId) {
+        let resultsRSI = await this.mysqlCon.getProcessedRSI(coinId);
+
+        if (
+            resultsRSI.length < 4 &&
+            Number(resultsRSI[resultsRSI.length - 1 - 4]) === Number(0.0)
+        ) {
+            return;
+        }
+
+        let RSIArr = resultsRSI.map((el) => {
+            return el.RSI;
+        });
+
+        let timestamp = resultsRSI[resultsRSI.length - 1]['timestamp'];
+
+        const rsi_t1to3 = calculateGraphGradientsTrendsPerChange(
+            RSIArr.reverse().slice(0, 4)
+        );
+
+        console.log(rsi_t1to3);
+        this.mysqlCon.storeTrends(coinId, timestamp, rsi_t1to3, 'RSI');
     }
 }
 
