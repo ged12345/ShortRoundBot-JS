@@ -152,7 +152,12 @@ function calculateSellUrgencyFactor(
     return sellUrgencyFactor;
 }
 
+function getRandomInt(max) {
+    return Math.floor(Math.random() * max);
+}
+
 module.exports = {
     calculateGraphGradientsTrendsPerChange,
     calculateSellUrgencyFactor,
+    getRandomInt,
 };

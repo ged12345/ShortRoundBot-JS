@@ -1,11 +1,15 @@
 const Queuer = require('../utils/queuer.js').Queuer;
 const Queue = require('../utils/queue.js');
 const API = require('../utils/api.js');
-const { encryptCodeIn, encrypt512 } = require('../utils/general.js');
+const { encryptCodeIn, decryptAES } = require('../utils/general.js');
 const eventConstants = require('./constants.js').BOT_EVENT;
+const coinAdviceConstants = require('../coin-bot/constants.js').COIN_ADVICE;
 const code = require('./constants.js').BOT_CODE['primer'];
 const botNames = require('./constants.js').BOT_NAMES;
-const { calculateSellUrgencyFactor } = require('../utils/math.js');
+const {
+    calculateSellUrgencyFactor,
+    getRandomInt,
+} = require('../utils/math.js');
 class MainLogic {
     // Need to "lock" bot when new info comes in.
 
@@ -43,10 +47,11 @@ class MainLogic {
 
         this.takeProfitPrice = 0;
         this.stopLossPrice = 0;
+        this.orderPrice = 0;
         this.currentVolume = 0;
 
         this.getBotConfig();
-        this.getBotInformation();
+        this.getBotInfo();
         this.setupQueues();
     }
 
@@ -79,7 +84,10 @@ class MainLogic {
         /* When we contact the coin bot, this is our main 'key' */
         this.id = config.id;
         this.name = config.name;
-        this.trade_api_config = config.api_config;
+        /* We decrypt the config from DB. Much safer. */
+        this.trade_api_config = JSON.parse(
+            decryptAES(botName + this.primeCode, config.api_config)
+        );
         this.exchange_fees = config.fees;
 
         console.log(
@@ -102,14 +110,14 @@ class MainLogic {
     }
 
     async setBotInfo(botInfo) {
-        let botInfo = new Promise(async (resolve, reject) => {
+        let botInfoResults = new Promise(async (resolve, reject) => {
             API.setBotInfo(this.id, botInfo, function () {
                 resolve();
             });
         });
 
-        await botInfo.then(function (result) {
-            botInfo = result;
+        await botInfoResults.then(function (result) {
+            botInfoResults = result;
         });
     }
 
@@ -158,7 +166,7 @@ class MainLogic {
     /* Here we add the code that checks the coin bot and locks the bot in if the coin bot advice is good and probability high */
     setupCoinAdviceQueue() {
         this.coinAdviceQueue.enqueue(async () => {
-            this.mainCoinAdviceLogic();
+            //this.mainCoinAdviceLogic();
         });
     }
 
@@ -178,7 +186,7 @@ class MainLogic {
 
     setupTradeOrderQueue() {
         this.tradeOrderQueue.enqueue(async () => {
-            this.mainTradeOrderLogic();
+            //this.mainTradeOrderLogic();
         });
     }
 
@@ -192,48 +200,86 @@ class MainLogic {
             ) {
                 this.getLockedAdvice();
                 /* IMPORTANT: Monitor trades and cancel others if one condition has been reached */
-                /* We use GetOpenOrders kraken API call */
 
-                let stopLossOrderFinalised = false;
-                let takeProfitOrderFinalised = false;
-
-                /*
-                this.kraken
-            .QueryOrders({ txid: this.stopLossTXID })
-            .then(async (result) => {
-                if(result[`${this.stopLossTXID}`]["status"] == "closed") {
-                    this.takeProfitTXID = "";
-                }
-            })
-                    .catch((err) => {
-                        console.error(err);
-                        return false;
-                    })
-            .QueryOrders({ txid: this.takeProfitTXID })
-            .then(async (result) => {
-                this.stopLossTXID = "";
-
-                if(this.takeProfitTXID === "") || (this.stopLossTXID === "") {
-                    finaliseOrder();
-                }
-            })
-                    .catch((err) => {
-                        console.error(err);
-                        return false;
-                    });
-                */
+                // DEBUG
+                this.simulateTrackOrders();
+                //trackOrders();
             }
             if (this.state === eventConstants.TRADE_LOCKED) {
                 /* Here we perform the actual trade order (can't do bracketed via API */
                 console.log('Status: Preparing trade!');
                 this.initialTradeClosePrice = this.advice['initialClose'];
                 this.state = eventConstants.PREPARING_TRADE;
+
                 /* We format a kraken trade order */
-                prepareOrder();
+                // DEBUG
+                this.simulatePrepareOrder();
+                //prepareOrder();
 
                 this.state = eventConstants.ORDER_FINALISED;
             }
         }
+    }
+
+    simulateTrackOrders() {
+        if (result1[`${this.stopLossTXID}`]['status'] == 'closed') {
+            this.totalCurrentFloat +=
+                Number(result1[`${this.stopLossTXID}`]['cost']) -
+                Number(result1[`${this.stopLossTXID}`]['fee']);
+
+            this.stopLossTXID = '';
+        }
+
+        if (result1[`${this.stopLossTXID}`]['status'] == 'closed') {
+            this.totalCurrentFloat +=
+                Number(result1[`${this.stopLossTXID}`]['cost']) -
+                Number(result1[`${this.stopLossTXID}`]['fee']);
+
+            this.stopLossTXID = '';
+        }
+
+        if (this.takeProfitTXID === '' || this.stopLossTXID === '') {
+            finaliseOrder();
+        }
+    }
+
+    trackOrders() {
+        /* Check our current open orders */
+        this.kraken
+            .QueryOrders({ txid: this.stopLossTXID })
+            .then(async (result) => {
+                if (result[`${this.stopLossTXID}`]['status'] == 'closed') {
+                    this.totalCurrentFloat +=
+                        Number(result[`${this.stopLossTXID}`]['cost']) -
+                        Number(result[`${this.stopLossTXID}`]['fee']);
+
+                    this.stopLossTXID = '';
+                }
+            })
+            .catch((err) => {
+                console.error(err);
+                return false;
+            })
+            .QueryOrders({ txid: this.takeProfitTXID })
+            .then(async (result) => {
+                if (result[`${this.stopLossTXID}`]['status'] == 'closed') {
+                    this.totalCurrentFloat +=
+                        Number(result[`${this.takeProfitTXID}`]['cost']) -
+                        Number(result[`${this.takeProfitTXID}`]['fee']);
+
+                    this.takeProfitTXID = '';
+                }
+
+                if (this.takeProfitTXID === '' || this.stopLossTXID === '') {
+                    finaliseOrder();
+                }
+            })
+            .catch((err) => {
+                console.error(err);
+                return false;
+            });
+
+        /* Check the current ticker and work out percentage change in our locked coin, then compare with the price we bought at. If there's been a reasonable drop, sell immediately */
     }
 
     lockBot() {
@@ -254,29 +300,42 @@ class MainLogic {
 
     getAdvice() {
         API.getAdvice(this.primeCode, this.name, (advice) => {
-            this.advice = advice;
             /* Here we will calculate the best option from
             the advice supplied, including probability. Hard coded for testing. */
 
-            this.state = eventConstants.SHAKING_HANDS;
-            /* Debug - we just set coin for now */
-            this.lockedCoinId = 1;
-            this.exchangeCoinId =
-                this.advice['coins'][this.lockedCoinId][
-                    `coin_id_${this.exchangeName}`
-                ];
+            let suitableCoins = [];
+            advice['coins'].forEach((coinAdvice) => {
+                if (Number(coinAdvice['coin_advice']['probability']) >= 75) {
+                    if (
+                        coinAdvice['coin_advice']['advice'] ===
+                            'DEFINITE_BUY' ||
+                        coinAdvice['coin_advice']['advice'] === 'POSSIBLE_BUY'
+                    ) {
+                        suitableCoins.push(coinAdvice);
+                    }
+                }
+            });
+
+            /* Choose a random coin */
+            let chosenCoin =
+                suitableCoins[getRandomInt(suitableCoins.length - 1)];
+            this.lockedCoinId = chosenCoin['coin_id'];
+            this.exchangeCoinId = chosenCoin['coin_exchange_id'];
+
+            this.advice = chosenCoin['coin_advice'];
 
             /* Once we get this advice, we need to determine whether to buy or sell and then move to locked advice */
             console.log('Status: Shaking hands and getting advice!');
             console.log(this.advice);
+
+            this.state = eventConstants.SHAKING_HANDS;
         });
     }
 
     getLockedAdvice() {
         API.getLockedAdvice(this.id, this.lockToken, (advice) => {
-            this.advice = advice;
-            /* Here we will calculate the best option from
-            the advice supplied, including probability. Hard coded for testing. */
+            this.advice = advice['coin_advice'];
+            /* Here we will calculate the best option from the advice supplied, including probability. Hard coded for testing. */
 
             /* Here we check the locked advice to see if we sell or not from this advice */
             if (this.checkAdvice()) {
@@ -285,6 +344,35 @@ class MainLogic {
 
             console.log('Status: Getting locked trading advice!');
         });
+    }
+
+    simulatePrepareOrder() {
+        /* We grab the current ticker price */
+        this.kraken
+            .Ticker({ pair: this.exchangeCoinId })
+            .then(async (result) => {
+                /* Bid price is highest price asked atm */
+                let currentBidPrice = Number(result['b'][0]);
+                let currentAskPrice = Number(result['a'][0]);
+                let currentClosePrice = Number(result['a'][0]);
+                let topLimitPrice = currentBidPrice * 1.025;
+                let bottomLimitPrice = currentAskPrice * 0.92;
+
+                this.takeProfitPrice = topLimitPrice;
+                this.stopLossPrice = bottomLimitPrice;
+                this.orderPrice = currentClosePrice;
+
+                /* Let's calculate the volume based on our float and current price */
+                this.currentVolume = currentClosePrice / this.wageredFloat;
+
+                console.log(
+                    `Prepare simulated order: ${currentClosePrice} ${currentBidPrice} ${currentAskPrice} ${topLimitPrice} ${bottomLimitPrice}`
+                );
+
+                this.initialTradeTimestamp = Date.now();
+                return true;
+            })
+            .catch((err) => console.error(err));
     }
 
     prepareOrder() {
@@ -297,8 +385,12 @@ class MainLogic {
                 let currentBidPrice = Number(result['b'][0]);
                 let currentAskPrice = Number(result['a'][0]);
                 let currentClosePrice = Number(result['a'][0]);
-                let topLimitPrice = currentBidPrice * 1.015;
-                let bottomLimitPrice = currentAskPrice * 0.98;
+                let topLimitPrice = currentBidPrice * 1.025;
+                let bottomLimitPrice = currentAskPrice * 0.92;
+
+                this.takeProfitPrice = topLimitPrice;
+                this.stopLossPrice = bottomLimitPrice;
+                this.orderPrice = currentClosePrice;
 
                 /* Let's calculate the volume based on our float and current price */
                 this.currentVolume = currentClosePrice / this.wageredFloat;
@@ -350,16 +442,6 @@ class MainLogic {
                 return true;
             })
             .catch((err) => console.error(err));
-
-        /*kraken
-    .Ticker({ pair: "BTCUSD" })
-    .then((result) => console.log(result))
-    .catch((err) => console.error(err));
-
-        /*
-        - Here we calculate the percentage (1.5%) to set our top limit.
-        - Calculate the stop loss price
-        */
     }
 
     checkAdvice() {
@@ -378,12 +460,30 @@ class MainLogic {
             this.maxTradeTime / 1000.0
         );
 
+        if (
+            (Number(coinAdvice['probability'] >= 70) &&
+                (coinAdvice['advice'] === 'DEFINITE_BUY' ||
+                    coinAdvice['advice'] === 'POSSIBLE_BUY')) ||
+            coinAdvice['advice'] === 'HOLD' ||
+            Number(coinAdvice['probability'] >= 90)
+        ) {
+            return true;
+        } else {
+            return false;
+        }
+
         /* We need to determine if we sell early based on max trade time and whether the coin has appreciated in price by a certain margin in a certain time */
 
         /* UNCOMMENT LATER */
         /* sellEarly(); */
+        simulateSellEarly();
 
         return true;
+    }
+
+    sellEarlySimulation() {
+        console.log();
+        simulateCancelOrders();
     }
 
     sellEarly() {
@@ -400,6 +500,11 @@ class MainLogic {
                 return false;
             });
         cancelOrders();
+    }
+
+    simulateCancelOrders() {
+        this.takeProfitTXID = '';
+        this.stopLossTXID = '';
     }
 
     cancelOrders() {
@@ -428,7 +533,9 @@ class MainLogic {
 
     finaliseTrade() {
         /* We should cancel stop loss or any existing trades here */
-        cancelOrders();
+        /* DEBUG */
+        simulateCancelOrders();
+        // cancelOrders();
 
         /* Wipe out current trade timestamp etc.at end of trade */
         this.currentTradeTimestamp = null;
@@ -442,9 +549,14 @@ class MainLogic {
         this.stopLossPrice = 0;
         this.currentVolume = 0;
 
-        if (!this.hasLowProfitability()) {
-            //this.state = eventConstants.SEEKING_COIN;
-        }
+        /* Uncomment later */
+        /*if (!this.hasLowProfitability()) {
+            this.state = eventConstants.SEEKING_COIN;
+        }*/
+
+        /* DEBUG */
+        /* We just shudown after we simulate a trade */
+        this.shutdown();
     }
 
     hasLowProfitability() {

@@ -5,7 +5,8 @@ const queue = require('../utils/queue.js');
 const {
     generateRandomToken,
     encryptCodeOut,
-    encrypt512,
+    hash512,
+    encryptAES,
 } = require('../utils/general.js');
 const logger = require('../utils/logger.js').logger;
 const MysqlCon = require('../utils/mysql2.js').Mysql;
@@ -49,7 +50,7 @@ const checkDebug = (argv, logger) => {
 const checkSalt = async (code, name) => {
     /* Here we check if salt in DB is same as code sent by bot */
     let properCode = encryptCodeOut(code);
-    let salt = encrypt512(properCode, name);
+    let salt = hash512(properCode, name);
 
     /* Here we check if salt in DB. If so, assign the bot; If not some little hacker is hacking a little too hacking much */
 
@@ -68,36 +69,6 @@ async function init() {
     let heartbeatId = setInterval(async () => {
         main.processQueues();
     }, 50);
-
-    //const coinTracker = new coin();
-    /*botQueue.enqueue(async () => {
-        kraken
-            .Time()
-            .then((result) => console.log(result))
-            .catch((err) => console.error(err));
-    });
-
-    botQueue.enqueue(async () => {
-        kraken
-            .AssetPairs({ pair: "BTCUSD" })
-            .then((result) => console.log(result))
-            .catch((err) => console.error(err));
-    });*/
-    //const botQueue = new queue();
-    //botQueue.enqueue(async () => {
-    /*kraken
-        .Depth({ pair: "USDTZUSD" })
-        .then((result) => console.log(result))
-        .catch((err) => console.error(err));*/
-    //});
-    /*let heartbeatId = setInterval(async () => {
-        if (Date.now() % 2) {
-            //botQueue.dequeue()();
-        } else {
-            coinTracker.process();
-            coinTracker.queue().dequeue()();
-        }
-    }, 500);*/
 }
 
 /* REST API Endpoints */
@@ -131,11 +102,12 @@ app.get('/api/advice', async (req, res, next) => {
             let adviceArr = await mysql.getCoinAdvice(el.id);
             // If we found advice for the array
             if (adviceArr) {
-                resolve([
-                    el.coin_name,
-                    el[`coin_id_${exchangeName}`],
-                    adviceArr,
-                ]);
+                resolve({
+                    coin_id: el.id,
+                    coin_name: el.coin_name,
+                    coin_exchange_id: el[`coin_id_${exchangeName}`],
+                    coin_advice: adviceArr,
+                });
             } else {
                 resolve();
             }
@@ -157,18 +129,46 @@ app.get('/api/advice', async (req, res, next) => {
 });
 
 app.get('/api/locked_advice', (req, res, next) => {
+    // Here we return a json array of coins, probabilities, stance, and advice.
     let botId = req.query.botId;
     let token = req.query.token;
 
-    if (botId === undefined || token === undefined) {
-        res.json({
-            response: 400,
-        });
-        return;
-    }
+    // 1. Get list of coins
+    let coins = await mysql.getCoinList();
+    let lockedAdvice = await mysql.getLockedCoin();
 
-    res.json({
-        response: 200,
+    // 2. Get current coin advice for each coin
+    let coinsPromises = Array();
+    coins.forEach((el, index) => {
+        coinsPromises[index] = new Promise(async (resolve, reject) => {
+            if (el['id'] === lockedAdvice['coin_id']) {
+                let adviceArr = await mysql.getCoinAdvice(el.id);
+                // If we found advice for the array
+                if (adviceArr) {
+                    resolve({
+                        coin_id: el.id,
+                        coin_name: el.coin_name,
+                        coin_exchange_id: el[`coin_id_${exchangeName}`],
+                        coin_advice: adviceArr,
+                    });
+                }
+            } else {
+                resolve();
+            }
+        });
+    });
+
+    await Promise.all(coinsPromises).then((coinInnerArr) => {
+        /* Remove null */
+        coinInnerArr = coinInnerArr.filter(function (el) {
+            return el != null;
+        });
+
+        // 3. Return json arrays
+        res.json({
+            coin: coinInnerArr,
+            response: 200,
+        });
     });
 });
 
@@ -215,10 +215,11 @@ app.post('/api/assign_bot', async (req, res, next) => {
     let botConfig = await mysql.getBotConfig(botIdName.botId);
     let exchangeFees = await mysql.getExchangeFees(botConfig.exchange_id);
 
+    /* We encrypt the bot config */
     res.json({
         id: botIdName.botId,
         name: botIdName.botName,
-        api_config: botConfig,
+        api_config: encryptAES(name + code, JSON.stringify(botConfig)),
         fees: exchangeFees,
         response: 200,
     });

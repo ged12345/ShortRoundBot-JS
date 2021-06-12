@@ -19,9 +19,9 @@ class Mysql {
         });*/
     }
 
-    async getBotInformation(coinId) {
-        const [rsows, fields] = await this.connection.query(
-            `SELECT * FROM bot WHERE coin_id = '${coinId}'`
+    async getBotInformation(botId) {
+        const [rows, fields] = await this.connection.query(
+            `SELECT * FROM bot WHERE bot_id = '${botId}'`
         );
 
         //console.log("Data received from Db:");
@@ -133,6 +133,20 @@ class Mysql {
         );
         console.log('Data received from Db:');
         console.log(rows);
+    }
+
+    async getLockedCoin(botId) {
+        let result = false;
+
+        const [rows, fields] = await this.connection.query(
+            `SELECT * FROM coin_bot_lock WHERE bot_id = ${mysqlCon.escape(
+                botId
+            )}`
+        );
+        console.log('Data received from Db:');
+        console.log(rows);
+
+        return rows;
     }
 
     async getCoinList() {
