@@ -15,7 +15,9 @@ WOBBLING_DOWN is when the coin has dropped by a small amount over a period of ti
 
 const COIN_STATUS = {
     CRASHING: 'crashing',
+    DROPPING: 'dropping',
     SPIKING: 'spiking',
+    RISING: 'rising',
     SIDEWAYS: 'sideways',
     WOBBLING_UP: 'wobbling_up',
     WOBBLING_DOWN: 'wobbling_down',

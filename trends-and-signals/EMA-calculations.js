@@ -151,7 +151,7 @@ class EMACalculations {
 
         let timestamp = resultsEMA[resultsEMA.length - 1]['timestamp'];
 
-        console.log('EMA: ' + EMAArr.reverse().slice(0, 4));
+        //console.log('EMA: ' + EMAArr.reverse().slice(0, 4));
 
         const ema_t1to3 = calculateGraphGradientsTrendsPerChange(
             EMAArr.reverse().slice(0, 4)

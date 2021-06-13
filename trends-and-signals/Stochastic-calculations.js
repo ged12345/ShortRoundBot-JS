@@ -180,13 +180,11 @@ class StochasticCalculations {
         let timestamp =
             resultsStochastics[resultsStochastics.length - 1]['timestamp'];
 
-        console.log('Stoch: ' + stochArr.reverse().slice(0, 4));
+        //console.log('Stoch: ' + stochArr.reverse().slice(0, 4));
 
         const stoch_t1to3 = calculateGraphGradientsTrendsPerChange(
             stochArr.reverse().slice(0, 4)
         );
-
-        console.log(stoch_t1to3);
 
         if (stoch_t1to3) {
             this.mysqlCon.storeTrends(coinId, timestamp, stoch_t1to3, 'Stoch');

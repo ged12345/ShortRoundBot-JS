@@ -293,11 +293,12 @@ class RSICalculations {
 
         let timestamp = resultsRSI[resultsRSI.length - 1]['timestamp'];
 
+        //console.log('RSI: ' + RSIArr.reverse().slice(0, 4));
+
         const rsi_t1to3 = calculateGraphGradientsTrendsPerChange(
             RSIArr.reverse().slice(0, 4)
         );
 
-        console.log(rsi_t1to3);
         if (rsi_t1to3) {
             this.mysqlCon.storeTrends(coinId, timestamp, rsi_t1to3, 'RSI');
         }

@@ -130,6 +130,7 @@ class MainLogic {
         await this.mysqlCon.emptyProcessStochastic();
         await this.mysqlCon.emptyProcessBollinger();
         await this.mysqlCon.emptyProcessEMA();
+        await this.mysqlCon.emptyProcessMACD();
         await this.mysqlCon.emptyTrends();
     }
 
@@ -407,9 +408,9 @@ class MainLogic {
             closeArr.slice(0, 4).reverse()
         );
 
-        console.log('CLOSE TRENDS: ');
-        console.log(closeArr.slice(0, 4).reverse());
-        console.log(close_t1to3);
+        //console.log('CLOSE TRENDS: ');
+        //console.log(closeArr.slice(0, 4).reverse());
+        //console.log(close_t1to3);
 
         this.mysqlCon.storeTrends(coinId, timestamp, close_t1to3, 'close');
     }

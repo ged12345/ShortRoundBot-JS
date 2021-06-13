@@ -27,14 +27,14 @@ class MACDCalculations {
             await this.calculateInitialEMA12(coinId);
             sleep(500).then(async () => {
                 await this.calculateInitialEMA26(coinId);
-                sleep(500).then(async () => {
-                    //await this.calculateInitialMACDandSignalLine(coinId);
-                });
+                /*sleep(500).then(async () => {
+                    await this.calculateInitialMACDandSignalLine(coinId);
+                });*/
             });
         } else {
             //console.log("EMA SECOND: " + coinId);
-            await this.calculateAll(coinId);
-            await this.findTrends;
+            //await this.calculateAll(coinId);
+            //await this.findTrends;
         }
 
         this.cleanup(coinId);
@@ -60,7 +60,7 @@ class MACDCalculations {
 
         let EMA12Arr = [];
         EMA12Arr.push({
-            timestamp: resultsOHLC[11]['timestamp'],
+            timestamp: resultsOHLC[EMANum - 1]['timestamp'],
             EMA: Number(totalClose / EMANum),
         });
 
@@ -116,7 +116,7 @@ class MACDCalculations {
 
         let EMA26Arr = [];
         EMA26Arr.push({
-            timestamp: resultsOHLC[11]['timestamp'],
+            timestamp: resultsOHLC[EMANum - 1]['timestamp'],
             EMA: Number(totalClose / EMANum),
         });
 
@@ -171,7 +171,7 @@ class MACDCalculations {
         let signalLineArr = [];
 
         for (var i = firstCommonIndex; i < resultsMACD.length; i++) {
-            let timestamp = resultsOHLC[i + 26]['timestamp'];
+            let timestamp = resultsOHLC[i]['timestamp'];
             let currMACD = {
                 timestamp: timestamp,
                 EMA_12: resultsMACD['EMA_12'],
@@ -209,7 +209,7 @@ class MACDCalculations {
                     (1 - multiplier)
         );
 
-        let MACD = Number(EMA26 - EMA12);
+        let MACD = Number(EMA12 - EMA26);
 
         let signalLine = -9999;
         /* Count how many MACDs we have */
@@ -227,23 +227,22 @@ class MACDCalculations {
             /* We have our first signal! */
             let totalClose = 0;
             for (
-                var i = resultsOHLC.length - signalNum;
-                i < resultsOHLC.length;
+                var i = resultsMACD.length - signalNum;
+                i < resultsMACD.length;
                 i++
             ) {
-                totalClose += Number(resultsOHLC[i]['close']);
+                totalClose += Number(resultsMACD[i]['MACD']);
             }
 
-            console.log('SIGNAL 9');
-            console.log(totalClose, signalNum);
             signalLine = Number(totalClose / signalNum);
         } else if (signalCount > 9) {
             /* We have our next signal! */
             console.log('SIGNAL 9+');
             console.log(resultsMACD[resultsMACD.length - 1], close);
             signalLine =
-                close * multiplier +
-                resultsMACD[resultsMACD.length - 1] * (1 - multiplier);
+                MACD * multiplier +
+                resultsMACD[resultsMACD.length - 1]['signal_line'] *
+                    (1 - multiplier);
         }
 
         let currMACD = {

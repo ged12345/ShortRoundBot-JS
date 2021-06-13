@@ -181,7 +181,7 @@ class BollingerBandsCalculations {
         let timestamp =
             resultsHistoricBoll[resultsHistoricBoll.length - 1]['timestamp'];
 
-        console.log('PerB: ' + perbArr.reverse().slice(0, 4));
+        //console.log('PerB: ' + perbArr.reverse().slice(0, 4));
 
         const perb_t1to3 = calculateGraphGradientsTrendsPerChange(
             perbArr.reverse().slice(0, 4)
