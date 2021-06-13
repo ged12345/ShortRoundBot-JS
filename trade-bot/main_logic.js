@@ -31,6 +31,9 @@ class MainLogic {
         this.totalCurrentFloat = this.wageredFloat;
         this.initialTradeTimestamp = null;
         this.initialTradeClosePrice = 0.0;
+
+        this.oldTrackTradeClosePrice = 0.0;
+        this.newTrackTradeClosePrice = 0.0;
         /* This factor increased per minute */
         this.minCoinAppreciationPercentPerMin = 0.05;
 
@@ -48,7 +51,7 @@ class MainLogic {
         this.takeProfitPrice = 0;
         this.stopLossPrice = 0;
         this.orderPrice = 0;
-        this.currentVolume = 0;
+        this.orderVolume = 0;
 
         this.getBotConfig();
         this.getBotInfo();
@@ -151,7 +154,7 @@ class MainLogic {
             40000 /* Just after the close */
         );
 
-        this.mainQueuer.enqueueQueue(this.tradeOrderQueue, 500, true);
+        this.mainQueuer.enqueueQueue(this.tradeOrderQueue, 10000, true);
 
         this.queueSetupComplete = true;
     }
@@ -208,7 +211,6 @@ class MainLogic {
             if (this.state === eventConstants.TRADE_LOCKED) {
                 /* Here we perform the actual trade order (can't do bracketed via API */
                 console.log('Status: Preparing trade!');
-                this.initialTradeClosePrice = this.advice['initialClose'];
                 this.state = eventConstants.PREPARING_TRADE;
 
                 /* We format a kraken trade order */
@@ -227,20 +229,58 @@ class MainLogic {
                 Number(result1[`${this.stopLossTXID}`]['cost']) -
                 Number(result1[`${this.stopLossTXID}`]['fee']);
 
+            this.totalLoss -=
+                Number(result1[`${this.stopLossTXID}`]['cost']) -
+                Number(result1[`${this.stopLossTXID}`]['fee']) -
+                this.orderPrice;
+
             this.stopLossTXID = '';
         }
 
-        if (result1[`${this.stopLossTXID}`]['status'] == 'closed') {
+        if (result1[`${this.takeProfitTXID}`]['status'] == 'closed') {
             this.totalCurrentFloat +=
-                Number(result1[`${this.stopLossTXID}`]['cost']) -
-                Number(result1[`${this.stopLossTXID}`]['fee']);
+                Number(result1[`${this.takeProfitTXID}`]['cost']) -
+                Number(result1[`${this.takeProfitTXID}`]['fee']);
 
-            this.stopLossTXID = '';
+            this.totalLoss -=
+                Number(result1[`${this.takeProfitTXID}`]['cost']) -
+                Number(result1[`${this.takeProfitTXID}`]['fee']) -
+                this.orderPrice;
+
+            this.takeProfitTXID = '';
         }
 
         if (this.takeProfitTXID === '' || this.stopLossTXID === '') {
             finaliseOrder();
         }
+
+        /* Check the current ticker and work out percentage change in our locked coin, then compare with the price we bought at. If there's been a reasonable drop, sell immediately */
+
+        this.kraken
+            .Ticker({ pair: this.exchangeCoinId })
+            .then(async (result) => {
+                this.oldTrackTradeClosePrice = Number(
+                    this.newTrackTradeClosePrice
+                );
+                this.newTrackTradeClosePrice = Number(result['c'][0]);
+                this.oldTrackTradeClosePrice = Number(this.orderPrice);
+
+                /* If the price has dropped by 2.5% */
+                if (
+                    (this.newTrackTradeClosePrice -
+                        this.oldTrackTradeClosePrice) /
+                        this.newTrackTradeClosePrice <
+                    -0.025
+                ) {
+                    /* DEBUG */
+                    this.simulateSellEarly();
+                    //this.sellEarly();
+                }
+            })
+            .catch((err) => {
+                console.error(err);
+                return false;
+            });
     }
 
     trackOrders() {
@@ -253,6 +293,11 @@ class MainLogic {
                         Number(result[`${this.stopLossTXID}`]['cost']) -
                         Number(result[`${this.stopLossTXID}`]['fee']);
 
+                    this.totalLoss -=
+                        Number(result1[`${this.stopLossTXID}`]['cost']) -
+                        Number(result1[`${this.stopLossTXID}`]['fee']) -
+                        this.orderPrice;
+
                     this.stopLossTXID = '';
                 }
             })
@@ -262,10 +307,15 @@ class MainLogic {
             })
             .QueryOrders({ txid: this.takeProfitTXID })
             .then(async (result) => {
-                if (result[`${this.stopLossTXID}`]['status'] == 'closed') {
+                if (result[`${this.takeProfitTXID}`]['status'] == 'closed') {
                     this.totalCurrentFloat +=
                         Number(result[`${this.takeProfitTXID}`]['cost']) -
                         Number(result[`${this.takeProfitTXID}`]['fee']);
+
+                    this.totalLoss -=
+                        Number(result1[`${this.takeProfitTXID}`]['cost']) -
+                        Number(result1[`${this.takeProfitTXID}`]['fee']) -
+                        this.orderPrice;
 
                     this.takeProfitTXID = '';
                 }
@@ -280,6 +330,30 @@ class MainLogic {
             });
 
         /* Check the current ticker and work out percentage change in our locked coin, then compare with the price we bought at. If there's been a reasonable drop, sell immediately */
+
+        this.kraken
+            .Ticker({ pair: this.exchangeCoinId })
+            .then(async (result) => {
+                this.oldTrackTradeClosePrice = this.newTrackTradeClosePrice;
+                this.newTrackTradeClosePrice = Number(result['c'][0]);
+                this.oldTrackTradeClosePrice = this.orderPrice;
+
+                /* If the price has dropped by 2.5% */
+                if (
+                    (this.newTrackTradeClosePrice -
+                        this.oldTrackTradeClosePrice) /
+                        this.newTrackTradeClosePrice <
+                    -0.025
+                ) {
+                    /* DEBUG */
+                    this.simulateSellEarly();
+                    //this.sellEarly();
+                }
+            })
+            .catch((err) => {
+                console.error(err);
+                return false;
+            });
     }
 
     lockBot() {
@@ -354,16 +428,17 @@ class MainLogic {
                 /* Bid price is highest price asked atm */
                 let currentBidPrice = Number(result['b'][0]);
                 let currentAskPrice = Number(result['a'][0]);
-                let currentClosePrice = Number(result['a'][0]);
-                let topLimitPrice = currentBidPrice * 1.025;
-                let bottomLimitPrice = currentAskPrice * 0.92;
+                let currentClosePrice = Number(result['c'][0]);
+                let topLimitPrice = currentBidPrice * 1.025; // 2.5%
+                let bottomLimitPrice = currentAskPrice * 0.98; // 2%
 
                 this.takeProfitPrice = topLimitPrice;
                 this.stopLossPrice = bottomLimitPrice;
                 this.orderPrice = currentClosePrice;
+                this.newTrackTradeClosePrice = this.orderPrice;
 
                 /* Let's calculate the volume based on our float and current price */
-                this.currentVolume = currentClosePrice / this.wageredFloat;
+                this.orderVolume = currentClosePrice / this.wageredFloat;
 
                 console.log(
                     `Prepare simulated order: ${currentClosePrice} ${currentBidPrice} ${currentAskPrice} ${topLimitPrice} ${bottomLimitPrice}`
@@ -384,16 +459,17 @@ class MainLogic {
                 /* Bid price is highest price asked atm */
                 let currentBidPrice = Number(result['b'][0]);
                 let currentAskPrice = Number(result['a'][0]);
-                let currentClosePrice = Number(result['a'][0]);
-                let topLimitPrice = currentBidPrice * 1.025;
-                let bottomLimitPrice = currentAskPrice * 0.92;
+                let currentClosePrice = Number(result['c'][0]);
+                let topLimitPrice = currentBidPrice * 1.025; // 2.5%
+                let bottomLimitPrice = currentAskPrice * 0.98; // 2%
 
                 this.takeProfitPrice = topLimitPrice;
                 this.stopLossPrice = bottomLimitPrice;
                 this.orderPrice = currentClosePrice;
+                this.newTrackTradeClosePrice = this.orderPrice;
 
                 /* Let's calculate the volume based on our float and current price */
-                this.currentVolume = currentClosePrice / this.wageredFloat;
+                this.orderVolume = currentClosePrice / this.wageredFloat;
 
                 console.log(
                     `Prepare order: ${currentBidPrice} ${currentAskPrice} ${topLimitPrice} ${bottomLimitPrice}`
@@ -405,7 +481,7 @@ class MainLogic {
                         pair: this.exchangeCoinId,
                         ordertype: 'market',
                         type: 'buy',
-                        volume: this.currentVolume,
+                        volume: this.orderVolume,
                     })
                     .then(async (result) => {})
                     .catch((err) => {
@@ -417,7 +493,7 @@ class MainLogic {
                         pair: this.exchangeCoinId,
                         ordertype: 'take-profit',
                         type: 'sell',
-                        volume: this.currentVolume,
+                        volume: this.orderVolume,
                         price: topLimitPrice,
                     })
                     .then(async (result) => {})
@@ -429,7 +505,7 @@ class MainLogic {
                         pair: this.exchangeCoinId,
                         ordertype: 'stop-loss',
                         type: 'sell',
-                        volume: this.currentVolume,
+                        volume: this.orderVolume,
                         price: bottomLimitPrice,
                     })
                     .then(async (result) => {})
@@ -492,7 +568,7 @@ class MainLogic {
                 pair: this.exchangeCoinId,
                 ordertype: 'market',
                 type: 'sell',
-                volume: this.currentVolume,
+                volume: this.orderVolume,
             })
             .then(async (result) => {})
             .catch((err) => {
@@ -547,7 +623,7 @@ class MainLogic {
         this.stopLossTXID = '';
         this.takeProfitPrice = 0;
         this.stopLossPrice = 0;
-        this.currentVolume = 0;
+        this.orderVolume = 0;
 
         /* Uncomment later */
         /*if (!this.hasLowProfitability()) {
@@ -561,7 +637,10 @@ class MainLogic {
 
     hasLowProfitability() {
         /* If we lose money too many times and the loss is too great (33%), immediately shutdown */
-        if (this.lossCount >= 3 && this.totalLoss >= this.currentFloat / 3.0) {
+        if (
+            this.lossCount >= 3 &&
+            this.totalLoss >= this.totalCurrentFloat / 3.0
+        ) {
             this.shutdown();
             return true;
         } else {

@@ -162,6 +162,7 @@ class BollingerBandsCalculations {
 
         //console.log(currHistBollinger);
         await this.mysqlCon.storeHistoricBollinger(coinId, currHistBollinger);
+        await this.findTrends(coinId);
     }
 
     async findTrends(coinId) {
@@ -186,7 +187,9 @@ class BollingerBandsCalculations {
             perbArr.reverse().slice(0, 4)
         );
 
-        this.mysqlCon.storeTrends(coinId, timestamp, perb_t1to3, 'PerB');
+        if (perb_t1to3) {
+            this.mysqlCon.storeTrends(coinId, timestamp, perb_t1to3, 'PerB');
+        }
     }
 }
 

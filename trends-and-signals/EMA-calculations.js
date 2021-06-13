@@ -30,28 +30,6 @@ class EMACalculations {
         this.cleanup(coinId);
     }
 
-    async findTrends(coinId) {
-        let resultsEMA = await this.mysqlCon.getProcessedEMA(coinId);
-
-        if (resultsEMA.length < 4) {
-            return;
-        }
-
-        let EMAArr = resultsEMA.map((el) => {
-            return el.EMA;
-        });
-
-        let timestamp = resultsEMA[resultsEMA.length - 1]['timestamp'];
-
-        console.log('EMA: ' + EMAArr.reverse().slice(0, 4));
-
-        const ema_t1to3 = calculateGraphGradientsTrendsPerChange(
-            EMAArr.reverse().slice(0, 4)
-        );
-
-        this.mysqlCon.storeTrends(coinId, timestamp, ema_t1to3, 'EMA');
-    }
-
     async firstEMACalculation(coinId) {
         let resultsOHLC = await this.mysqlCon.getCoinOHLC(coinId);
 
@@ -155,7 +133,33 @@ class EMACalculations {
         await this.mysqlCon.storeProcessedEMA(coinId, currEMA);
         await this.mysqlCon.cleanupProcessedEMA(coinId, this.EMAStoreNum);
 
+        await this.findTrends(coinId);
+
         this.cleanup(coinId);
+    }
+
+    async findTrends(coinId) {
+        let resultsEMA = await this.mysqlCon.getProcessedEMA(coinId);
+
+        if (resultsEMA.length < 4) {
+            return;
+        }
+
+        let EMAArr = resultsEMA.map((el) => {
+            return el.EMA;
+        });
+
+        let timestamp = resultsEMA[resultsEMA.length - 1]['timestamp'];
+
+        console.log('EMA: ' + EMAArr.reverse().slice(0, 4));
+
+        const ema_t1to3 = calculateGraphGradientsTrendsPerChange(
+            EMAArr.reverse().slice(0, 4)
+        );
+
+        if (ema_t1to3) {
+            this.mysqlCon.storeTrends(coinId, timestamp, ema_t1to3, 'EMA');
+        }
     }
 }
 

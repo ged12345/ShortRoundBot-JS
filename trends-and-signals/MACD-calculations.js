@@ -1,28 +1,8 @@
-//www.investopedia.com/terms/s/stochasticoscillator.asp
-/*
-The Formula for the Stochastic Oscillator is:
-%K= (C−L14)
-    --------
-    (H14−L14)
+//https://www.investopedia.com/ask/answers/122414/what-moving-average-convergence-divergence-macd-formula-and-how-it-calculated.asp
 
-​	 )×100
-where:
-C = The most recent closing price
-L14 = The lowest price traded of the 14 previous
-trading sessions
-H14 = The highest price traded during the same
-14-day period
-%K = The current value of the stochastic indicator
-
-80 - overbought
-20 - oversold
-
-Full stoch
-kFull = dSlow
-dFull = kFull for the past n periods / n (n=3 here, since our original for dSlow was 3)
-*/
 const util = require('util');
 const Decimal = require('decimal.js');
+const sleep = require('../utils/general.js').sleep;
 const { calculateGraphGradientsTrendsPerChange } = require('../utils/math.js');
 
 class MACDCalculations {
@@ -42,117 +22,269 @@ class MACDCalculations {
     }
 
     async calculate(coinId) {
+        let resultsMACD = await this.mysqlCon.getProcessedMACD(coinId);
+        if (resultsMACD.length === 0) {
+            await this.calculateInitialEMA12(coinId);
+            sleep(500).then(async () => {
+                await this.calculateInitialEMA26(coinId);
+                sleep(500).then(async () => {
+                    //await this.calculateInitialMACDandSignalLine(coinId);
+                });
+            });
+        } else {
+            //console.log("EMA SECOND: " + coinId);
+            await this.calculateAll(coinId);
+            await this.findTrends;
+        }
+
+        this.cleanup(coinId);
+    }
+
+    async calculateInitialEMA12(coinId) {
         let resultsOHLC = await this.mysqlCon.getCoinOHLC(coinId);
-        let arrMACD = Array();
 
         /* No acquired OHLC results yet */
         if (resultsOHLC.length === 0) return;
 
-        let lowestTraded = 1000000000000;
-        let highestTraded = 0;
-
-        /* If we have three fastK's calculated, we can then calculate the slowD by averaging the last fastK's (divided by 3) */
-        let resultsMACDs = await this.mysqlCon.getProcessedMACD(coinId);
-
-        /* Highest and lowest of last 14 periods */
+        /* 1. Iterate through 26 OHLC entries, and calculate the SMA. */
         let totalOHLCResults = resultsOHLC.length;
-        /* Note: We were hitting the current period as a part of the 14 prev. periods but this is incorrect. We use the innerLowHighIndex and DON'T skip the last one (our current period) */
-        let startLowHighIndex = totalOHLCResults - this.MACDStoreNum;
-        let lowHighIndex = 0;
-        let innerLowHighIndex = 0;
+        let totalClose = 0;
 
-        resultsOHLC.forEach((el, index) => {
-            //console.log("Real index: " + index);
-            if (lowHighIndex < startLowHighIndex) {
-                //console.log("lowHighIndex: " + lowHighIndex);
-                lowHighIndex++;
-            } else {
-                if (innerLowHighIndex < this.MACDStoreNum) {
-                    //console.log("Current Low: " + Number(el["low"]));
-                    if (Number(el['low']) < lowestTraded) {
-                        //    console.log("Old Low: " + lowestTraded);
-                        lowestTraded = Number(el['low']);
-                    }
+        /* Everything but the last value. We calculate the SMA first but calculate the EMA of the last OHLC value (the SMA being the EMA for yesterday) */
 
-                    //console.log("Current High: " + Number(el["high"]));
-                    if (Number(el['high']) > highestTraded) {
-                        //    console.log("Old High: " + highestTraded);
-                        highestTraded = Number(el['high']);
-                    }
+        let EMANum = 12;
+
+        for (let i = 0; i < EMANum; i++) {
+            totalClose += Number(resultsOHLC[i]['close']);
+        }
+
+        let EMA12Arr = [];
+        EMA12Arr.push({
+            timestamp: resultsOHLC[11]['timestamp'],
+            EMA: Number(totalClose / EMANum),
+        });
+
+        totalClose = 0;
+
+        for (let i = EMANum; i < totalOHLCResults; i++) {
+            let close = Number(resultsOHLC[i]['close']);
+
+            let multiplier = 2.0 / (EMANum + 1);
+
+            EMA12Arr.push({
+                timestamp: resultsOHLC[i]['timestamp'],
+                EMA: Number(
+                    close * multiplier +
+                        EMA12Arr[EMA12Arr.length - 1]['EMA'] * (1 - multiplier)
+                ),
+            });
+        }
+
+        EMA12Arr.forEach(async (el) => {
+            let currMACD = {
+                timestamp: el['timestamp'],
+                EMA_12: el['EMA'],
+                EMA_26: -9999,
+                MACD: -9999,
+                signal_line: -9999,
+                hist: -9999,
+            };
+
+            /* Add this to mysql and then cleanup*/
+            await this.mysqlCon.storeProcessedMACD(coinId, currMACD);
+        });
+    }
+
+    async calculateInitialEMA26(coinId) {
+        let resultsOHLC = await this.mysqlCon.getCoinOHLC(coinId);
+        let resultsMACD = await this.mysqlCon.getProcessedMACD(coinId);
+
+        /* No acquired OHLC results yet */
+        if (resultsOHLC.length === 0) return;
+
+        /* 1. Iterate through 26 OHLC entries, and calculate the SMA. */
+        let totalOHLCResults = resultsOHLC.length;
+        let totalClose = 0;
+
+        /* Everything but the last value. We calculate the SMA first but calculate the EMA of the last OHLC value (the SMA being the EMA for yesterday) */
+
+        let EMANum = 26;
+
+        for (var i = 0; i < EMANum; i++) {
+            totalClose += Number(resultsOHLC[i]['close']);
+        }
+
+        let EMA26Arr = [];
+        EMA26Arr.push({
+            timestamp: resultsOHLC[11]['timestamp'],
+            EMA: Number(totalClose / EMANum),
+        });
+
+        totalClose = 0;
+
+        for (var i = totalOHLCResults - EMANum; i < totalOHLCResults; i++) {
+            let close = Number(resultsOHLC[i]['close']);
+
+            let multiplier = 2.0 / (EMANum + 1);
+
+            EMA26Arr.push({
+                timestamp: resultsOHLC[i]['timestamp'],
+                EMA: Number(
+                    close * multiplier +
+                        EMA26Arr[EMA26Arr.length - 1]['EMA'] * (1 - multiplier)
+                ),
+            });
+        }
+
+        EMA26Arr.forEach(async (el) => {
+            let EMA_12 = -9999;
+            for (var i = 0; i < resultsMACD.length; i++) {
+                //console.log(resultsMACD[i]['timestamp'], el['timestamp']);
+
+                if (resultsMACD[i]['timestamp'] === el['timestamp']) {
+                    EMA_12 = resultsMACD[i]['EMA_12'];
+                    //console.log(resultsMACD[i]['EMA_12'], EMA_12);
                 }
-                innerLowHighIndex++;
+            }
+
+            let currMACD = {
+                timestamp: el['timestamp'],
+                EMA_12: EMA_12,
+                EMA_26: el['EMA'],
+                MACD: -9999,
+                signal_line: -9999,
+                hist: -9999,
+            };
+            /* Add this to mysql and then cleanup*/
+            await this.mysqlCon.storeProcessedMACD(coinId, currMACD);
+        });
+    }
+
+    async calculateInitialMACDandSignalLine(coinId) {
+        let resultsOHLC = await this.mysqlCon.getCoinOHLC(coinId);
+        let resultsMACD = await this.mysqlCon.getProcessedMACD(coinId);
+
+        // We have common EMA values at the start of the 26 - 12 EMA = 14
+        let firstCommonIndex = 14;
+
+        let MACDArr = [];
+        let signalLineArr = [];
+
+        for (var i = firstCommonIndex; i < resultsMACD.length; i++) {
+            let timestamp = resultsOHLC[i + 26]['timestamp'];
+            let currMACD = {
+                timestamp: timestamp,
+                EMA_12: resultsMACD['EMA_12'],
+                EMA_26: resultsMACD['EMA_26'],
+                MACD: Number(resultsMACD['EMA_26'] - resultsMACD['EMA_12']),
+                signal_line: -9999,
+                hist: -9999,
+            };
+        }
+
+        /* Signal line is not calculated because we're at 32 for stored OHLC, and 26+9 = 35 periods */
+    }
+
+    async calculateAll(coinId) {
+        let resultsOHLC = await this.mysqlCon.getCoinOHLC(coinId);
+        let resultsMACD = await this.mysqlCon.getProcessedMACD(coinId);
+
+        let close = Number(resultsOHLC[resultsOHLC.length - 1]['close']);
+
+        let EMANum = 12;
+        let multiplier = 2.0 / (EMANum + 1);
+
+        let EMA12 = Number(
+            close * multiplier +
+                Number(resultsMACD[resultsMACD.length - 1]['EMA_12']) *
+                    (1 - multiplier)
+        );
+
+        EMANum = 26;
+        multiplier = 2.0 / (EMANum + 1);
+
+        let EMA26 = Number(
+            close * multiplier +
+                Number(resultsMACD[resultsMACD.length - 1]['EMA_26']) *
+                    (1 - multiplier)
+        );
+
+        let MACD = Number(EMA26 - EMA12);
+
+        let signalLine = -9999;
+        /* Count how many MACDs we have */
+        let signalCount = 0;
+        resultsMACD.forEach((el) => {
+            if (Number(el['MACD']) != Number(-9999.0)) {
+                signalCount += 1;
             }
         });
 
-        let lastElOHLC = resultsOHLC[resultsOHLC.length - 1];
+        let signalNum = 9;
+        multiplier = 2.0 / (signalNum + 1);
+
+        if (signalCount === 9) {
+            /* We have our first signal! */
+            let totalClose = 0;
+            for (
+                var i = resultsOHLC.length - signalNum;
+                i < resultsOHLC.length;
+                i++
+            ) {
+                totalClose += Number(resultsOHLC[i]['close']);
+            }
+
+            console.log('SIGNAL 9');
+            console.log(totalClose, signalNum);
+            signalLine = Number(totalClose / signalNum);
+        } else if (signalCount > 9) {
+            /* We have our next signal! */
+            console.log('SIGNAL 9+');
+            console.log(resultsMACD[resultsMACD.length - 1], close);
+            signalLine =
+                close * multiplier +
+                resultsMACD[resultsMACD.length - 1] * (1 - multiplier);
+        }
+
         let currMACD = {
-            timestamp: Number(lastElOHLC['timestamp']),
-            close: Number(lastElOHLC['close']),
-            high: highestTraded,
-            low: lowestTraded,
-            kFast: new Decimal(Number(lastElOHLC['close']))
-                .minus(lowestTraded)
-                .dividedBy(new Decimal(highestTraded).minus(lowestTraded))
-                .times(100),
-            dSlow: -1,
-            kFull: -1,
-            dFull: -1,
+            timestamp: resultsOHLC[resultsOHLC.length - 1]['timestamp'],
+            EMA_12: EMA12,
+            EMA_26: EMA26,
+            MACD: MACD,
+            signal_line: signalLine,
+            hist: signalLine !== Number(-9999.0) ? signalLine - MACD : -9999,
         };
 
-        if (currMACD['kFast'] < 0) {
-            currMACD['kFast'] = 0;
-        } else if (currMACD['kFast'] > 100) {
-            currMACD['kFast'] = 100;
-        }
-
-        if (resultsMACDs.length > 2) {
-            /* Get the last three entries (including the current) and average them to get the slowD */
-            currMACD['dSlow'] = new Decimal(currMACD['kFast'])
-                .plus(Number(resultsMACDs[resultsMACDs.length - 2]['k_fast']))
-                .plus(Number(resultsMACDs[resultsMACDs.length - 1]['k_fast']))
-                .dividedBy(3.0);
-        }
-
-        if (resultsMACDs.length > 5) {
-            currMACD['kFull'] = Number(currMACD['dSlow']);
-
-            currMACD['dFull'] = new Decimal(currMACD['kFull'])
-                .plus(Number(resultsMACDs[resultsMACDs.length - 2]['d_slow']))
-                .plus(Number(resultsMACDs[resultsMACDs.length - 1]['d_slow']))
-                .dividedBy(3.0);
-        }
+        console.log(EMA12, EMA26, MACD, signalLine);
 
         /* Add this to mysql and then cleanup*/
         await this.mysqlCon.storeProcessedMACD(coinId, currMACD);
-
-        this.cleanup(coinId);
     }
 
     async findTrends(coinId) {
         let resultsMACDs = await this.mysqlCon.getProcessedMACD(coinId);
 
-        /* We check for -1, because thats' the default for Stoch for 4-5 turns */
+        /* We check for -9999, because thats' the default for MACD for 4-5 turns */
         if (
-            resultsMACDs.length < 4 /* &&
-            Number(resultsMACDs[resultsMACDs.length - 1 - 4]) === Number(-1.0)*/
+            resultsMACDs.length < 4 &&
+            Number(resultsMACDs[resultsMACDs.length - 1]['signal_line']) ===
+                Number(-9999)
         ) {
             return;
         }
 
         let MACDArr = resultsMACDs.map((el) => {
             /* We need the faster metric, but we can change to d_full if we have to */
-            return el.k_full;
+            return el.hist;
         });
 
         let timestamp = resultsMACDs[resultsMACDs.length - 1]['timestamp'];
-
-        console.log('MACD: ' + MACDArr.reverse().slice(0, 4));
 
         const macd_t1to3 = calculateGraphGradientsTrendsPerChange(
             MACDArr.reverse().slice(0, 4)
         );
 
-        this.mysqlCon.storeTrends(coinId, timestamp, macd_t1to3, 'Stoch');
+        this.mysqlCon.storeTrends(coinId, timestamp, macd_t1to3, 'MACD');
     }
 }
 

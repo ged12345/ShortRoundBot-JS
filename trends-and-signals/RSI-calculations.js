@@ -272,6 +272,7 @@ class RSICalculations {
             }
 
             await this.mysqlCon.storeProcessedRSI(coinId, currRSI);
+            await this.findTrends(coinId);
             resolve();
         });
     }
@@ -280,8 +281,8 @@ class RSICalculations {
         let resultsRSI = await this.mysqlCon.getProcessedRSI(coinId);
 
         if (
-            resultsRSI.length < 4 &&
-            Number(resultsRSI[resultsRSI.length - 1 - 4]) === Number(0.0)
+            resultsRSI.length < 4 ||
+            Number(resultsRSI[resultsRSI.length - 1 - 4]['RSI']) === Number(0.0)
         ) {
             return;
         }
@@ -297,7 +298,9 @@ class RSICalculations {
         );
 
         console.log(rsi_t1to3);
-        this.mysqlCon.storeTrends(coinId, timestamp, rsi_t1to3, 'RSI');
+        if (rsi_t1to3) {
+            this.mysqlCon.storeTrends(coinId, timestamp, rsi_t1to3, 'RSI');
+        }
     }
 }
 

@@ -128,7 +128,7 @@ app.get('/api/advice', async (req, res, next) => {
     });
 });
 
-app.get('/api/locked_advice', (req, res, next) => {
+app.get('/api/locked_advice', async (req, res, next) => {
     // Here we return a json array of coins, probabilities, stance, and advice.
     let botId = req.query.botId;
     let token = req.query.token;

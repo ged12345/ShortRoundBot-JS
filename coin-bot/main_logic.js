@@ -33,6 +33,7 @@ const StochasticProcessor = require('../trends-and-signals/Stochastic-calculatio
 const BollingerProcessor = require('../trends-and-signals/BollingerBands-calculations.js');
 const GeneralAdviceProcessor = require('../advice-processing/General-advice.js');
 const EMAProcessor = require('../trends-and-signals/EMA-calculations.js');
+const MACDProcessor = require('../trends-and-signals/MACD-calculations.js');
 const API = require('../utils/api.js');
 const { calculateGraphGradientsTrendsPerChange } = require('../utils/math.js');
 const { rotateArray } = require('../utils/general.js');
@@ -63,6 +64,7 @@ class MainLogic {
             'Stochastic',
             'Bollinger',
             'EMA',
+            'MACD',
             'Advice',
         ]);
         //this.state = eventConstants.SEEKING_COIN;
@@ -86,6 +88,12 @@ class MainLogic {
             this.processLocks.unlock
         );
         this.EMAProcessor = new EMAProcessor(
+            this.mysqlCon,
+            this.EMAStoreNum,
+            this.graphPeriod,
+            this.processLocks.unlock
+        );
+        this.MACDProcessor = new MACDProcessor(
             this.mysqlCon,
             this.EMAStoreNum,
             this.graphPeriod,
@@ -175,6 +183,7 @@ class MainLogic {
         this.StochasticProcessingQueue = new Queue();
         this.BollingerProcessingQueue = new Queue();
         this.EMAProcessingQueue = new Queue();
+        this.MACDProcessingQueue = new Queue();
         this.setupTrendsAndSignalsProcessingQueue();
 
         /* We up this for each trend/signal we calculate, and for each coin */
@@ -253,6 +262,24 @@ class MainLogic {
             46000
         );
 
+        this.coinTrendsAndSignalsProcessingQueuer.enqueueQueue(
+            this.MACDProcessingQueue,
+            trendsAndSignalsFrequency /* We only acquire this info once a minute */,
+            true,
+            true,
+            true,
+            27000
+        );
+
+        this.coinTrendsAndSignalsProcessingQueuer.enqueueQueue(
+            this.MACDProcessingQueue,
+            trendsAndSignalsFrequency /* We only acquire this info once a minute */,
+            true,
+            true,
+            true,
+            47000
+        );
+
         /* Calculating general advice info */
         this.GeneralAdviceQueue = new Queue();
         this.setupGeneralCoinAdviceQueue();
@@ -314,6 +341,7 @@ class MainLogic {
         this.setupStochasticProcessingQueue();
         this.setupBollingerProcessingQueue();
         this.setupEMAProcessingQueue();
+        this.setupMACDProcessingQueue();
     }
 
     setupTrendsAndSignalsGraphingQueue() {
@@ -438,10 +466,27 @@ class MainLogic {
 
         this.coinConfigArr.forEach((coin) => {
             let trend = 'EMA';
-            this.BollingerProcessingQueue.enqueue(async () => {
+            this.EMAProcessingQueue.enqueue(async () => {
                 console.log(`Processing ${trend}: ${coin['coin_id_kraken']}`);
 
                 this.processTrendWithLock(this.EMAProcessor, trend, coin['id']);
+            });
+        });
+    }
+
+    async setupMACDProcessingQueue() {
+        /* We do processing in the same way we did previously, a MACDfor each coin. */
+
+        this.coinConfigArr.forEach((coin) => {
+            let trend = 'MACD';
+            this.MACDProcessingQueue.enqueue(async () => {
+                console.log(`Processing ${trend}: ${coin['coin_id_kraken']}`);
+
+                this.processTrendWithLock(
+                    this.MACDProcessor,
+                    trend,
+                    coin['id']
+                );
             });
         });
     }
@@ -773,7 +818,7 @@ class MainLogic {
     async processTrendWithLock(processor, trend, coinId) {
         this.processLocks.lock(trend, coinId);
         await processor.calculate(coinId);
-        await processor.findTrends(coinId);
+        //await processor.findTrends(coinId);
         let unlocked = this.processLocks.awaitLock(trend, coinId);
 
         if (unlocked === false) {

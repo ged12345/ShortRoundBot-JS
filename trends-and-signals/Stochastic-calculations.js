@@ -154,6 +154,8 @@ class StochasticCalculations {
         /* Add this to mysql and then cleanup*/
         await this.mysqlCon.storeProcessedStochastic(coinId, currStochastic);
 
+        await this.findTrends(coinId);
+
         this.cleanup(coinId);
     }
 
@@ -164,16 +166,15 @@ class StochasticCalculations {
 
         /* We check for -1, because thats' the default for Stoch for 4-5 turns */
         if (
-            resultsStochastics.length < 4 &&
-            Number(resultsStochastics[resultsStochastics.length - 1 - 4]) ===
-                Number(-1.0)
+            resultsStochastics.length < 4 ||
+            Number(resultsStochastics[0]['k_fast']) === Number(-1.0)
         ) {
             return;
         }
 
         let stochArr = resultsStochastics.map((el) => {
-            /* We need the faster metric, but we can change to d_full if we have to */
-            return el.k_full;
+            /* We need the faster metric (k_fast), but we can change to d_full if we have to */
+            return el.k_fast;
         });
 
         let timestamp =
@@ -187,7 +188,9 @@ class StochasticCalculations {
 
         console.log(stoch_t1to3);
 
-        this.mysqlCon.storeTrends(coinId, timestamp, stoch_t1to3, 'Stoch');
+        if (stoch_t1to3) {
+            this.mysqlCon.storeTrends(coinId, timestamp, stoch_t1to3, 'Stoch');
+        }
     }
 }
 
