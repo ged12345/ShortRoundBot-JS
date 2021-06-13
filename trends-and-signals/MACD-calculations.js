@@ -27,14 +27,14 @@ class MACDCalculations {
             await this.calculateInitialEMA12(coinId);
             sleep(500).then(async () => {
                 await this.calculateInitialEMA26(coinId);
-                /*sleep(500).then(async () => {
+                sleep(500).then(async () => {
                     await this.calculateInitialMACDandSignalLine(coinId);
-                });*/
+                });
             });
         } else {
             //console.log("EMA SECOND: " + coinId);
-            //await this.calculateAll(coinId);
-            //await this.findTrends;
+            await this.calculateAll(coinId);
+            await this.findTrends;
         }
 
         this.cleanup(coinId);
@@ -122,7 +122,7 @@ class MACDCalculations {
 
         totalClose = 0;
 
-        for (var i = totalOHLCResults - EMANum; i < totalOHLCResults; i++) {
+        for (var i = EMANum; i < totalOHLCResults; i++) {
             let close = Number(resultsOHLC[i]['close']);
 
             let multiplier = 2.0 / (EMANum + 1);
@@ -134,6 +134,8 @@ class MACDCalculations {
                         EMA26Arr[EMA26Arr.length - 1]['EMA'] * (1 - multiplier)
                 ),
             });
+
+            //console.log('RESULTS OHLC:' + i);
         }
 
         EMA26Arr.forEach(async (el) => {

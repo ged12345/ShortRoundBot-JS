@@ -257,9 +257,9 @@ class RSICalculations {
                 currRSI["aveLoss"] = 0;
             }*/
 
-            if (currRSI['aveLoss'] === 0) {
+            if (currRSI['aveLoss'].equals(0)) {
                 currRSI['RSI'] = new Decimal(100);
-            } else if (currRSI['aveGain'] === 0) {
+            } else if (currRSI['aveGain'].equals(0)) {
                 currRSI['RSI'] = new Decimal(0);
             } else {
                 currRSI['RS'] = new Decimal(currRSI['aveGain']).dividedBy(
@@ -270,6 +270,8 @@ class RSICalculations {
                     new Decimal(100).dividedBy(RS.plus(1))
                 );
             }
+
+            console.log(currRSI);
 
             await this.mysqlCon.storeProcessedRSI(coinId, currRSI);
             await this.findTrends(coinId);
