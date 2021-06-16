@@ -13,6 +13,7 @@ class EMACalculations {
     async cleanup(coinId) {
         /* Cleanup the processed RSI and limit */
         await this.mysqlCon.cleanupProcessedEMA(coinId, this.totalRecordsNum);
+        await this.mysqlCon.cleanupTrends(coinId);
         /* Unlock the coin for processing */
         this.unlockKey('EMA');
     }

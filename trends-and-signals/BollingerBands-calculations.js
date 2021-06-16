@@ -39,6 +39,7 @@ class BollingerBandsCalculations {
             coinId,
             this.totalRecordsNum
         );
+        await this.mysqlCon.cleanupTrends(coinId);
         /* Unlock the coin for processing */
         this.unlockKey('Bollinger');
     }

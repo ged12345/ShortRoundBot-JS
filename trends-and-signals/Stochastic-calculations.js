@@ -40,6 +40,7 @@ class StochasticCalculations {
             coinId,
             this.totalRecordsNum
         );
+        await this.mysqlCon.cleanupTrends(coinId);
         /* Unlock the coin for processing */
         this.unlockKey('Stochastic');
     }
@@ -104,9 +105,9 @@ class StochasticCalculations {
             dFull: -1,
         };
 
-        if (currStochastic['kFast'] < 0) {
+        if (currStochastic['kFast'].lessThan(0)) {
             currStochastic['kFast'] = 0;
-        } else if (currStochastic['kFast'] > 100) {
+        } else if (currStochastic['kFast'].greaterThan(100)) {
             currStochastic['kFast'] = 100;
         }
 

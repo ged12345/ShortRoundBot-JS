@@ -9,7 +9,7 @@ class Mysql {
             password: '54ngfr0!D',
             database: 'short_round',
             waitForConnections: true,
-            connectionLimit: 10,
+            connectionLimit: 20,
             queueLimit: 0,
         });
 
@@ -203,7 +203,7 @@ class Mysql {
         const [rows, fields] = await this.connection.query(
             `SELECT * FROM coin_ohlc WHERE coin_id=${mysqlCon.escape(
                 coin_id
-            )} LIMIT 32`
+            )} LIMIT 33`
         );
         /* TO DO: Replace 32 with our graph limit */
 
@@ -614,9 +614,11 @@ class Mysql {
         let [rows, fields] = await this.connection.query(
             `INSERT INTO coin_trends (coin_id, time, date, timestamp, ${type}_t1_2, ${type}_t2_3, ${type}_shape, ${type}_per_change1, ${type}_per_change2, ${type}_per_change3) VALUES ('${coin_id}', '${stampFullTime}', '${stampFullDate}','${timestamp}','${results[1][0]}', '${results[1][1]}', '${results[2]}', '${results[3][0]}', '${results[3][1]}', '${results[3][2]}') ON DUPLICATE KEY UPDATE ${type}_t1_2=${results[1][0]}, ${type}_t2_3=${results[1][1]}, ${type}_shape='${results[2]}', ${type}_per_change1=${results[3][0]}, ${type}_per_change2=${results[3][1]}, ${type}_per_change3=${results[3][2]}`
         );
+    }
 
+    async cleanupTrends(coin_id, limitNum) {
         /* Only keep the last 60 */
-        [rows, fields] = await this.connection.query(
+        let [rows, fields] = await this.connection.query(
             `DELETE FROM coin_trends
             WHERE timestamp IN
             (

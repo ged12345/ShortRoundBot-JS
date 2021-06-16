@@ -64,6 +64,7 @@ class RSICalculations {
     async cleanup(coinId) {
         /* Cleanup the processed RSI and limit */
         await this.mysqlCon.cleanupProcessedRSI(coinId, this.totalRecordsNum);
+        await this.mysqlCon.cleanupTrends(coinId);
         /* Unlock the coin for processing */
         this.unlockKey('RSI');
     }
@@ -270,8 +271,6 @@ class RSICalculations {
                     new Decimal(100).dividedBy(RS.plus(1))
                 );
             }
-
-            console.log(currRSI);
 
             await this.mysqlCon.storeProcessedRSI(coinId, currRSI);
             await this.findTrends(coinId);

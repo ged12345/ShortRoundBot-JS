@@ -17,6 +17,7 @@ class MACDCalculations {
     async cleanup(coinId) {
         /* Cleanup the processed RSI and limit */
         await this.mysqlCon.cleanupProcessedMACD(coinId, this.totalRecordsNum);
+        await this.mysqlCon.cleanupTrends(coinId);
         /* Unlock the coin for processing */
         this.unlockKey('MACD');
     }
@@ -32,7 +33,6 @@ class MACDCalculations {
                 });
             });
         } else {
-            //console.log("EMA SECOND: " + coinId);
             await this.calculateAll(coinId);
             await this.findTrends;
         }
@@ -46,7 +46,7 @@ class MACDCalculations {
         /* No acquired OHLC results yet */
         if (resultsOHLC.length === 0) return;
 
-        /* 1. Iterate through 26 OHLC entries, and calculate the SMA. */
+        /* 1. Iterate through 12 OHLC entries, and calculate the SMA. */
         let totalOHLCResults = resultsOHLC.length;
         let totalClose = 0;
 
@@ -58,24 +58,27 @@ class MACDCalculations {
             totalClose += Number(resultsOHLC[i]['close']);
         }
 
+        //console.log('TOTAL CLOSE: ');
+        //console.log(totalClose);
+
         let EMA12Arr = [];
         EMA12Arr.push({
             timestamp: resultsOHLC[EMANum - 1]['timestamp'],
-            EMA: Number(totalClose / EMANum),
+            EMA: Number(totalClose / (EMANum * 1.0)),
         });
 
         totalClose = 0;
+        let multiplier = 2.0 / (EMANum + 1);
 
         for (let i = EMANum; i < totalOHLCResults; i++) {
             let close = Number(resultsOHLC[i]['close']);
 
-            let multiplier = 2.0 / (EMANum + 1);
-
             EMA12Arr.push({
                 timestamp: resultsOHLC[i]['timestamp'],
                 EMA: Number(
-                    close * multiplier +
-                        EMA12Arr[EMA12Arr.length - 1]['EMA'] * (1 - multiplier)
+                    (close - EMA12Arr[EMA12Arr.length - 1]['EMA']) *
+                        multiplier +
+                        EMA12Arr[EMA12Arr.length - 1]['EMA']
                 ),
             });
         }
@@ -117,21 +120,21 @@ class MACDCalculations {
         let EMA26Arr = [];
         EMA26Arr.push({
             timestamp: resultsOHLC[EMANum - 1]['timestamp'],
-            EMA: Number(totalClose / EMANum),
+            EMA: Number(totalClose / (EMANum * 1.0)),
         });
 
         totalClose = 0;
+        let multiplier = 2.0 / (EMANum + 1);
 
         for (var i = EMANum; i < totalOHLCResults; i++) {
             let close = Number(resultsOHLC[i]['close']);
 
-            let multiplier = 2.0 / (EMANum + 1);
-
             EMA26Arr.push({
                 timestamp: resultsOHLC[i]['timestamp'],
                 EMA: Number(
-                    close * multiplier +
-                        EMA26Arr[EMA26Arr.length - 1]['EMA'] * (1 - multiplier)
+                    (close - EMA26Arr[EMA26Arr.length - 1]['EMA']) *
+                        multiplier +
+                        EMA26Arr[EMA26Arr.length - 1]['EMA']
                 ),
             });
 
@@ -145,7 +148,6 @@ class MACDCalculations {
 
                 if (resultsMACD[i]['timestamp'] === el['timestamp']) {
                     EMA_12 = resultsMACD[i]['EMA_12'];
-                    //console.log(resultsMACD[i]['EMA_12'], EMA_12);
                 }
             }
 
@@ -196,20 +198,22 @@ class MACDCalculations {
         let EMANum = 12;
         let multiplier = 2.0 / (EMANum + 1);
 
-        let EMA12 = Number(
-            close * multiplier +
-                Number(resultsMACD[resultsMACD.length - 1]['EMA_12']) *
-                    (1 - multiplier)
-        );
+        let EMA12 =
+            Number(
+                close - Number(resultsMACD[resultsMACD.length - 1]['EMA_12'])
+            ) *
+                multiplier +
+            Number(resultsMACD[resultsMACD.length - 1]['EMA_12']);
 
         EMANum = 26;
         multiplier = 2.0 / (EMANum + 1);
 
-        let EMA26 = Number(
-            close * multiplier +
-                Number(resultsMACD[resultsMACD.length - 1]['EMA_26']) *
-                    (1 - multiplier)
-        );
+        let EMA26 =
+            Number(
+                close - Number(resultsMACD[resultsMACD.length - 1]['EMA_26'])
+            ) *
+                multiplier +
+            Number(resultsMACD[resultsMACD.length - 1]['EMA_26']);
 
         let MACD = Number(EMA12 - EMA26);
 
@@ -247,13 +251,22 @@ class MACDCalculations {
                     (1 - multiplier);
         }
 
+        if (
+            resultsMACD[resultsMACD.length - 1]['timestamp'] ===
+            resultsOHLC[resultsOHLC.length - 1]['timestamp']
+        ) {
+            console.log('MACD TIMESTAMP IS CORRECT');
+        } else {
+            console.log('MACD TIMESTAMP IS INCORRECT');
+        }
+
         let currMACD = {
             timestamp: resultsOHLC[resultsOHLC.length - 1]['timestamp'],
             EMA_12: EMA12,
             EMA_26: EMA26,
             MACD: MACD,
             signal_line: signalLine,
-            hist: signalLine !== Number(-9999.0) ? signalLine - MACD : -9999,
+            hist: signalLine !== Number(-9999.0) ? MACD - signalLine : -9999,
         };
 
         console.log(EMA12, EMA26, MACD, signalLine);
