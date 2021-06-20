@@ -412,7 +412,7 @@ class GeneralTrendAdvice {
             coinAdvice = COIN_ADVICE.POSSIBLE_BUY;
         } else if (tradeBuyPercentage >= 60 && tradeSellPercentage < 30) {
             coinAdvice = COIN_ADVICE.POSSIBLE_BUY;
-        } else if (tradeBuyPercentage >= 55 && tradeSellPercentage > 10) {
+        } else if (tradeBuyPercentage >= 55 && tradeSellPercentage < 10) {
             coinAdvice = COIN_ADVICE.POSSIBLE_BUY;
         } else if (tradeBuyPercentage > 50 && tradeSellPercentage < 60) {
             coinAdvice = COIN_ADVICE.HOLD;
@@ -420,11 +420,18 @@ class GeneralTrendAdvice {
             coinAdvice = COIN_ADVICE.HOLD;
         } else if (tradeBuyPercentage < 60 && tradeSellPercentage > 70) {
             coinAdvice = COIN_ADVICE.POSSIBLE_SELL;
+        } else if (tradeBuyPercentage < 40 && tradeSellPercentage > 60) {
+            coinAdvice = COIN_ADVICE.POSSIBLE_SELL;
         } else if (tradeSellPercentage > 80) {
-            coinAdvice = COIN_ADVICE.DEFINITE_SELL;
+            coinAdvice = COIN_ADVICE.POSSIBLE_SELL;
         } else if (tradeSellPercentage >= 90) {
             coinAdvice = COIN_ADVICE.IMMEDIATE_SELL;
-        }
+        } /*else if (
+            currResultsTrends['close_shape'] === TREND_SHAPE.CRASHING &&
+            tradeSellPercentage > 60
+        ) {
+            coinAdvice = COIN_ADVICE.POSSIBLE_SELL;
+        }*/
 
         console.log('Shape: ', currResultsTrends['close_shape']);
 

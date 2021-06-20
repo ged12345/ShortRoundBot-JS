@@ -39,6 +39,7 @@ const { calculateGraphGradientsTrendsPerChange } = require('../utils/math.js');
 const { rotateArray, outputError } = require('../utils/general.js');
 const NETWORK = require('../legacy/config/network-config.js');
 
+const util = require('util');
 const fs = require('fs');
 const write = require('write');
 
@@ -476,7 +477,7 @@ class MainLogic {
                     await this.mysqlCon.cleanupCoinOHLC(coinId, storeNum);
                 } catch (err) {
                     outputError(err);
-                    outputError(result);
+                    outputError(util.inspect(result));
                 }
                 /* Unlock ohlc here so we can do calculations on this element - do we need this per coin? */
                 this.processLocks.unlock('OHLC');
