@@ -195,7 +195,8 @@ class StochasticCalculations {
         //console.log('Stoch: ' + stochArr.reverse().slice(0, 4));
 
         const stoch_t1to3 = calculateGraphGradientsTrendsPerChange(
-            stochArr.reverse().slice(0, 4)
+            stochArr.reverse().slice(0, 4),
+            false
         );
 
         if (stoch_t1to3) {

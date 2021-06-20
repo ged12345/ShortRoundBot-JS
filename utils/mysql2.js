@@ -414,9 +414,21 @@ class Mysql {
             hour12: false,
         });
 
-        const [rows, fields] = await this.connection.query(
-            `INSERT INTO coin_processed_bollinger VALUES (${coin_id}, '${stampFullTime}', '${stampFullDate}','${timestamp}',${results['close']},${results['mean']},${results['SD']},${results['bWidth']},${results['perB']},${results['bolU']},${results['bolD']},${results['bolMA']}) ON DUPLICATE KEY UPDATE close=${results['close']},mean=${results['mean']},SD=${results['SD']},per_b=${results['perB']},b_width=${results['bWidth']},bol_u=${results['bolU']},bol_d=${results['bolD']},bol_ma=${results['bolMA']}`
-        );
+        let queryDeadlock = false;
+        let retryLimit = 0;
+
+        do {
+            try {
+                queryDeadlock = false;
+                const [rows, fields] = await this.connection.query(
+                    `INSERT INTO coin_processed_bollinger VALUES (${coin_id}, '${stampFullTime}', '${stampFullDate}','${timestamp}',${results['close']},${results['mean']},${results['SD']},${results['bWidth']},${results['perB']},${results['bolU']},${results['bolD']},${results['bolMA']}) ON DUPLICATE KEY UPDATE close=${results['close']},mean=${results['mean']},SD=${results['SD']},per_b=${results['perB']},b_width=${results['bWidth']},bol_u=${results['bolU']},bol_d=${results['bolD']},bol_ma=${results['bolMA']}`
+                );
+            } catch (err) {
+                queryDeadlock = true;
+            }
+
+            retryLimit++;
+        } while (queryDeadlock === true && retryLimit < 10);
     }
 
     async cleanupProcessedBollinger(coin_id, limitNum) {
@@ -470,9 +482,21 @@ class Mysql {
             `INSERT INTO coin_processed_sma VALUES (${coin_id}, '${stampFullTime}', '${stampFullDate}','${timestamp}',${results["close"]},${results["SMA"]},${results["EMA"]},${results["trend"]},${results["trend_weighting"]}) ON DUPLICATE KEY UPDATE close=${results["close"]},SMA=${results["SMA"]}, EMA=${results["EMA"]},trend=\"${results["trend"]}\",trend_weighting=\"${results["trend_weighting"]}\"`
         );*/
 
-        const [rows, fields] = await this.connection.query(
-            `INSERT INTO coin_processed_sma VALUES (${coin_id}, '${stampFullTime}', '${stampFullDate}','${timestamp}',${results['close']},${results['SMA']},${results['EMA']},${results['trend']},${results['trend_weighting']}) ON DUPLICATE KEY UPDATE close=${results['close']},SMA=${results['SMA']}, EMA=${results['EMA']},trend=\"${results['trend']}\",trend_weighting=\"${results['trend_weighting']}\"`
-        );
+        let queryDeadlock = false;
+        let retryLimit = 0;
+
+        do {
+            try {
+                queryDeadlock = false;
+                const [rows, fields] = await this.connection.query(
+                    `INSERT INTO coin_processed_sma VALUES (${coin_id}, '${stampFullTime}', '${stampFullDate}','${timestamp}',${results['close']},${results['SMA']},${results['EMA']},${results['trend']},${results['trend_weighting']}) ON DUPLICATE KEY UPDATE close=${results['close']},SMA=${results['SMA']}, EMA=${results['EMA']},trend=\"${results['trend']}\",trend_weighting=\"${results['trend_weighting']}\"`
+                );
+            } catch (err) {
+                queryDeadlock = true;
+            }
+
+            retryLimit++;
+        } while (queryDeadlock === true && retryLimit < 10);
     }
 
     async cleanupProcessedEMA(coin_id, limitNum) {
@@ -679,6 +703,80 @@ class Mysql {
     async emptyTrends() {
         const [rows, fields] = await this.connection.query(
             'TRUNCATE TABLE coin_trends'
+        );
+    }
+
+    async getCoinAdvice(coin_id) {
+        const [rows, fields] = await this.connection.query(
+            `SELECT * from coin_advice WHERE coin_id=${mysqlCon.escape(
+                coin_id
+            )}`
+        );
+
+        //console.log("Data received from Db:");
+        //console.log(rows);
+
+        return rows;
+    }
+
+    async storeCoinAdvice(coin_id, timestamp, results) {
+        let timestampDate = new Date(timestamp * 1000);
+        let stampFullDate = timestampDate
+            .toLocaleDateString('en-AU')
+            .slice(0, 10)
+            .split('/')
+            .reverse()
+            .join('-');
+        let stampFullTime = timestampDate.toLocaleTimeString('en-AU', {
+            hour12: false,
+        });
+
+        /*console.log(
+            `INSERT INTO coin_advice (coin_id, time, date, timestamp, status, advice, buy_probability, sell_probability,resistance_price, support_price, stop_loss_price, token) VALUES ('${coin_id}', '${stampFullTime}', '${stampFullDate}','${timestamp}','${results['coinStatus']}', '${results['coinAdvice']}', '${results['tradeBuy']}', '${results['tradeSell']}', NULL, NULL, NULL, NULL) ON DUPLICATE KEY UPDATE status='${results['coinStatus']}', advice='${results['coinAdvice']}', buy_probability=${results['tradeBuy']}, sell_probability=${results['tradeSell']}`
+        );*/
+
+        /* Deadlock because the row is locked. So I've had to add deadlock testing and retry once a deadlock occurs. */
+        let queryDeadlock = false;
+        let retryLimit = 0;
+
+        do {
+            try {
+                queryDeadlock = false;
+
+                let [rows, fields] = await this.connection.query(
+                    `INSERT INTO coin_advice (coin_id, time, date, timestamp, status, advice, buy_probability, sell_probability,resistance_price, support_price, stop_loss_price, token) VALUES ('${coin_id}', '${stampFullTime}', '${stampFullDate}','${timestamp}','${results['coinStatus']}', '${results['coinAdvice']}', '${results['tradeBuy']}', '${results['tradeSell']}', NULL, NULL, NULL, NULL) ON DUPLICATE KEY UPDATE status='${results['coinStatus']}', advice='${results['coinAdvice']}', buy_probability=${results['tradeBuy']}, sell_probability=${results['tradeSell']}`
+                );
+            } catch (err) {
+                console.log(err);
+                queryDeadlock = true;
+            }
+
+            retryLimit++;
+        } while (queryDeadlock === true && retryLimit < 10);
+    }
+
+    async cleanupCoinAdvice(coin_id, limitNum) {
+        /* Only keep the last 60 */
+        let [rows, fields] = await this.connection.query(
+            `DELETE FROM coin_advice
+            WHERE timestamp IN
+            (
+                SELECT timestamp
+                FROM
+                    (
+                        SELECT timestamp
+                        FROM coin_advice
+                        WHERE coin_id = ${mysqlCon.escape(coin_id)}
+                        ORDER BY timestamp DESC
+                        LIMIT 20,60
+                    ) a
+            )`
+        );
+    }
+
+    async emptyCoinAdvice() {
+        const [rows, fields] = await this.connection.query(
+            'TRUNCATE TABLE coin_advice'
         );
     }
 }

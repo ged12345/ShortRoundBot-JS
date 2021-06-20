@@ -73,6 +73,12 @@ function calculateTrendShape(trendArr) {
         return TREND_SHAPE.DROPPING_DOWN;
     } else if ((basicTrendArr[0] + basicTrendArr[1]) / 2.0 < 0) {
         return TREND_SHAPE.SLOPING_DOWN;
+    } else if ((basicTrendArr[0] + basicTrendArr[1]) / 2.0 === 0) {
+        if (basicTrendArr[0] > 0) {
+            return TREND_SHAPE.DOWNWARD_UBEND_SOFT;
+        } else if (basicTrendArr[0] < 0) {
+            return TREND_SHAPE.UPWARD_UBEND_SOFT;
+        }
     } else {
         outputError(trendArr);
     }

@@ -34,7 +34,7 @@ class MACDCalculations {
             });
         } else {
             await this.calculateAll(coinId);
-            await this.findTrends;
+            await this.findTrends(coinId);
         }
 
         this.cleanup(coinId);
@@ -271,7 +271,7 @@ class MACDCalculations {
 
         /* We check for -9999, because thats' the default for MACD for 4-5 turns */
         if (
-            resultsMACDs.length < 4 &&
+            resultsMACDs.length < 4 ||
             Number(resultsMACDs[resultsMACDs.length - 1]['signal_line']) ===
                 Number(-9999)
         ) {
@@ -286,7 +286,8 @@ class MACDCalculations {
         let timestamp = resultsMACDs[resultsMACDs.length - 1]['timestamp'];
 
         const macd_t1to3 = calculateGraphGradientsTrendsPerChange(
-            MACDArr.reverse().slice(0, 4)
+            MACDArr.reverse().slice(0, 4),
+            true
         );
 
         this.mysqlCon.storeTrends(coinId, timestamp, macd_t1to3, 'MACD');

@@ -36,7 +36,7 @@ const EMAProcessor = require('../trends-and-signals/EMA-calculations.js');
 const MACDProcessor = require('../trends-and-signals/MACD-calculations.js');
 const API = require('../utils/api.js');
 const { calculateGraphGradientsTrendsPerChange } = require('../utils/math.js');
-const { rotateArray } = require('../utils/general.js');
+const { rotateArray, outputError } = require('../utils/general.js');
 const NETWORK = require('../legacy/config/network-config.js');
 
 const fs = require('fs');
@@ -58,6 +58,9 @@ class MainLogic {
         this.StochasticStoreNum = 14; // 14 time periods
         this.BollingerStoreNum = 21; // 21 time periods
         this.EMAStoreNum = this.graphPeriod;
+
+        this.currTimestamp = 0;
+
         this.processLocks = new ProcessLocks([
             'OHLC',
             'RSI',
@@ -132,6 +135,7 @@ class MainLogic {
         await this.mysqlCon.emptyProcessEMA();
         await this.mysqlCon.emptyProcessMACD();
         await this.mysqlCon.emptyTrends();
+        await this.mysqlCon.emptyCoinAdvice();
     }
 
     async setupKraken() {
@@ -168,6 +172,15 @@ class MainLogic {
             true,
             true,
             true,
+            1000 /* Just after the close */
+        );
+
+        this.coinDataAcquisitionQueuer.enqueueQueue(
+            this.OHLCAcquisitionQueue,
+            OHLCFrequency /* We only acquire this info once a minute */,
+            true,
+            true,
+            true,
             20000 /* Just after the close */
         );
 
@@ -197,6 +210,15 @@ class MainLogic {
             true,
             true,
             true,
+            3000
+        );
+
+        this.coinTrendsAndSignalsProcessingQueuer.enqueueQueue(
+            this.RSIProcessingQueue,
+            trendsAndSignalsFrequency /* We only acquire this info once a minute */,
+            true,
+            true,
+            true,
             23000
         );
 
@@ -207,6 +229,15 @@ class MainLogic {
             true,
             true,
             43000
+        );
+
+        this.coinTrendsAndSignalsProcessingQueuer.enqueueQueue(
+            this.StochasticProcessingQueue,
+            trendsAndSignalsFrequency /* We only acquire this info once a minute */,
+            true,
+            true,
+            true,
+            4000
         );
 
         this.coinTrendsAndSignalsProcessingQueuer.enqueueQueue(
@@ -233,6 +264,15 @@ class MainLogic {
             true,
             true,
             true,
+            5000
+        );
+
+        this.coinTrendsAndSignalsProcessingQueuer.enqueueQueue(
+            this.BollingerProcessingQueue,
+            trendsAndSignalsFrequency /* We only acquire this info once a minute */,
+            true,
+            true,
+            true,
             25000
         );
 
@@ -251,6 +291,15 @@ class MainLogic {
             true,
             true,
             true,
+            6000
+        );
+
+        this.coinTrendsAndSignalsProcessingQueuer.enqueueQueue(
+            this.EMAProcessingQueue,
+            trendsAndSignalsFrequency /* We only acquire this info once a minute */,
+            true,
+            true,
+            true,
             26000
         );
 
@@ -261,6 +310,15 @@ class MainLogic {
             true,
             true,
             46000
+        );
+
+        this.coinTrendsAndSignalsProcessingQueuer.enqueueQueue(
+            this.MACDProcessingQueue,
+            trendsAndSignalsFrequency /* We only acquire this info once a minute */,
+            true,
+            true,
+            true,
+            7000
         );
 
         this.coinTrendsAndSignalsProcessingQueuer.enqueueQueue(
@@ -291,6 +349,15 @@ class MainLogic {
             true,
             true,
             true,
+            10000
+        );
+
+        this.coinAdviceGenerationQueuer.enqueueQueue(
+            this.GeneralAdviceQueue,
+            trendsAndSignalsFrequency /* We only acquire this info once a minute */,
+            true,
+            true,
+            true,
             30000
         );
 
@@ -306,6 +373,24 @@ class MainLogic {
         /* Plotting graphs to compare calculations with online */
         this.PlotlyGraphingQueue = new Queue();
         this.setupTrendsAndSignalsGraphingQueue();
+
+        this.coinTrendsAndSignalsGraphingQueuer.enqueueQueue(
+            this.PlotlyGraphingQueue,
+            trendsAndSignalsFrequency /* We only acquire this info once a minute */,
+            true,
+            true,
+            true,
+            15000
+        );
+
+        this.coinTrendsAndSignalsGraphingQueuer.enqueueQueue(
+            this.PlotlyGraphingQueue,
+            trendsAndSignalsFrequency /* We only acquire this info once a minute */,
+            true,
+            true,
+            true,
+            35000
+        );
 
         this.coinTrendsAndSignalsGraphingQueuer.enqueueQueue(
             this.PlotlyGraphingQueue,
@@ -374,20 +459,25 @@ class MainLogic {
             .OHLC({ pair: coinPair, interval: 1 })
             .then(async (result) => {
                 /* This gets the result array in the proper order */
-                let ohlcDesc = result[coinPair].reverse();
+                try {
+                    let ohlcDesc = result[coinPair].reverse();
 
-                if (coinId == 1) {
-                    this.calculateOHLCTrends(coinId, ohlcDesc);
+                    if (coinId == 1) {
+                        this.calculateOHLCTrends(coinId, ohlcDesc);
+                    }
+
+                    let limiterIndex = 0;
+                    for (const ohlcEl of ohlcDesc) {
+                        await this.mysqlCon.storeCoinOHLC(coinId, ohlcEl);
+
+                        if (limiterIndex >= storeNum) break;
+                        limiterIndex++;
+                    }
+                    await this.mysqlCon.cleanupCoinOHLC(coinId, storeNum);
+                } catch (err) {
+                    outputError(err);
+                    outputError(result);
                 }
-
-                let limiterIndex = 0;
-                for (const ohlcEl of ohlcDesc) {
-                    await this.mysqlCon.storeCoinOHLC(coinId, ohlcEl);
-
-                    if (limiterIndex >= storeNum) break;
-                    limiterIndex++;
-                }
-                await this.mysqlCon.cleanupCoinOHLC(coinId, storeNum);
                 /* Unlock ohlc here so we can do calculations on this element - do we need this per coin? */
                 this.processLocks.unlock('OHLC');
             })
@@ -397,7 +487,7 @@ class MainLogic {
     calculateOHLCTrends(coinId, ohlcArr) {
         /* Here we calculate the trends for each value of the OHLC then add them to our ohlcEl array */
 
-        const timestamp = ohlcArr[0][0];
+        const timestamp = (this.currTimestamp = ohlcArr[0][0]);
 
         const closeArr = ohlcArr.map((el) => {
             // Close value in array
@@ -405,7 +495,9 @@ class MainLogic {
         });
 
         const close_t1to3 = calculateGraphGradientsTrendsPerChange(
-            closeArr.slice(0, 4).reverse()
+            closeArr.slice(0, 4).reverse(),
+            true,
+            'Close DEBUG: '
         );
 
         //console.log('CLOSE TRENDS: ');
@@ -831,8 +923,17 @@ class MainLogic {
 
     async calculateAdviceWithLock(advisor, trend, coinId) {
         this.processLocks.lock(trend, coinId);
+        /* DEBUG */
         if (coinId === 1) {
-            console.log(await advisor.advise(coinId));
+            let advice = await advisor.advise(coinId);
+            if (advice !== false) {
+                this.mysqlCon.storeCoinAdvice(
+                    coinId,
+                    this.currTimestamp,
+                    advice
+                );
+                this.mysqlCon.cleanupCoinAdvice();
+            }
         }
         let unlocked = this.processLocks.awaitLock(trend, coinId);
 

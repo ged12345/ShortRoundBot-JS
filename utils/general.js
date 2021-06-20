@@ -1,4 +1,6 @@
 var crypto = require('crypto');
+const fs = require('fs');
+const util = require('util');
 
 const algorithm = 'aes-256-ctr';
 const iv = crypto.randomBytes(16);

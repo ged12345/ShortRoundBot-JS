@@ -38,14 +38,18 @@ class GeneralTrendAdvice {
 
         let resultsTrends = await this.mysqlCon.getTrends(coinId);
 
-        if (resultsOHLC.length === 0) return false;
-
+        if (resultsOHLC.length === 0) {
+            console.log('Advice: None yet, OHLC not prepared yet.');
+            return false;
+        }
         /* If we have no EMAs and the signal line for the MACD hasn't be calculated */
         if (resultsEMA.length < 2) {
+            console.log('Advice: None yet, EMA too short.');
             return false;
         } else if (
             resultsMACD[resultsMACD.length - 1]['signal_line'] === -9999
         ) {
+            console.log('Advice: None yet, MACD too short.');
             return false;
         }
 
@@ -54,33 +58,64 @@ class GeneralTrendAdvice {
 
         let currResultsTrends = resultsTrends[resultsTrends.length - 1];
 
+        /* 3 is current, 2 is next current, 1 is 3 back */
         let CloseTotalPercentageChange =
             Number(currResultsTrends['close_per_change1']) +
             Number(currResultsTrends['close_per_change2']) +
             Number(currResultsTrends['close_per_change3']);
 
         let CloseCurrPercentageChange = Number(
-            currResultsTrends['close_per_change1']
+            currResultsTrends['close_per_change3']
         );
 
         let CloseCurr1And2PercentageChange =
-            Number(currResultsTrends['close_per_change1']) +
+            Number(currResultsTrends['close_per_change3']) +
             Number(currResultsTrends['close_per_change2']);
+
+        console.log(
+            Number(currResultsTrends['close_per_change1']),
+            Number(currResultsTrends['close_per_change2']),
+            Number(currResultsTrends['close_per_change3'])
+        );
 
         let RSITotalPercentageChange =
             Number(currResultsTrends['RSI_per_change1']) +
             Number(currResultsTrends['RSI_per_change2']) +
             Number(currResultsTrends['RSI_per_change3']);
 
+        let RSICurrPercentageChange = Number(
+            currResultsTrends['RSI_per_change3']
+        );
+
+        let RSICurr1And2PercentageChange =
+            Number(currResultsTrends['RSI_per_change3']) +
+            Number(currResultsTrends['RSI_per_change2']);
+
         let StochTotalPercentageChange =
             Number(currResultsTrends['Stoch_per_change1']) +
             Number(currResultsTrends['Stoch_per_change2']) +
             Number(currResultsTrends['Stoch_per_change3']);
 
+        let StochCurrPercentageChange = Number(
+            currResultsTrends['Stoch_per_change3']
+        );
+
+        let StochCurr1And2PercentageChange =
+            Number(currResultsTrends['Stoch_per_change3']) +
+            Number(currResultsTrends['Stoch_per_change2']);
+
         let PerBTotalPercentageChange =
             Number(currResultsTrends['PerB_per_change1']) +
             Number(currResultsTrends['PerB_per_change2']) +
             Number(currResultsTrends['PerB_per_change3']);
+
+        let PerBCurrPercentageChange = Number(
+            currResultsTrends['PerB_per_change3']
+        );
+
+        let PerBCurr1And2PercentageChange =
+            Number(currResultsTrends['PerB_per_change3']) +
+            Number(currResultsTrends['PerB_per_change2']);
 
         let MACDTotalPercentageChange =
             Number(currResultsTrends['MACD_per_change1']) +
@@ -93,135 +128,295 @@ class GeneralTrendAdvice {
         let coinStatus = '';
         let coinAdvice = COIN_ADVICE.HOLD;
 
-        /* Sell percentages */
+        let timestamp = Date.now();
+        let timestampDate = new Date(timestamp);
+        let stampFullDate = timestampDate
+            .toLocaleDateString('en-AU')
+            .slice(0, 10)
+            .split('/')
+            .reverse()
+            .join('-');
+        let stampFullTime = timestampDate.toLocaleTimeString('en-AU', {
+            hour12: false,
+        });
+
+        console.log(stampFullTime);
+
+        /* CLOSE */
         if (
             currResultsTrends['close_shape'] === TREND_SHAPE.CRASHING &&
-            CloseTotalPercentageChange < -5
+            CloseTotalPercentageChange < -2
+        ) {
+            tradeSellPercentage = 95;
+        } else if (
+            currResultsTrends['close_shape'] === TREND_SHAPE.CRASHING &&
+            CloseTotalPercentageChange < -1.5
         ) {
             tradeSellPercentage = 90;
         } else if (
             currResultsTrends['close_shape'] === TREND_SHAPE.CRASHING &&
-            CloseTotalPercentageChange < -2.5
+            CloseTotalPercentageChange < -1
         ) {
             tradeSellPercentage = 85;
         } else if (
             currResultsTrends['close_shape'] === TREND_SHAPE.CRASHING &&
-            CloseTotalPercentageChange < -1
+            CloseTotalPercentageChange < -0.5
         ) {
             tradeSellPercentage = 80;
         } else if (
-            currResultsTrends['close_shape'] === TREND_SHAPE.DROPPING_DOWN &&
-            CloseTotalPercentageChange < -10
-        ) {
-            tradeSellPercentage = 75;
-        } else if (
-            currResultsTrends['close_shape'] === TREND_SHAPE.DROPPING_DOWN &&
-            CloseTotalPercentageChange < -5
+            currResultsTrends['close_shape'] === TREND_SHAPE.CRASHING &&
+            CloseTotalPercentageChange < -0.25
         ) {
             tradeSellPercentage = 70;
         } else if (
-            currResultsTrends['close_shape'] === TREND_SHAPE.DROPPING_DOWN &&
-            CloseTotalPercentageChange < -2.5
-        ) {
-            tradeSellPercentage = 65;
-        } else if (
-            currResultsTrends['close_shape'] === TREND_SHAPE.DROPPING_DOWN &&
-            CloseTotalPercentageChange < -1.5
+            currResultsTrends['close_shape'] === TREND_SHAPE.CRASHING &&
+            CloseTotalPercentageChange < -0.1
         ) {
             tradeSellPercentage = 60;
         } else if (
             currResultsTrends['close_shape'] === TREND_SHAPE.DROPPING_DOWN &&
+            CloseTotalPercentageChange < -5
+        ) {
+            tradeSellPercentage = 75;
+        } else if (
+            currResultsTrends['close_shape'] === TREND_SHAPE.DROPPING_DOWN &&
+            CloseTotalPercentageChange < -2.5
+        ) {
+            tradeSellPercentage = 70;
+        } else if (
+            currResultsTrends['close_shape'] === TREND_SHAPE.DROPPING_DOWN &&
             CloseTotalPercentageChange < -1
         ) {
-            tradeSellPercentage = 55;
+            tradeSellPercentage = 65;
         } else if (
             currResultsTrends['close_shape'] === TREND_SHAPE.DROPPING_DOWN &&
             CloseTotalPercentageChange < -0.5
         ) {
+            tradeSellPercentage = 60;
+        } else if (
+            currResultsTrends['close_shape'] === TREND_SHAPE.DROPPING_DOWN &&
+            CloseTotalPercentageChange < -0.25
+        ) {
+            tradeSellPercentage = 55;
+        } else if (
+            currResultsTrends['close_shape'] === TREND_SHAPE.DROPPING_DOWN &&
+            CloseTotalPercentageChange < -0.1
+        ) {
             tradeSellPercentage = 50;
+        } else if (
+            currResultsTrends['close_shape'] === TREND_SHAPE.DROPPING_DOWN &&
+            CloseTotalPercentageChange < -0.05
+        ) {
+            tradeSellPercentage = 40;
         }
 
+        if (
+            currResultsTrends['close_shape'] === TREND_SHAPE.DROPPING_DOWN &&
+            CloseCurr1And2PercentageChange < -1
+        ) {
+            tradeSellPercentage += 12.5;
+        } else if (
+            currResultsTrends['close_shape'] === TREND_SHAPE.DROPPING_DOWN &&
+            CloseCurr1And2PercentageChange < -0.75
+        ) {
+            tradeSellPercentage += 10;
+        } else if (
+            currResultsTrends['close_shape'] === TREND_SHAPE.DROPPING_DOWN &&
+            CloseCurr1And2PercentageChange < -0.5
+        ) {
+            tradeSellPercentage += 7.5;
+        } else if (
+            currResultsTrends['close_shape'] === TREND_SHAPE.DROPPING_DOWN &&
+            CloseCurr1And2PercentageChange < -0.25
+        ) {
+            tradeSellPercentage += 5;
+        } else if (
+            currResultsTrends['close_shape'] === TREND_SHAPE.DROPPING_DOWN &&
+            CloseCurr1And2PercentageChange < -0.1
+        ) {
+            tradeSellPercentage += 2.5;
+        }
+
+        console.log('Trade Buy1: ', tradeBuyPercentage);
+        console.log('Trade Sell1: ', tradeSellPercentage);
+
+        /* Buy percentages */
+        if (CloseTotalPercentageChange > 0.2) {
+            tradeBuyPercentage += 20;
+        } else if (CloseTotalPercentageChange > 0.15) {
+            tradeBuyPercentage += 15;
+        } else if (CloseTotalPercentageChange > 0.125) {
+            tradeBuyPercentage += 12.5;
+        } else if (CloseTotalPercentageChange > 0.1) {
+            tradeBuyPercentage += 10;
+        } else if (CloseTotalPercentageChange > 0.075) {
+            tradeBuyPercentage += 7.5;
+        } else if (CloseTotalPercentageChange > 0.05) {
+            tradeBuyPercentage += 5;
+        }
+
+        console.log('Trade Buy2: ', tradeBuyPercentage);
+        console.log('Trade Sell2: ', tradeSellPercentage);
+
+        /* Our buy percentage is low, and the first or first and second together is going up, let's pump up the buy percentage */
+        if (tradeBuyPercentage < 30) {
+            if (CloseCurrPercentageChange > 0.2) {
+                tradeBuyPercentage += 25;
+            } else if (CloseCurrPercentageChange > 0.15) {
+                tradeBuyPercentage += 20;
+            } else if (CloseCurrPercentageChange > 0.1) {
+                tradeBuyPercentage += 15;
+            } else if (CloseCurrPercentageChange > 0.05) {
+                tradeBuyPercentage += 10;
+            } else if (CloseCurr1And2PercentageChange > 0.2) {
+                tradeBuyPercentage += 20;
+            } else if (CloseCurr1And2PercentageChange > 0.15) {
+                tradeBuyPercentage += 15;
+            } else if (CloseCurr1And2PercentageChange > 0.1) {
+                tradeBuyPercentage += 10;
+            } else if (CloseCurr1And2PercentageChange > 0.05) {
+                tradeBuyPercentage += 5;
+            }
+        }
+
+        console.log('Close part total:', CloseTotalPercentageChange);
+        console.log('Close part 1+2:', CloseCurr1And2PercentageChange);
+        console.log('Close part 1:', CloseCurrPercentageChange);
+        console.log('Trade Buy: ', tradeBuyPercentage);
+        console.log('Trade Sell: ', tradeSellPercentage);
+        //console.log(currResultsTrends);
+
+        /* MACD */
         /* If the MACD histogram percentage change is currently negative */
         if (MACDTotalPercentageChange > 10) {
-            tradeSellPercentage += 15;
+            tradeBuyPercentage += 20;
         } else if (MACDTotalPercentageChange > 7.5) {
-            tradeSellPercentage += 12.5;
+            tradeBuyPercentage += 15;
         } else if (MACDTotalPercentageChange > 5) {
-            tradeSellPercentage += 10;
+            tradeBuyPercentage += 12.5;
         } else if (MACDTotalPercentageChange > 2.5) {
-            tradeSellPercentage += 7.5;
+            tradeBuyPercentage += 10;
+        } else if (MACDTotalPercentageChange > 1) {
+            tradeBuyPercentage += 7.5;
+        } else if (MACDTotalPercentageChange > 0.5) {
+            tradeBuyPercentage += 5;
         }
 
         /* If the MACD histogram percentage change is currently negative */
         if (MACDTotalPercentageChange < -10) {
-            tradeBuyPercentage += 15;
+            tradeSellPercentage += 20;
         } else if (MACDTotalPercentageChange < -7.5) {
-            tradeBuyPercentage += 12.5;
+            tradeSellPercentage += 15;
         } else if (MACDTotalPercentageChange < -5) {
-            tradeBuyPercentage += 10;
+            tradeSellPercentage += 12.5;
         } else if (MACDTotalPercentageChange < -2.5) {
-            tradeBuyPercentage += 7.5;
+            tradeSellPercentage += 10;
+        } else if (MACDTotalPercentageChange < -1) {
+            tradeSellPercentage += 7.5;
+        } else if (MACDTotalPercentageChange < -0.5) {
+            tradeSellPercentage += 5;
         }
 
-        /* Buy percentages */
-        if (CloseTotalPercentageChange > 5) {
-            tradeBuyPercentage += 5;
-        } else if (CloseTotalPercentageChange > 10) {
-            tradeBuyPercentage += 10;
-        } else if (CloseTotalPercentageChange > 15) {
-            tradeBuyPercentage += 20;
-        }
+        console.log('MACDTrade Buy: ', tradeBuyPercentage);
+        console.log('MACDTrade Sell: ', tradeSellPercentage);
 
-        /* Our buy percentage is low, and the first or first and second together is going up, let's pump up the buy percentage */
-        if (tradeBuyPercentage < 30) {
-            if (CloseCurrPercentageChange > 5) {
-                tradeBuyPercentage += 15;
-            } else if (CloseCurrPercentageChange > 10) {
-                tradeBuyPercentage += 20;
-            } else if (CloseCurrPercentageChange > 15) {
-                tradeBuyPercentage += 25;
-            } else if (CloseCurr1And2PercentageChange > 5) {
-                tradeBuyPercentage += 10;
-            } else if (CloseCurr1And2PercentageChange > 10) {
-                tradeBuyPercentage += 15;
-            } else if (CloseCurr1And2PercentageChange > 15) {
-                tradeBuyPercentage += 20;
-            }
-        }
-
+        /* RSI */
         if (RSITotalPercentageChange > 0 && RSITotalPercentageChange > 25) {
             tradeBuyPercentage += 7.5;
+        }
+
+        if (RSICurrPercentageChange > 20) {
+            tradeBuyPercentage += 25;
+        } else if (RSICurr1And2PercentageChange > 20) {
+            tradeBuyPercentage += 20;
+        } else if (RSICurrPercentageChange > 15) {
+            tradeBuyPercentage += 20;
+        } else if (RSICurr1And2PercentageChange > 15) {
+            tradeBuyPercentage += 15;
+        } else if (RSICurrPercentageChange > 10) {
+            tradeBuyPercentage += 15;
+        } else if (RSICurr1And2PercentageChange > 10) {
+            tradeBuyPercentage += 10;
+        } else if (RSICurrPercentageChange > 5) {
+            tradeBuyPercentage += 10;
+        } else if (RSICurr1And2PercentageChange > 5) {
+            tradeBuyPercentage += 5;
+        } else if (RSICurrPercentageChange > 2.5) {
+            tradeBuyPercentage += 5;
+        } else if (RSICurr1And2PercentageChange > 2.5) {
+            tradeBuyPercentage += 2.5;
         }
 
         if (currRSI > 90) {
             tradeBuyPercentage += 10;
         }
 
+        console.log('RSITrade Buy: ', tradeBuyPercentage);
+        console.log('RSITrade Sell: ', tradeSellPercentage);
+
+        /* Stoch */
         if (StochTotalPercentageChange > 0 && StochTotalPercentageChange > 25) {
             tradeBuyPercentage += 7.5;
         }
 
-        if (PerBTotalPercentageChange > 0 && PerBTotalPercentageChange > 25) {
-            tradeBuyPercentage += 7.5;
+        if (StochCurrPercentageChange > 15) {
+            tradeBuyPercentage += 20;
+        } else if (StochCurr1And2PercentageChange > 15) {
+            tradeBuyPercentage += 15;
+        } else if (StochCurrPercentageChange > 10) {
+            tradeBuyPercentage += 15;
+        } else if (StochCurr1And2PercentageChange > 10) {
+            tradeBuyPercentage += 10;
+        } else if (StochCurrPercentageChange > 5) {
+            tradeBuyPercentage += 10;
+        } else if (StochCurr1And2PercentageChange > 5) {
+            tradeBuyPercentage += 5;
         }
 
+        console.log('Stoch part total:', StochTotalPercentageChange);
+        console.log('Stoch part 1+2:', StochCurr1And2PercentageChange);
+        console.log('Stoch part 1:', StochCurrPercentageChange);
+        console.log('StochTrade Buy: ', tradeBuyPercentage);
+        console.log('StochTrade Sell: ', tradeSellPercentage);
+
+        /* Bollinginger - PerB */
+        if (PerBTotalPercentageChange > 0 && PerBTotalPercentageChange > 25) {
+            tradeBuyPercentage += 20;
+        }
+
+        if (PerBCurrPercentageChange > 15) {
+            tradeBuyPercentage += 20;
+        } else if (PerBCurr1And2PercentageChange > 15) {
+            tradeBuyPercentage += 15;
+        } else if (PerBCurrPercentageChange > 10) {
+            tradeBuyPercentage += 15;
+        } else if (PerBCurr1And2PercentageChange > 10) {
+            tradeBuyPercentage += 10;
+        } else if (PerBCurrPercentageChange > 5) {
+            tradeBuyPercentage += 10;
+        } else if (PerBCurr1And2PercentageChange > 5) {
+            tradeBuyPercentage += 5;
+        }
+
+        console.log('Current PerB: ', currPerB);
         if (currPerB > 98) {
             tradeBuyPercentage += 35;
         }
 
-        if (StochTotalPercentageChange > 0 && StochTotalPercentageChange > 25) {
-            tradeBuyPercentage += 7.5;
-        }
-
-        if (MACDTotalPercentageChange > 0 && MACDTotalPercentageChange > 25) {
-            tradeBuyPercentage += 15;
-        }
+        console.log('PerBTrade Buy: ', tradeBuyPercentage);
+        console.log('PerBTrade Sell: ', tradeSellPercentage);
 
         if (tradeBuyPercentage >= 90) {
             coinAdvice = COIN_ADVICE.DEFINITE_BUY;
-        } else if (tradeBuyPercentage > 70 && tradeSellPercentage < 60) {
+        } else if (tradeBuyPercentage >= 70 && tradeSellPercentage < 60) {
+            coinAdvice = COIN_ADVICE.POSSIBLE_BUY;
+        } else if (tradeBuyPercentage >= 60 && tradeSellPercentage < 30) {
+            coinAdvice = COIN_ADVICE.POSSIBLE_BUY;
+        } else if (tradeBuyPercentage >= 55 && tradeSellPercentage > 10) {
             coinAdvice = COIN_ADVICE.POSSIBLE_BUY;
         } else if (tradeBuyPercentage > 50 && tradeSellPercentage < 60) {
+            coinAdvice = COIN_ADVICE.HOLD;
+        } else if (tradeBuyPercentage > 40 && tradeSellPercentage < 20) {
             coinAdvice = COIN_ADVICE.HOLD;
         } else if (tradeBuyPercentage < 60 && tradeSellPercentage > 70) {
             coinAdvice = COIN_ADVICE.POSSIBLE_SELL;

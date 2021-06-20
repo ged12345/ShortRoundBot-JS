@@ -153,6 +153,14 @@ class RSICalculations {
             );*/
 
         arrRSI.forEach(async (el) => {
+            if (
+                el['RSI'] === Infinity ||
+                el['RS'] === Infinity ||
+                el['aveLoss'] === Infinity ||
+                el['aveGain'] === Infinity
+            ) {
+                outputError('RSI Error: ', el);
+            }
             await this.mysqlCon.storeProcessedRSI(coinId, el);
         });
 
@@ -297,7 +305,8 @@ class RSICalculations {
         //console.log('RSI: ' + RSIArr.reverse().slice(0, 4));
 
         const rsi_t1to3 = calculateGraphGradientsTrendsPerChange(
-            RSIArr.reverse().slice(0, 4)
+            RSIArr.reverse().slice(0, 4),
+            false
         );
 
         if (rsi_t1to3) {
