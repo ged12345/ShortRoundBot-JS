@@ -60,6 +60,15 @@ function sleep(time) {
     return new Promise((resolve) => setTimeout(resolve, time));
 }
 
+function outputError(err) {
+    console.log('Error: ', err);
+    var log_file_err = fs.createWriteStream(__dirname + '/error.log', {
+        flags: 'a',
+    });
+
+    log_file_err.write(util.format('Caught exception: ' + err) + '\n');
+}
+
 module.exports = {
     encryptCodeIn,
     encryptCodeOut,
@@ -69,4 +78,5 @@ module.exports = {
     generateRandomToken,
     rotateArray,
     sleep,
+    outputError,
 };

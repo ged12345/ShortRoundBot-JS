@@ -224,9 +224,23 @@ class Mysql {
             hour12: false,
         });
 
-        const [rows, fields] = await this.connection.query(
-            `INSERT INTO coin_ohlc VALUES (${coin_id}, '${stampFullTime}', '${stampFullDate}','${timestamp}',${results[1]},${results[2]},${results[3]},${results[4]},${results[5]},${results[6]},${results[7]}) ON DUPLICATE KEY UPDATE open=${results[1]}, high=${results[2]}, low=${results[3]}, close=${results[4]}, vwap=${results[5]}, volume=${results[6]}, count=${results[7]}`
-        );
+        /* Deadlock because the row is locked. So I've had to add deadlock testing and retry once a deadlock occurs. */
+        let queryDeadlock = false;
+        let retryLimit = 0;
+
+        do {
+            try {
+                queryDeadlock = false;
+
+                const [rows, fields] = await this.connection.query(
+                    `INSERT INTO coin_ohlc VALUES (${coin_id}, '${stampFullTime}', '${stampFullDate}','${timestamp}',${results[1]},${results[2]},${results[3]},${results[4]},${results[5]},${results[6]},${results[7]}) ON DUPLICATE KEY UPDATE open=${results[1]}, high=${results[2]}, low=${results[3]}, close=${results[4]}, vwap=${results[5]}, volume=${results[6]}, count=${results[7]}`
+                );
+            } catch (err) {
+                queryDeadlock = true;
+            }
+
+            retryLimit++;
+        } while (queryDeadlock === true && retryLimit < 10);
     }
 
     /* Coin Kraken API functions */
@@ -553,9 +567,22 @@ class Mysql {
             `INSERT INTO coin_processed_sma VALUES (${coin_id}, '${stampFullTime}', '${stampFullDate}','${timestamp}',${results["close"]},${results["SMA"]},${results["EMA"]},${results["trend"]},${results["trend_weighting"]}) ON DUPLICATE KEY UPDATE close=${results["close"]},SMA=${results["SMA"]}, EMA=${results["EMA"]},trend=\"${results["trend"]}\",trend_weighting=\"${results["trend_weighting"]}\"`
         );*/
 
-        const [rows, fields] = await this.connection.query(
-            `INSERT INTO coin_processed_macd VALUES (${coin_id}, '${stampFullTime}', '${stampFullDate}','${timestamp}',${results['EMA_12']},${results['EMA_26']},${results['MACD']},${results['signal_line']},${results['hist']}) ON DUPLICATE KEY UPDATE EMA_12=${results['EMA_12']},EMA_26=${results['EMA_26']}, MACD=${results['MACD']},signal_line=\"${results['signal_line']}\",hist=\"${results['hist']}\"`
-        );
+        let queryDeadlock = false;
+        let retryLimit = 0;
+
+        do {
+            try {
+                queryDeadlock = false;
+
+                const [rows, fields] = await this.connection.query(
+                    `INSERT INTO coin_processed_macd VALUES (${coin_id}, '${stampFullTime}', '${stampFullDate}','${timestamp}',${results['EMA_12']},${results['EMA_26']},${results['MACD']},${results['signal_line']},${results['hist']}) ON DUPLICATE KEY UPDATE EMA_12=${results['EMA_12']},EMA_26=${results['EMA_26']}, MACD=${results['MACD']},signal_line=\"${results['signal_line']}\",hist=\"${results['hist']}\"`
+                );
+            } catch (err) {
+                queryDeadlock = true;
+            }
+
+            retryLimit++;
+        } while (queryDeadlock === true && retryLimit < 10);
     }
 
     async cleanupProcessedMACD(coin_id, limitNum) {
@@ -611,9 +638,23 @@ class Mysql {
             `INSERT INTO coin_trends (coin_id, time, date, timestamp, ${type}_t1_2, ${type}_t2_3, ${type}_shape, ${type}_per_change1, ${type}_per_change2, ${type}_per_change3) VALUES ('${coin_id}', '${stampFullTime}', '${stampFullDate}','${timestamp}','${results[1][0]}', '${results[1][1]}', '${results[2]}', '${results[3][0]}', '${results[3][1]}', '${results[3][2]}') ON DUPLICATE KEY UPDATE ${type}_t1_2=${results[1][0]}, ${type}_t2_3=${results[1][1]}, ${type}_shape='${results[2]}', ${type}_per_change1=${results[3][0]}, ${type}_per_change2=${results[3][1]}, ${type}_per_change3=${results[3][2]}`
         );*/
 
-        let [rows, fields] = await this.connection.query(
-            `INSERT INTO coin_trends (coin_id, time, date, timestamp, ${type}_t1_2, ${type}_t2_3, ${type}_shape, ${type}_per_change1, ${type}_per_change2, ${type}_per_change3) VALUES ('${coin_id}', '${stampFullTime}', '${stampFullDate}','${timestamp}','${results[1][0]}', '${results[1][1]}', '${results[2]}', '${results[3][0]}', '${results[3][1]}', '${results[3][2]}') ON DUPLICATE KEY UPDATE ${type}_t1_2=${results[1][0]}, ${type}_t2_3=${results[1][1]}, ${type}_shape='${results[2]}', ${type}_per_change1=${results[3][0]}, ${type}_per_change2=${results[3][1]}, ${type}_per_change3=${results[3][2]}`
-        );
+        /* Deadlock because the row is locked. So I've had to add deadlock testing and retry once a deadlock occurs. */
+        let queryDeadlock = false;
+        let retryLimit = 0;
+
+        do {
+            try {
+                queryDeadlock = false;
+
+                let [rows, fields] = await this.connection.query(
+                    `INSERT INTO coin_trends (coin_id, time, date, timestamp, ${type}_t1_2, ${type}_t2_3, ${type}_shape, ${type}_per_change1, ${type}_per_change2, ${type}_per_change3) VALUES ('${coin_id}', '${stampFullTime}', '${stampFullDate}','${timestamp}','${results[1][0]}', '${results[1][1]}', '${results[2]}', '${results[3][0]}', '${results[3][1]}', '${results[3][2]}') ON DUPLICATE KEY UPDATE ${type}_t1_2=${results[1][0]}, ${type}_t2_3=${results[1][1]}, ${type}_shape='${results[2]}', ${type}_per_change1=${results[3][0]}, ${type}_per_change2=${results[3][1]}, ${type}_per_change3=${results[3][2]}`
+                );
+            } catch (err) {
+                queryDeadlock = true;
+            }
+
+            retryLimit++;
+        } while (queryDeadlock === true && retryLimit < 10);
     }
 
     async cleanupTrends(coin_id, limitNum) {

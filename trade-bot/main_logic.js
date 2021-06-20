@@ -338,13 +338,48 @@ class MainLogic {
                 this.newTrackTradeClosePrice = Number(result['c'][0]);
                 this.oldTrackTradeClosePrice = this.orderPrice;
 
-                /* If the price has dropped by 2.5% */
+                /* If the price has dropped by 0.5% */
                 if (
                     (this.newTrackTradeClosePrice -
                         this.oldTrackTradeClosePrice) /
                         this.newTrackTradeClosePrice <
-                    -0.025
+                    -0.005
                 ) {
+                    /* DEBUG */
+                    this.simulateSellEarly();
+                    //this.sellEarly();
+                }
+
+                /* If the price has risen, we bring up the stop-loss */
+                if (
+                    (this.newTrackTradeClosePrice -
+                        this.oldTrackTradeClosePrice) /
+                        this.newTrackTradeClosePrice >
+                    0.025
+                ) {
+                    this.kraken
+                        .CancelOrder({ txid: this.stopLossTXID })
+                        .then(async (result) => {
+                            this.stopLossTXID = '';
+                        })
+                        .catch((err) => {
+                            console.error(err);
+                            return false;
+                        })
+                        .AddOrder({
+                            pair: this.exchangeCoinId,
+                            ordertype: 'stop-loss',
+                            type: 'sell',
+                            volume: this.orderVolume,
+                            price: this.newTrackTradeClosePrice * 0.9965,
+                        })
+                        .then(async (result) => {
+                            this.stopLossTXID = result['txid'];
+                        })
+                        .catch((err) => {
+                            console.error(err);
+                            return false;
+                        });
                     /* DEBUG */
                     this.simulateSellEarly();
                     //this.sellEarly();
@@ -460,8 +495,8 @@ class MainLogic {
                 let currentBidPrice = Number(result['b'][0]);
                 let currentAskPrice = Number(result['a'][0]);
                 let currentClosePrice = Number(result['c'][0]);
-                let topLimitPrice = currentBidPrice * 1.025; // 2.5%
-                let bottomLimitPrice = currentAskPrice * 0.98; // 2%
+                let topLimitPrice = currentBidPrice * 1.009; // 0.9%
+                let bottomLimitPrice = currentAskPrice * 0.99; // 1%
 
                 this.takeProfitPrice = topLimitPrice;
                 this.stopLossPrice = bottomLimitPrice;
@@ -496,7 +531,9 @@ class MainLogic {
                         volume: this.orderVolume,
                         price: topLimitPrice,
                     })
-                    .then(async (result) => {})
+                    .then(async (result) => {
+                        this.takeProfitTXID = result['txid'];
+                    })
                     .catch((err) => {
                         console.error(err);
                         return false;
@@ -508,7 +545,9 @@ class MainLogic {
                         volume: this.orderVolume,
                         price: bottomLimitPrice,
                     })
-                    .then(async (result) => {})
+                    .then(async (result) => {
+                        this.stopLossTXID = result['txid'];
+                    })
                     .catch((err) => {
                         console.error(err);
                         return false;
@@ -558,7 +597,7 @@ class MainLogic {
     }
 
     sellEarlySimulation() {
-        console.log();
+        console.log('Selling early.');
         simulateCancelOrders();
     }
 

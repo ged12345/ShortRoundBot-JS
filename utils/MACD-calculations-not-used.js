@@ -221,7 +221,7 @@ class MACDCalculations {
         /* Count how many MACDs we have */
         let signalCount = 0;
         resultsMACD.forEach((el) => {
-            if (Number(el['MACD']) !== Number(-9999.0)) {
+            if (Number(el['MACD']) != Number(-9999.0)) {
                 signalCount += 1;
             }
         });
@@ -243,8 +243,8 @@ class MACDCalculations {
             signalLine = Number(totalClose / signalNum);
         } else if (signalCount > 9) {
             /* We have our next signal! */
-            //console.log('SIGNAL 9+');
-            //console.log(resultsMACD[resultsMACD.length - 1], close);
+            console.log('SIGNAL 9+');
+            console.log(resultsMACD[resultsMACD.length - 1], close);
             signalLine =
                 MACD * multiplier +
                 resultsMACD[resultsMACD.length - 1]['signal_line'] *
@@ -260,7 +260,7 @@ class MACDCalculations {
             hist: signalLine !== Number(-9999.0) ? MACD - signalLine : -9999,
         };
 
-        //console.log(EMA12, EMA26, MACD, signalLine);
+        console.log(EMA12, EMA26, MACD, signalLine);
 
         /* Add this to mysql and then cleanup*/
         await this.mysqlCon.storeProcessedMACD(coinId, currMACD);

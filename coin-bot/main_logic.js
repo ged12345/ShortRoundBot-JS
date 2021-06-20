@@ -832,7 +832,6 @@ class MainLogic {
     async calculateAdviceWithLock(advisor, trend, coinId) {
         this.processLocks.lock(trend, coinId);
         if (coinId === 1) {
-            console.log('Advice?');
             console.log(await advisor.advise(coinId));
         }
         let unlocked = this.processLocks.awaitLock(trend, coinId);

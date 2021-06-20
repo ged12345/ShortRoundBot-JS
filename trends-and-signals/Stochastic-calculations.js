@@ -22,6 +22,7 @@ kFull = dSlow
 dFull = kFull for the past n periods / n (n=3 here, since our original for dSlow was 3)
 */
 const util = require('util');
+const { outputError } = require('../utils/general');
 const Decimal = require('decimal.js');
 const { calculateGraphGradientsTrendsPerChange } = require('../utils/math.js');
 
@@ -150,6 +151,16 @@ class StochasticCalculations {
                     )
                 )
                 .dividedBy(3.0);
+        }
+
+        /* Debug */
+        if (
+            isNaN(Number(currStochastic['dSlow'])) ||
+            isNaN(Number(currStochastic['dFull'])) ||
+            isNaN(Number(currStochastic['kFull'])) ||
+            isNaN(Number(currStochastic['kFast']))
+        ) {
+            outputError(currStochastic);
         }
 
         /* Add this to mysql and then cleanup*/

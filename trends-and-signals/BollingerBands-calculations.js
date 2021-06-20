@@ -167,26 +167,26 @@ class BollingerBandsCalculations {
     }
 
     async findTrends(coinId) {
-        let resultsHistoricBoll = await this.mysqlCon.getHistoricBollinger(
+        let resultsProcessedBoll = await this.mysqlCon.getProcessedBollinger(
             coinId
         );
 
-        if (resultsHistoricBoll.length < 4) {
+        if (resultsProcessedBoll.length < 4) {
             return;
         }
 
-        let perbArr = resultsHistoricBoll.map((el) => {
+        let perbArr = resultsProcessedBoll.map((el) => {
             return el.per_b;
         });
 
         let timestamp =
-            resultsHistoricBoll[resultsHistoricBoll.length - 1]['timestamp'];
-
-        //console.log('PerB: ' + perbArr.reverse().slice(0, 4));
+            resultsProcessedBoll[resultsProcessedBoll.length - 1]['timestamp'];
 
         const perb_t1to3 = calculateGraphGradientsTrendsPerChange(
             perbArr.reverse().slice(0, 4)
         );
+
+        //console.log('PerB: ' + perb_t1to3);
 
         if (perb_t1to3) {
             this.mysqlCon.storeTrends(coinId, timestamp, perb_t1to3, 'PerB');

@@ -1,4 +1,5 @@
 const { TREND_SHAPE } = require('../coin-bot/constants.js');
+const { outputError } = require('./general');
 
 function calculateTrendShape(trendArr) {
     /* trendArr is of the 3 different gradients and the general assessment of these values */
@@ -72,6 +73,8 @@ function calculateTrendShape(trendArr) {
         return TREND_SHAPE.DROPPING_DOWN;
     } else if ((basicTrendArr[0] + basicTrendArr[1]) / 2.0 < 0) {
         return TREND_SHAPE.SLOPING_DOWN;
+    } else {
+        outputError(trendArr);
     }
 }
 

@@ -40,7 +40,7 @@ class GeneralTrendAdvice {
 
         if (resultsOHLC.length === 0) return false;
 
-        /* If we have no EMAs and the signal line for the MACD hasn't be calculatd */
+        /* If we have no EMAs and the signal line for the MACD hasn't be calculated */
         if (resultsEMA.length < 2) {
             return false;
         } else if (
@@ -58,6 +58,14 @@ class GeneralTrendAdvice {
             Number(currResultsTrends['close_per_change1']) +
             Number(currResultsTrends['close_per_change2']) +
             Number(currResultsTrends['close_per_change3']);
+
+        let CloseCurrPercentageChange = Number(
+            currResultsTrends['close_per_change1']
+        );
+
+        let CloseCurr1And2PercentageChange =
+            Number(currResultsTrends['close_per_change1']) +
+            Number(currResultsTrends['close_per_change2']);
 
         let RSITotalPercentageChange =
             Number(currResultsTrends['RSI_per_change1']) +
@@ -83,77 +91,105 @@ class GeneralTrendAdvice {
         let currPerB = Number(resultsMACD['per_b']);
         let currClosePrice = resultsOHLC[resultsOHLC.length - 1]['close'];
         let coinStatus = '';
-        let coinAdvice = '';
+        let coinAdvice = COIN_ADVICE.HOLD;
 
         /* Sell percentages */
         if (
             currResultsTrends['close_shape'] === TREND_SHAPE.CRASHING &&
-            CloseTotalPercentageChange < -0.05
+            CloseTotalPercentageChange < -5
         ) {
             tradeSellPercentage = 90;
         } else if (
             currResultsTrends['close_shape'] === TREND_SHAPE.CRASHING &&
-            CloseTotalPercentageChange < -0.025
+            CloseTotalPercentageChange < -2.5
         ) {
             tradeSellPercentage = 85;
         } else if (
             currResultsTrends['close_shape'] === TREND_SHAPE.CRASHING &&
-            CloseTotalPercentageChange < -0.01
+            CloseTotalPercentageChange < -1
         ) {
             tradeSellPercentage = 80;
         } else if (
             currResultsTrends['close_shape'] === TREND_SHAPE.DROPPING_DOWN &&
-            CloseTotalPercentageChange < -0.1
+            CloseTotalPercentageChange < -10
         ) {
             tradeSellPercentage = 75;
         } else if (
             currResultsTrends['close_shape'] === TREND_SHAPE.DROPPING_DOWN &&
-            CloseTotalPercentageChange < -0.05
+            CloseTotalPercentageChange < -5
         ) {
             tradeSellPercentage = 70;
         } else if (
             currResultsTrends['close_shape'] === TREND_SHAPE.DROPPING_DOWN &&
-            CloseTotalPercentageChange < -0.025
+            CloseTotalPercentageChange < -2.5
         ) {
             tradeSellPercentage = 65;
         } else if (
             currResultsTrends['close_shape'] === TREND_SHAPE.DROPPING_DOWN &&
-            CloseTotalPercentageChange < -0.015
+            CloseTotalPercentageChange < -1.5
         ) {
             tradeSellPercentage = 60;
         } else if (
             currResultsTrends['close_shape'] === TREND_SHAPE.DROPPING_DOWN &&
-            CloseTotalPercentageChange < -0.01
+            CloseTotalPercentageChange < -1
         ) {
             tradeSellPercentage = 55;
         } else if (
             currResultsTrends['close_shape'] === TREND_SHAPE.DROPPING_DOWN &&
-            CloseTotalPercentageChange < -0.005
+            CloseTotalPercentageChange < -0.5
         ) {
             tradeSellPercentage = 50;
         }
 
         /* If the MACD histogram percentage change is currently negative */
-        if (MACDTotalPercentageChange < -0.005) {
-            tradeSellPercentage += 7.5;
-        } else if (MACDTotalPercentageChange < -0.01) {
-            tradeSellPercentage += 10;
-        } else if (MACDTotalPercentageChange < -0.15) {
-            tradeSellPercentage += 12.5;
-        } else if (MACDTotalPercentageChange < -0.01) {
+        if (MACDTotalPercentageChange > 10) {
             tradeSellPercentage += 15;
+        } else if (MACDTotalPercentageChange > 7.5) {
+            tradeSellPercentage += 12.5;
+        } else if (MACDTotalPercentageChange > 5) {
+            tradeSellPercentage += 10;
+        } else if (MACDTotalPercentageChange > 2.5) {
+            tradeSellPercentage += 7.5;
+        }
+
+        /* If the MACD histogram percentage change is currently negative */
+        if (MACDTotalPercentageChange < -10) {
+            tradeBuyPercentage += 15;
+        } else if (MACDTotalPercentageChange < -7.5) {
+            tradeBuyPercentage += 12.5;
+        } else if (MACDTotalPercentageChange < -5) {
+            tradeBuyPercentage += 10;
+        } else if (MACDTotalPercentageChange < -2.5) {
+            tradeBuyPercentage += 7.5;
         }
 
         /* Buy percentages */
-        if (CloseTotalPercentageChange > 0.05) {
+        if (CloseTotalPercentageChange > 5) {
             tradeBuyPercentage += 5;
-        } else if (CloseTotalPercentageChange > 0.1) {
+        } else if (CloseTotalPercentageChange > 10) {
             tradeBuyPercentage += 10;
-        } else if (CloseTotalPercentageChange > 0.15) {
+        } else if (CloseTotalPercentageChange > 15) {
             tradeBuyPercentage += 20;
         }
 
-        if (RSITotalPercentageChange > 0 && RSITotalPercentageChange > 0.25) {
+        /* Our buy percentage is low, and the first or first and second together is going up, let's pump up the buy percentage */
+        if (tradeBuyPercentage < 30) {
+            if (CloseCurrPercentageChange > 5) {
+                tradeBuyPercentage += 15;
+            } else if (CloseCurrPercentageChange > 10) {
+                tradeBuyPercentage += 20;
+            } else if (CloseCurrPercentageChange > 15) {
+                tradeBuyPercentage += 25;
+            } else if (CloseCurr1And2PercentageChange > 5) {
+                tradeBuyPercentage += 10;
+            } else if (CloseCurr1And2PercentageChange > 10) {
+                tradeBuyPercentage += 15;
+            } else if (CloseCurr1And2PercentageChange > 15) {
+                tradeBuyPercentage += 20;
+            }
+        }
+
+        if (RSITotalPercentageChange > 0 && RSITotalPercentageChange > 25) {
             tradeBuyPercentage += 7.5;
         }
 
@@ -161,14 +197,11 @@ class GeneralTrendAdvice {
             tradeBuyPercentage += 10;
         }
 
-        if (
-            StochTotalPercentageChange > 0 &&
-            StochTotalPercentageChange > 0.25
-        ) {
+        if (StochTotalPercentageChange > 0 && StochTotalPercentageChange > 25) {
             tradeBuyPercentage += 7.5;
         }
 
-        if (PerBTotalPercentageChange > 0 && PerBTotalPercentageChange > 0.25) {
+        if (PerBTotalPercentageChange > 0 && PerBTotalPercentageChange > 25) {
             tradeBuyPercentage += 7.5;
         }
 
@@ -176,14 +209,11 @@ class GeneralTrendAdvice {
             tradeBuyPercentage += 35;
         }
 
-        if (
-            StochTotalPercentageChange > 0 &&
-            StochTotalPercentageChange > 0.25
-        ) {
+        if (StochTotalPercentageChange > 0 && StochTotalPercentageChange > 25) {
             tradeBuyPercentage += 7.5;
         }
 
-        if (MACDTotalPercentageChange > 0 && MACDTotalPercentageChange > 0.25) {
+        if (MACDTotalPercentageChange > 0 && MACDTotalPercentageChange > 25) {
             tradeBuyPercentage += 15;
         }
 
@@ -200,6 +230,8 @@ class GeneralTrendAdvice {
         } else if (tradeSellPercentage >= 90) {
             coinAdvice = COIN_ADVICE.IMMEDIATE_SELL;
         }
+
+        console.log('Shape: ', currResultsTrends['close_shape']);
 
         if (
             currResultsTrends['close_shape'] ===
