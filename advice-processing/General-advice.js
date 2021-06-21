@@ -3,6 +3,7 @@ const {
     COIN_ADVICE,
     TREND_SHAPE,
 } = require('../coin-bot/constants.js');
+const { outputError } = require('../utils/general.js');
 
 class GeneralTrendAdvice {
     constructor(
@@ -380,6 +381,10 @@ class GeneralTrendAdvice {
             tradeBuyPercentage += 15;
         }
 
+        if (currRSI > 66) {
+            tradeBuyPercentage += 10;
+        }
+
         console.log('RSITrade Buy: ', tradeBuyPercentage);
         console.log('RSITrade Sell: ', tradeSellPercentage);
 
@@ -422,7 +427,7 @@ class GeneralTrendAdvice {
 
         /* Bollinginger - PerB */
         if (PerBTotalPercentageChange > 0 && PerBTotalPercentageChange > 25) {
-            tradeBuyPercentage += 10;
+            tradeBuyPercentage += 15;
         }
 
         if (PerBCurrPercentageChange > 20) {
@@ -458,13 +463,13 @@ class GeneralTrendAdvice {
             CloseCurr1And2PercentageChange < 0 &&
             CloseCurrPercentageChange < 0
         ) {
-            tradeBuyPercentage += 30;
+            tradeBuyPercentage += 20;
         }
 
         console.log('PerBTrade Buy: ', tradeBuyPercentage);
         console.log('PerBTrade Sell: ', tradeSellPercentage);
 
-        if (tradeBuyPercentage >= 90) {
+        if (tradeBuyPercentage > 90) {
             coinAdvice = COIN_ADVICE.DEFINITE_BUY;
         } else if (tradeBuyPercentage >= 70 && tradeSellPercentage < 60) {
             coinAdvice = COIN_ADVICE.POSSIBLE_BUY;
@@ -545,6 +550,79 @@ class GeneralTrendAdvice {
             coinStatus = COIN_STATUS.DROPPING;
         } else if (currResultsTrends['close_shape'] === TREND_SHAPE.CRASHING) {
             coinStatus = COIN_STATUS.CRASHING;
+        }
+
+        /* Debug */
+        if (coinAdvice === COIN_ADVICE.DEFINITE_BUY) {
+            outputError('Timestamp: ', timestamp);
+            outputError('Definite Buy');
+            outputError('Close');
+            outputError(
+                'Close 1: ',
+                Number(currResultsTrends['Close_per_change1'])
+            );
+            outputError(
+                'Close 2: ',
+                Number(currResultsTrends['Close_per_change2'])
+            );
+            outputError(
+                'Close 3: ',
+                Number(currResultsTrends['Close_per_change3'])
+            );
+            outputError('MACD');
+            outputError(
+                'MACD 1: ',
+                Number(currResultsTrends['MACD_per_change1'])
+            );
+            outputError(
+                'MACD 2: ',
+                Number(currResultsTrends['MACD_per_change2'])
+            );
+            outputError(
+                'MACD 3: ',
+                Number(currResultsTrends['MACD_per_change3'])
+            );
+            outputError('RSI');
+            outputError(
+                'RSI 1: ',
+                Number(currResultsTrends['RSI_per_change1'])
+            );
+            outputError(
+                'RSI 2: ',
+                Number(currResultsTrends['RSI_per_change2'])
+            );
+            outputError(
+                'RSI 3: ',
+                Number(currResultsTrends['RSI_per_change3'])
+            );
+            outputError('Curr RSI: ', Number(currRSI));
+            outputError('PerB');
+            outputError(
+                'PerB 1: ',
+                Number(currResultsTrends['PerB_per_change1'])
+            );
+            outputError(
+                'PerB 2: ',
+                Number(currResultsTrends['PerB_per_change2'])
+            );
+            outputError(
+                'PerB 3: ',
+                Number(currResultsTrends['PerB_per_change3'])
+            );
+            outputError('Curr PerB: ', Number(currPerB));
+            outputError('Stoch');
+            outputError(
+                'Stoch 1: ',
+                Number(currResultsTrends['Stoch_per_change1'])
+            );
+            outputError(
+                'Stoch 2: ',
+                Number(currResultsTrends['Stoch_per_change2'])
+            );
+            outputError(
+                'Stoch 3: ',
+                Number(currResultsTrends['Stoch_per_change3'])
+            );
         }
 
         return {
