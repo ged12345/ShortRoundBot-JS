@@ -122,8 +122,10 @@ class GeneralTrendAdvice {
             Number(currResultsTrends['MACD_per_change2']) +
             Number(currResultsTrends['MACD_per_change3']);
 
-        let currRSI = Number(resultsRSI['RSI']);
-        let currPerB = Number(resultsMACD['per_b']);
+        let currRSI = Number(resultsRSI[resultsRSI.length - 1]['RSI']);
+        /* This was it previously - we fixed this but may be stuffing us up */
+        /* let currPerB = Number(resultsMACD['per_b']); */
+        let currPerB = Number(resultsBoll[resultsBoll.length - 1]['per_b']);
         let currClosePrice = resultsOHLC[resultsOHLC.length - 1]['close'];
         let coinStatus = '';
         let coinAdvice = COIN_ADVICE.HOLD;
@@ -225,7 +227,7 @@ class GeneralTrendAdvice {
             CloseCurr1And2PercentageChange < -0.5
         ) {
             tradeSellPercentage += 7.5;
-        } else if (
+        } /* Added these last two - may be messing us up */ else if (
             currResultsTrends['close_shape'] === TREND_SHAPE.DROPPING_DOWN &&
             CloseCurr1And2PercentageChange < -0.25
         ) {
@@ -412,7 +414,10 @@ class GeneralTrendAdvice {
             coinAdvice = COIN_ADVICE.POSSIBLE_BUY;
         } else if (tradeBuyPercentage >= 60 && tradeSellPercentage < 30) {
             coinAdvice = COIN_ADVICE.POSSIBLE_BUY;
-        } else if (tradeBuyPercentage >= 55 && tradeSellPercentage < 10) {
+        } /* We changed this too - tradeSellPercentage was > 10) */ else if (
+            tradeBuyPercentage >= 55 &&
+            tradeSellPercentage < 10
+        ) {
             coinAdvice = COIN_ADVICE.POSSIBLE_BUY;
         } else if (tradeBuyPercentage > 50 && tradeSellPercentage < 60) {
             coinAdvice = COIN_ADVICE.HOLD;
