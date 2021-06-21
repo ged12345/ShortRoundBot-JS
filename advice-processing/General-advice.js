@@ -492,7 +492,8 @@ class GeneralTrendAdvice {
             coinAdvice = COIN_ADVICE.POSSIBLE_SELL;
         } else if (tradeSellPercentage >= 90) {
             coinAdvice = COIN_ADVICE.IMMEDIATE_SELL;
-        } /*else if (
+        } /* Maybe - test this out */
+        /*else if (
             currResultsTrends['close_shape'] === TREND_SHAPE.CRASHING &&
             tradeSellPercentage > 60
         ) {
