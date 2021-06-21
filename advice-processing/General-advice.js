@@ -239,6 +239,33 @@ class GeneralTrendAdvice {
             tradeSellPercentage += 2.5;
         }
 
+        if (
+            currResultsTrends['close_shape'] === TREND_SHAPE.DROPPING_DOWN &&
+            CloseCurrPercentageChange < -1
+        ) {
+            tradeSellPercentage += 15;
+        } else if (
+            currResultsTrends['close_shape'] === TREND_SHAPE.DROPPING_DOWN &&
+            CloseCurrPercentageChange < -0.75
+        ) {
+            tradeSellPercentage += 12.5;
+        } else if (
+            currResultsTrends['close_shape'] === TREND_SHAPE.DROPPING_DOWN &&
+            CloseCurrPercentageChange < -0.5
+        ) {
+            tradeSellPercentage += 10;
+        } /* Added these last two - may be messing us up */ else if (
+            currResultsTrends['close_shape'] === TREND_SHAPE.DROPPING_DOWN &&
+            CloseCurrPercentageChange < -0.25
+        ) {
+            tradeSellPercentage += 7.5;
+        } else if (
+            currResultsTrends['close_shape'] === TREND_SHAPE.DROPPING_DOWN &&
+            CloseCurrPercentageChange < -0.1
+        ) {
+            tradeSellPercentage += 5;
+        }
+
         console.log('Trade Buy1: ', tradeBuyPercentage);
         console.log('Trade Sell1: ', tradeSellPercentage);
 
@@ -350,7 +377,7 @@ class GeneralTrendAdvice {
         }
 
         if (currRSI > 90) {
-            tradeBuyPercentage += 10;
+            tradeBuyPercentage += 15;
         }
 
         console.log('RSITrade Buy: ', tradeBuyPercentage);
@@ -361,7 +388,11 @@ class GeneralTrendAdvice {
             tradeBuyPercentage += 7.5;
         }
 
-        if (StochCurrPercentageChange > 15) {
+        if (StochCurrPercentageChange > 20) {
+            tradeBuyPercentage += 25;
+        } else if (StochCurr1And2PercentageChange > 20) {
+            tradeBuyPercentage += 20;
+        } else if (StochCurrPercentageChange > 15) {
             tradeBuyPercentage += 20;
         } else if (StochCurr1And2PercentageChange > 15) {
             tradeBuyPercentage += 15;
@@ -373,7 +404,15 @@ class GeneralTrendAdvice {
             tradeBuyPercentage += 10;
         } else if (StochCurr1And2PercentageChange > 5) {
             tradeBuyPercentage += 5;
+        } else if (StochCurrPercentageChange > 2.5) {
+            tradeBuyPercentage += 5;
+        } else if (StochCurr1And2PercentageChange > 2.5) {
+            tradeBuyPercentage += 2.5;
         }
+
+        console.log('Stoch 1:', Number(currResultsTrends['Stoch_per_change1']));
+        console.log('Stoch 2:', Number(currResultsTrends['Stoch_per_change2']));
+        console.log('Stoch 3:', Number(currResultsTrends['Stoch_per_change3']));
 
         console.log('Stoch part total:', StochTotalPercentageChange);
         console.log('Stoch part 1+2:', StochCurr1And2PercentageChange);
@@ -383,10 +422,14 @@ class GeneralTrendAdvice {
 
         /* Bollinginger - PerB */
         if (PerBTotalPercentageChange > 0 && PerBTotalPercentageChange > 25) {
-            tradeBuyPercentage += 20;
+            tradeBuyPercentage += 10;
         }
 
-        if (PerBCurrPercentageChange > 15) {
+        if (PerBCurrPercentageChange > 20) {
+            tradeBuyPercentage += 25;
+        } else if (PerBCurr1And2PercentageChange > 20) {
+            tradeBuyPercentage += 20;
+        } else if (PerBCurrPercentageChange > 15) {
             tradeBuyPercentage += 20;
         } else if (PerBCurr1And2PercentageChange > 15) {
             tradeBuyPercentage += 15;
@@ -398,11 +441,15 @@ class GeneralTrendAdvice {
             tradeBuyPercentage += 10;
         } else if (PerBCurr1And2PercentageChange > 5) {
             tradeBuyPercentage += 5;
+        } else if (PerBCurrPercentageChange > 2.5) {
+            tradeBuyPercentage += 5;
+        } else if (PerBCurr1And2PercentageChange > 2.5) {
+            tradeBuyPercentage += 2.5;
         }
 
         console.log('Current PerB: ', currPerB);
         if (currPerB > 98) {
-            tradeBuyPercentage += 35;
+            tradeBuyPercentage += 25;
         }
 
         console.log('PerBTrade Buy: ', tradeBuyPercentage);
