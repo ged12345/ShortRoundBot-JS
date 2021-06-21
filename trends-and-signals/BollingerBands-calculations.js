@@ -183,7 +183,7 @@ class BollingerBandsCalculations {
             resultsProcessedBoll[resultsProcessedBoll.length - 1]['timestamp'];
 
         const perb_t1to3 = calculateGraphGradientsTrendsPerChange(
-            perbArr.reverse().slice(0, 4),
+            perbArr.reverse().slice(0, 4).reverse(),
             false
         );
 

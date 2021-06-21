@@ -497,8 +497,7 @@ class MainLogic {
 
         const close_t1to3 = calculateGraphGradientsTrendsPerChange(
             closeArr.slice(0, 4).reverse(),
-            true,
-            'Close DEBUG: '
+            true
         );
 
         //console.log('CLOSE TRENDS: ');

@@ -194,10 +194,20 @@ class StochasticCalculations {
 
         //console.log('Stoch: ' + stochArr.reverse().slice(0, 4));
 
-        const stoch_t1to3 = calculateGraphGradientsTrendsPerChange(
-            stochArr.reverse().slice(0, 4),
-            false
-        );
+        let stoch_t1to3 = null;
+
+        if (coinId === 1) {
+            stoch_t1to3 = calculateGraphGradientsTrendsPerChange(
+                stochArr.reverse().slice(0, 4).reverse(),
+                false,
+                'Stoch DEBUG: '
+            );
+        } else {
+            stoch_t1to3 = calculateGraphGradientsTrendsPerChange(
+                stochArr.reverse().slice(0, 4).reverse(),
+                false
+            );
+        }
 
         if (stoch_t1to3) {
             this.mysqlCon.storeTrends(coinId, timestamp, stoch_t1to3, 'Stoch');

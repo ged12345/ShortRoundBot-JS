@@ -448,8 +448,17 @@ class GeneralTrendAdvice {
         }
 
         console.log('Current PerB: ', currPerB);
-        if (currPerB > 98) {
+        /*if (currPerB > 98) {
             tradeBuyPercentage += 25;
+        }*/
+
+        /* Trend for PerB seems to be if the current price trend is negative and PerB falls below or very cose to zero threshold, there is a price revrsal i.e. a buy buy buy! */
+        if (
+            currPerB < 2.5 &&
+            CloseCurr1And2PercentageChange < 0 &&
+            CloseCurrPercentageChange < 0
+        ) {
+            tradeBuyPercentage += 30;
         }
 
         console.log('PerBTrade Buy: ', tradeBuyPercentage);
