@@ -464,6 +464,16 @@ class GeneralTrendAdvice {
             CloseCurrPercentageChange < 0
         ) {
             tradeBuyPercentage += 20;
+            tradeSellPercentage -= 10;
+        }
+
+        if (
+            currPerB > 97.5 &&
+            CloseCurr1And2PercentageChange > 0 &&
+            CloseCurrPercentageChange > 0
+        ) {
+            tradeBuyPercentage -= 10;
+            tradeSellPercentage += 20;
         }
 
         console.log('PerBTrade Buy: ', tradeBuyPercentage);
