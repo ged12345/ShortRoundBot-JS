@@ -463,8 +463,8 @@ class GeneralTrendAdvice {
             CloseCurr1And2PercentageChange < 0 &&
             CloseCurrPercentageChange < 0
         ) {
-            tradeBuyPercentage += 20;
-            tradeSellPercentage -= 10;
+            tradeBuyPercentage += 30;
+            tradeSellPercentage -= 20;
         }
 
         if (
@@ -472,8 +472,8 @@ class GeneralTrendAdvice {
             CloseCurr1And2PercentageChange > 0 &&
             CloseCurrPercentageChange > 0
         ) {
-            tradeBuyPercentage -= 10;
-            tradeSellPercentage += 20;
+            tradeBuyPercentage -= 20;
+            tradeSellPercentage += 30;
         }
 
         console.log('PerBTrade Buy: ', tradeBuyPercentage);
@@ -564,7 +564,10 @@ class GeneralTrendAdvice {
         }
 
         /* Debug */
-        if (coinAdvice === COIN_ADVICE.DEFINITE_BUY) {
+        if (
+            coinAdvice === COIN_ADVICE.DEFINITE_BUY ||
+            coinAdvice === COIN_ADVICE.POSSIBLE_BUY
+        ) {
             outputError('Timestamp: ', timestamp);
             outputError('Definite Buy');
             outputError('Close');
