@@ -57,18 +57,17 @@ const checkSalt = async (code, name) => {
     return await mysql.checkSalt(salt);
 };
 
-/* Main code proper */
-
 /* Check for debug (logging) */
 checkDebug(process.argv, logger);
 
+/* Main code proper */
 const main = new MainLogic(mysql);
 init();
 
 async function init() {
     let heartbeatId = setInterval(async () => {
         main.processQueues();
-    }, 50);
+    }, 250);
 }
 
 /* REST API Endpoints */

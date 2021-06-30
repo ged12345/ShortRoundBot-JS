@@ -256,7 +256,7 @@ class MainLogic {
 
         /* Check the current ticker and work out percentage change in our locked coin, then compare with the price we bought at. If there's been a reasonable drop, sell immediately */
 
-        this.kraken
+        /* TO-DO: Ticker - update this to take into account the simulated timestamp I've added */
             .Ticker({ pair: this.exchangeCoinId })
             .then(async (result) => {
                 this.oldTrackTradeClosePrice = Number(
@@ -330,6 +330,8 @@ class MainLogic {
             });
 
         /* Check the current ticker and work out percentage change in our locked coin, then compare with the price we bought at. If there's been a reasonable drop, sell immediately */
+
+        /* TO-DO: Ticker - update this to take into account the simulated timestamp I've added */
 
         this.kraken
             .Ticker({ pair: this.exchangeCoinId })
@@ -457,6 +459,8 @@ class MainLogic {
 
     simulatePrepareOrder() {
         /* We grab the current ticker price */
+
+        /* TO-DO: Ticker - update this to take into account the simulated timestamp I've added */
         this.kraken
             .Ticker({ pair: this.exchangeCoinId })
             .then(async (result) => {
@@ -487,6 +491,8 @@ class MainLogic {
 
     prepareOrder() {
         /* We grab the current ticker price */
+
+        /* TO-DO: Ticker - update this to take into account the simulated timestamp I've added */
         this.kraken
             .Ticker({ pair: this.exchangeCoinId })
             .then(async (result) => {

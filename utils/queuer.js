@@ -1,10 +1,11 @@
-const { repeat } = require("lodash");
-const Queue = require("./queue.js");
+const { repeat } = require('lodash');
+const Queue = require('./queue.js');
+const TimeNow = require('./timeNow.js');
 
 class Queuer {
     constructor() {
         this.queueArr = Array();
-        this.lastTimeElapsed = Date.now();
+        this.lastTimeElapsed = TimeNow.nowOffset();
         this.currentQueueIndex = 0;
     }
 
@@ -18,13 +19,14 @@ class Queuer {
         /* Always push running after minute is up */
         lockOffset = 1000
     ) {
-        let now = Date.now();
+        let now = TimeNow.nowOffset();
 
         this.queueArr[this.queueArr.length] = {
             queue: queue,
             repeat: repeat,
             interval: interval /* In MS, as is Date.now() */,
-            runParallel: runParallel /* This allows us to run the queue every in parallel  interval MS */,
+            runParallel:
+                runParallel /* This allows us to run the queue every in parallel  interval MS */,
             lastParallelElapsed: lockToMinute
                 ? now + (60000 - (now % 60000)) + lockOffset
                 : now,
@@ -81,13 +83,13 @@ class Queuer {
 
     /* Checks if the current queue interval has elapsed by looking at last time we ran a queue */
     hasQueueIntervalElapsed(queueInterval) {
-        const now = Date.now();
+        const now = TimeNow.nowOffset();
         return now > this.lastTimeElapsed + queueInterval;
     }
 
     /* Checks if the current queue interval has elapsed by looking at the last bypass time we ran a queue */
     hasParallelIntervalElapsed(queue) {
-        const now = Date.now();
+        const now = TimeNow.nowOffset();
         if (queue.lockToMinute === true) {
             return now > queue.lastParallelElapsed;
         } else {
@@ -133,7 +135,7 @@ class Queuer {
         this.baseProcessQueue(queue, repeat);
 
         /* Update the current elapsed time since we've now processed the queue */
-        let now = Date.now();
+        let now = TimeNow.nowOffset();
 
         this.lastTimeElapsed = now;
     }
@@ -148,7 +150,7 @@ class Queuer {
         this.baseProcessQueue(queue, repeat);
 
         /* Update the current elapsed time since we've now processed the queue */
-        let now = Date.now();
+        let now = TimeNow.nowOffset();
 
         /*
         Lock to minute so we get information as close to 'close' as possible.

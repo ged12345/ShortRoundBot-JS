@@ -30,6 +30,17 @@ class Mysql {
         return rows[0];
     }
 
+    async getCoinConfig(botId) {
+        const [rows, fields] = await this.connection.query(
+            `SELECT * FROM coin_config WHERE bot_id = '1'`
+        );
+
+        //console.log("Data received from Db:");
+        //console.log(rows[0]);
+
+        return rows[0];
+    }
+
     async storeBotInformation(botId, results) {
         const [rows, fields] = await this.connection.query(
             `UPDATE bot SET float_usd=${results['floatUSD']},current_account_total_usd=${results['currentAccountTotalUSD']}, status=${results['status']}, goal_price=${results['goalPrice']}, goal_txid=${results['goalTXID']}, stop_loss_price=${results['stopLossPrice']}, stop_loss_txid=${results['stopLossTXID']} WHERE bot_id=${botId}`
@@ -730,6 +741,10 @@ class Mysql {
         let stampFullTime = timestampDate.toLocaleTimeString('en-AU', {
             hour12: false,
         });
+
+        console.log('DEBUG:');
+        console.log(timestamp);
+        console.log(stampFullTime);
 
         /*console.log(
             `INSERT INTO coin_advice (coin_id, time, date, timestamp, status, advice, buy_probability, sell_probability,resistance_price, support_price, stop_loss_price, token) VALUES ('${coin_id}', '${stampFullTime}', '${stampFullDate}','${timestamp}','${results['coinStatus']}', '${results['coinAdvice']}', '${results['tradeBuy']}', '${results['tradeSell']}', NULL, NULL, NULL, NULL) ON DUPLICATE KEY UPDATE status='${results['coinStatus']}', advice='${results['coinAdvice']}', buy_probability=${results['tradeBuy']}, sell_probability=${results['tradeSell']}`

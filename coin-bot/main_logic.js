@@ -37,6 +37,7 @@ const MACDProcessor = require('../trends-and-signals/MACD-calculations.js');
 const API = require('../utils/api.js');
 const { calculateGraphGradientsTrendsPerChange } = require('../utils/math.js');
 const { rotateArray, outputError } = require('../utils/general.js');
+const TimeNow = require('../utils/timeNow.js');
 const NETWORK = require('../legacy/config/network-config.js');
 
 const util = require('util');
@@ -50,6 +51,7 @@ class MainLogic {
         this.queueSetupComplete = false;
         this.mysqlCon = mysqlCon;
 
+        this.coinBotConfig = null;
         this.coinConfigArr = Array();
 
         // For the MACD (EMA-9, EMA-12, EMA-26)
@@ -61,6 +63,7 @@ class MainLogic {
         this.EMAStoreNum = this.graphPeriod;
 
         this.currTimestamp = 0;
+        this.simulateTimestamp = -1;
 
         this.processLocks = new ProcessLocks([
             'OHLC',
@@ -73,6 +76,10 @@ class MainLogic {
         ]);
         //this.state = eventConstants.SEEKING_COIN;
 
+        this.init();
+    }
+
+    async setupProcessors() {
         this.RSIProcessor = new RSIProcessor(
             this.mysqlCon,
             this.RSIStoreNum,
@@ -113,18 +120,19 @@ class MainLogic {
             this.graphPeriod,
             this.processLocks.unlock
         );
-
-        this.init();
     }
 
     async init() {
+        await this.setupProcessors();
         await this.cleanOldData();
         await this.getCoinConfig();
+        await this.setupSimulatedTimeNow();
         await this.setupKraken();
         await this.setupQueues();
     }
 
     async getCoinConfig() {
+        this.coinBotConfig = await this.mysqlCon.getCoinConfig();
         this.coinConfigArr = await this.mysqlCon.getCoinList();
     }
 
@@ -139,13 +147,41 @@ class MainLogic {
         await this.mysqlCon.emptyCoinAdvice();
     }
 
+    async setupSimulatedTimeNow() {
+        this.simulatedStartTimestamp = parseInt(
+            this.coinBotConfig['curr_timestamp'],
+            10
+        );
+        this.simulatedEndTimestamp = parseInt(
+            this.coinBotConfig['end_timestamp'],
+            10
+        );
+
+        if (
+            /* This is if we want to simulate from one time to another , so we can log results mor eeasily and overcome the start-up time until results */
+            this.simulatedStartTimestamp !== -1 &&
+            this.simulatedEndTimestamp !== -1
+        ) {
+            TimeNow.setStartEndIterateTime(
+                this.simulatedStartTimestamp,
+                this.simulatedEndTimestamp,
+                1,
+                5000
+            );
+        } /* If we're simulated from a certain time but we don't know the end time (every minute) - remember that it takes a number of minutes to properly simulate reaults, as usual*/ else if (
+            this.simulatedStartTimestamp !== -1
+        ) {
+            TimeNow.setStartTime(this.simulateStartTimestamp);
+        }
+    }
+
     async setupKraken() {
         /* Initialise Kraken API */
         this.kraken = require('kraken-api-wrapper')(
-            NETWORK.config.apiKey,
-            NETWORK.config.privateApiKey
+            this.coinBotConfig['api_key'],
+            this.coinBotConfig['priv_api_key']
         );
-        this.kraken.setOtp(NETWORK.config.twoFactor);
+        this.kraken.setOtp(this.coinBotConfig['2fa_pass']);
     }
 
     async setupQueues() {
@@ -403,17 +439,34 @@ class MainLogic {
         );
 
         this.queueSetupComplete = true;
+
+        /* If we're simulating a run, we start here */
+        TimeNow.startIterate();
     }
 
     processQueues() {
         /* Here we process both incoming coin bot advice (locked or not) and monitor bots current trades */
-
-        if (this.queueSetupComplete === true) {
+        if (this.queueSetupComplete === true && this.shouldProcessQueues()) {
             this.coinDataAcquisitionQueuer.processQueues();
             this.coinTrendsAndSignalsProcessingQueuer.processQueues();
             this.coinAdviceGenerationQueuer.processQueues();
             this.coinTrendsAndSignalsGraphingQueuer.processQueues();
         }
+    }
+
+    shouldProcessQueues() {
+        /* If we're running a simulation, we force the iterations each heartbeat - when we finish the simulation we stop processing. */
+        if (TimeNow.forceIterate === true && TimeNow.finishedIterate === true) {
+            return false;
+        } else if (
+            TimeNow.forceIterate === true &&
+            this.currTimestamp !== TimeNow.nowSeconds()
+        ) {
+            this.currTimestamp = TimeNow.nowSeconds();
+            return true;
+        }
+
+        return true;
     }
 
     setupCoinDataAcquisitionQueue() {
@@ -461,8 +514,9 @@ class MainLogic {
             .then(async (result) => {
                 /* This gets the result array in the proper order */
                 try {
-                    let ohlcDesc = result[coinPair].reverse();
+                    let ohlcDesc = this.getOHLCArray(result, coinPair);
 
+                    /* DEBUG: Reset for multiple coins */
                     if (coinId == 1) {
                         this.calculateOHLCTrends(coinId, ohlcDesc);
                     }
@@ -485,10 +539,41 @@ class MainLogic {
             .catch((err) => console.error(err));
     }
 
+    getOHLCArray(ohlcResult, coinPair) {
+        let ohlcDesc = null;
+        if (this.simulateTimestamp === -1) {
+            ohlcDesc = ohlcResult[coinPair].reverse();
+        } else {
+            // For timestamp simulation
+            ohlcDesc = ohlcResult[coinPair].reverse().filter((el) => {
+                // Return array elements which are less than or equal to the indicated timestamp, adjusted for the current minute
+                if (parseInt(el[0], 10) <= TimeNow.nowSeconds()) {
+                    return true;
+                } else {
+                    return false;
+                }
+            });
+        }
+
+        return ohlcDesc;
+    }
+
+    setOHLCTimestamp(ohlcArr) {
+        let timestamp = 0;
+        if (this.simulateTimestamp === -1) {
+            timestamp = this.currTimestamp = ohlcArr[0][0];
+        } else {
+            // For timestamp simulation
+            timestamp = this.currTimestamp = TimeNow.nowSeconds();
+        }
+
+        return timestamp;
+    }
+
     calculateOHLCTrends(coinId, ohlcArr) {
         /* Here we calculate the trends for each value of the OHLC then add them to our ohlcEl array */
 
-        const timestamp = (this.currTimestamp = ohlcArr[0][0]);
+        let timestamp = this.setOHLCTimestamp(ohlcArr);
 
         const closeArr = ohlcArr.map((el) => {
             // Close value in array
@@ -601,6 +686,43 @@ class MainLogic {
                 );
             });
         });
+    }
+
+    /* Generic processor lock and then wait for function to finish to unlock */
+    async processTrendWithLock(processor, trend, coinId) {
+        this.processLocks.lock(trend, coinId);
+        await processor.calculate(coinId);
+        //await processor.findTrends(coinId);
+        let unlocked = this.processLocks.awaitLock(trend, coinId);
+
+        if (unlocked === false) {
+            console.log(
+                `Error: ${trend} lock for ${coinId} is not for the current coin!`
+            );
+        }
+    }
+
+    async calculateAdviceWithLock(advisor, trend, coinId) {
+        this.processLocks.lock(trend, coinId);
+        /* DEBUG */
+        if (coinId === 1) {
+            let advice = await advisor.advise(coinId);
+            if (advice !== false) {
+                await this.mysqlCon.storeCoinAdvice(
+                    coinId,
+                    this.currTimestamp,
+                    advice
+                );
+                await this.mysqlCon.cleanupCoinAdvice();
+            }
+        }
+        let unlocked = this.processLocks.awaitLock(trend, coinId);
+
+        if (unlocked === false) {
+            console.log(
+                `Error: ${trend} lock for ${coinId} is not for the current coin!`
+            );
+        }
     }
 
     setupPlotlyGraphingQueue() {
@@ -905,43 +1027,6 @@ class MainLogic {
                 });
             }
         );
-    }
-
-    /* Generic processor lock and then wait for function to finish to unlock */
-    async processTrendWithLock(processor, trend, coinId) {
-        this.processLocks.lock(trend, coinId);
-        await processor.calculate(coinId);
-        //await processor.findTrends(coinId);
-        let unlocked = this.processLocks.awaitLock(trend, coinId);
-
-        if (unlocked === false) {
-            console.log(
-                `Error: ${trend} lock for ${coinId} is not for the current coin!`
-            );
-        }
-    }
-
-    async calculateAdviceWithLock(advisor, trend, coinId) {
-        this.processLocks.lock(trend, coinId);
-        /* DEBUG */
-        if (coinId === 1) {
-            let advice = await advisor.advise(coinId);
-            if (advice !== false) {
-                this.mysqlCon.storeCoinAdvice(
-                    coinId,
-                    this.currTimestamp,
-                    advice
-                );
-                this.mysqlCon.cleanupCoinAdvice();
-            }
-        }
-        let unlocked = this.processLocks.awaitLock(trend, coinId);
-
-        if (unlocked === false) {
-            console.log(
-                `Error: ${trend} lock for ${coinId} is not for the current coin!`
-            );
-        }
     }
 }
 

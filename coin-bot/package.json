@@ -16,6 +16,7 @@
         "express": "^4.17.1",
         "forever": "^0.10.10",
         "kraken-api-wrapper": "^0.2.0",
+        "mailgun-js": "^0.22.0",
         "mysql": "^2.18.1",
         "mysql2": "^2.2.5",
         "plotly": "^1.0.6",
