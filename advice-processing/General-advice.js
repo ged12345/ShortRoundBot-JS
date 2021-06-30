@@ -393,7 +393,15 @@ class GeneralTrendAdvice {
             tradeBuyPercentage += 7.5;
         }
 
-        if (StochCurrPercentageChange > 20) {
+        if (StochCurrPercentageChange > 40) {
+            tradeBuyPercentage += 35;
+        } else if (StochCurr1And2PercentageChange > 40) {
+            tradeBuyPercentage += 30;
+        } else if (StochCurrPercentageChange > 30) {
+            tradeBuyPercentage += 30;
+        } else if (StochCurr1And2PercentageChange > 30) {
+            tradeBuyPercentage += 25;
+        } else if (StochCurrPercentageChange > 20) {
             tradeBuyPercentage += 25;
         } else if (StochCurr1And2PercentageChange > 20) {
             tradeBuyPercentage += 20;
@@ -430,7 +438,15 @@ class GeneralTrendAdvice {
             tradeBuyPercentage += 15;
         }
 
-        if (PerBCurrPercentageChange > 20) {
+        if (PerBCurrPercentageChange > 40) {
+            tradeBuyPercentage += 35;
+        } else if (PerBCurr1And2PercentageChange > 40) {
+            tradeBuyPercentage += 30;
+        } else if (PerBCurrPercentageChange > 30) {
+            tradeBuyPercentage += 30;
+        } else if (PerBCurr1And2PercentageChange > 30) {
+            tradeBuyPercentage += 25;
+        } else if (PerBCurrPercentageChange > 20) {
             tradeBuyPercentage += 25;
         } else if (PerBCurr1And2PercentageChange > 20) {
             tradeBuyPercentage += 20;
@@ -464,7 +480,7 @@ class GeneralTrendAdvice {
             CloseCurrPercentageChange < 0
         ) {
             tradeBuyPercentage += 30;
-            tradeSellPercentage -= 20;
+            tradeSellPercentage += 30;
         }
 
         if (
@@ -472,7 +488,7 @@ class GeneralTrendAdvice {
             CloseCurr1And2PercentageChange > 0 &&
             CloseCurrPercentageChange > 0
         ) {
-            tradeBuyPercentage -= 20;
+            tradeBuyPercentage -= 30;
             tradeSellPercentage += 30;
         }
 
