@@ -196,18 +196,18 @@ class StochasticCalculations {
 
         let stoch_t1to3 = null;
 
-        if (coinId === 1) {
+        /*if (coinId === 1) {
             stoch_t1to3 = calculateGraphGradientsTrendsPerChange(
                 stochArr.reverse().slice(0, 4).reverse(),
                 false,
                 'Stoch DEBUG: '
             );
-        } else {
+        } else {*/
             stoch_t1to3 = calculateGraphGradientsTrendsPerChange(
                 stochArr.reverse().slice(0, 4).reverse(),
                 false
             );
-        }
+        //}
 
         if (stoch_t1to3) {
             this.mysqlCon.storeTrends(coinId, timestamp, stoch_t1to3, 'Stoch');

@@ -63,8 +63,8 @@ class Mysql {
             `SELECT * FROM bot WHERE assigned = "0" LIMIT 1`
         );
 
-        console.log('Data received from Db:');
-        console.log(rows);
+        //console.log('Data received from Db:');
+        //console.log(rows);
 
         let botId = null;
         let botName = null;
@@ -80,8 +80,8 @@ class Mysql {
             const [rows, fields] = await this.connection.query(
                 `UPDATE bot SET assigned = "1" WHERE bot_id = '${botId}'`
             );
-            console.log('Data received from Db:');
-            console.log(rows);
+            //console.log('Data received from Db:');
+            //console.log(rows);
         }
 
         return [botId, botName];
@@ -94,8 +94,8 @@ class Mysql {
                 `UPDATE bot SET assigned = "0" WHERE bot_id = '${botId}'`
             );
 
-            console.log('Data received from Db:');
-            console.log(rows);
+            //('Data received from Db:');
+            //console.log(rows);
         }
     }
 
@@ -106,8 +106,8 @@ class Mysql {
                 `SELECT * FROM bot_config WHERE salt='${salt}'`
             );
 
-            console.log('Data received from Db:');
-            console.log(rows);
+            //console.log('Data received from Db:');
+            //console.log(rows);
 
             return rows.length > 0 ? true : false;
         }
@@ -121,8 +121,8 @@ class Mysql {
                 botId
             )}`
         );
-        console.log('Data received from Db:');
-        console.log(rows);
+        //console.log('Data received from Db:');
+        //console.log(rows);
 
         return rows.length > 0;
     }
@@ -134,16 +134,16 @@ class Mysql {
             )}, ${mysqlCon.escape(coinId)}, ${mysqlCon.escape(token)})`
         );
 
-        console.log('Data received from Db:');
-        console.log(rows);
+        //console.log('Data received from Db:');
+        //console.log(rows);
     }
 
     async removeToken(token) {
         const [rows, fields] = await this.connection.query(
             `DELETE FROM coin_bot_lock WHERE token = ${mysqlCon.escape(token)}`
         );
-        console.log('Data received from Db:');
-        console.log(rows);
+        // console.log('Data received from Db:');
+        // console.log(rows);
     }
 
     async getLockedCoin(botId) {
@@ -154,8 +154,8 @@ class Mysql {
                 botId
             )}`
         );
-        console.log('Data received from Db:');
-        console.log(rows);
+        // console.log('Data received from Db:');
+        // console.log(rows);
 
         return rows;
     }
@@ -164,8 +164,9 @@ class Mysql {
         const [rows, fields] = await this.connection.query(
             'SELECT id, coin_name, coin_id_kraken, coin_id_binance FROM coin'
         );
+        
         /*console.log("Data received from Db:");
-            console.log(rows);*/
+        console.log(rows);*/
         return rows;
     }
 
@@ -175,8 +176,8 @@ class Mysql {
                 coinId
             )}`
         );
-        console.log('Data received from Db:');
-        console.log(rows);
+        // console.log('Data received from Db:');
+        // console.log(rows);
         /* Need to calculate closest to current date and time instead */
         if (rows.length > 0) {
             return rows[0];
@@ -192,8 +193,8 @@ class Mysql {
             )} LIMIT 1`
         );
 
-        console.log('Data received from Db:');
-        console.log(rows);
+        // console.log('Data received from Db:');
+        // console.log(rows);
 
         return rows[0];
     }
@@ -204,8 +205,8 @@ class Mysql {
                 exchangeId
             )} LIMIT 1`
         );
-        console.log('Data received from Db:');
-        console.log(rows);
+        // console.log('Data received from Db:');
+        // console.log(rows);
 
         return rows[0].exchange_fee;
     }
@@ -489,10 +490,6 @@ class Mysql {
             hour12: false,
         });
 
-        /*console.log(
-            `INSERT INTO coin_processed_sma VALUES (${coin_id}, '${stampFullTime}', '${stampFullDate}','${timestamp}',${results["close"]},${results["SMA"]},${results["EMA"]},${results["trend"]},${results["trend_weighting"]}) ON DUPLICATE KEY UPDATE close=${results["close"]},SMA=${results["SMA"]}, EMA=${results["EMA"]},trend=\"${results["trend"]}\",trend_weighting=\"${results["trend_weighting"]}\"`
-        );*/
-
         let queryDeadlock = false;
         let retryLimit = 0;
 
@@ -567,10 +564,6 @@ class Mysql {
             hour12: false,
         });
 
-        /*console.log(
-            `INSERT INTO coin_historical_bollinger VALUES (${coin_id}, '${stampFullTime}', '${stampFullDate}','${timestamp}',${results["close"]},${results["b_hist_squeeze"]},${results["b_hist_expansion"]}) ON DUPLICATE KEY UPDATE close=${results["close"]},historic_squeeze=${results["b_hist_squeeze"]}, historic_expansion=${results["b_hist_expansion"]}`
-        );*/
-
         const [rows, fields] = await this.connection.query(
             `INSERT INTO coin_historical_bollinger VALUES (${coin_id}, '${stampFullTime}', '${stampFullDate}','${timestamp}',${results['close']},${results['b_hist_squeeze']},${results['b_hist_expansion']}) ON DUPLICATE KEY UPDATE close=${results['close']},historic_squeeze=${results['b_hist_squeeze']}, historic_expansion=${results['b_hist_expansion']}`
         );
@@ -597,10 +590,6 @@ class Mysql {
         let stampFullTime = timestampDate.toLocaleTimeString('en-AU', {
             hour12: false,
         });
-
-        /*console.log(
-            `INSERT INTO coin_processed_sma VALUES (${coin_id}, '${stampFullTime}', '${stampFullDate}','${timestamp}',${results["close"]},${results["SMA"]},${results["EMA"]},${results["trend"]},${results["trend_weighting"]}) ON DUPLICATE KEY UPDATE close=${results["close"]},SMA=${results["SMA"]}, EMA=${results["EMA"]},trend=\"${results["trend"]}\",trend_weighting=\"${results["trend_weighting"]}\"`
-        );*/
 
         let queryDeadlock = false;
         let retryLimit = 0;
@@ -668,10 +657,6 @@ class Mysql {
         let stampFullTime = timestampDate.toLocaleTimeString('en-AU', {
             hour12: false,
         });
-
-        /*console.log(
-            `INSERT INTO coin_trends (coin_id, time, date, timestamp, ${type}_t1_2, ${type}_t2_3, ${type}_shape, ${type}_per_change1, ${type}_per_change2, ${type}_per_change3) VALUES ('${coin_id}', '${stampFullTime}', '${stampFullDate}','${timestamp}','${results[1][0]}', '${results[1][1]}', '${results[2]}', '${results[3][0]}', '${results[3][1]}', '${results[3][2]}') ON DUPLICATE KEY UPDATE ${type}_t1_2=${results[1][0]}, ${type}_t2_3=${results[1][1]}, ${type}_shape='${results[2]}', ${type}_per_change1=${results[3][0]}, ${type}_per_change2=${results[3][1]}, ${type}_per_change3=${results[3][2]}`
-        );*/
 
         /* Deadlock because the row is locked. So I've had to add deadlock testing and retry once a deadlock occurs. */
         let queryDeadlock = false;
@@ -742,14 +727,6 @@ class Mysql {
             hour12: false,
         });
 
-        console.log('DEBUG:');
-        console.log(timestamp);
-        console.log(stampFullTime);
-
-        /*console.log(
-            `INSERT INTO coin_advice (coin_id, time, date, timestamp, status, advice, buy_probability, sell_probability,resistance_price, support_price, stop_loss_price, token) VALUES ('${coin_id}', '${stampFullTime}', '${stampFullDate}','${timestamp}','${results['coinStatus']}', '${results['coinAdvice']}', '${results['tradeBuy']}', '${results['tradeSell']}', NULL, NULL, NULL, NULL) ON DUPLICATE KEY UPDATE status='${results['coinStatus']}', advice='${results['coinAdvice']}', buy_probability=${results['tradeBuy']}, sell_probability=${results['tradeSell']}`
-        );*/
-
         /* Deadlock because the row is locked. So I've had to add deadlock testing and retry once a deadlock occurs. */
         let queryDeadlock = false;
         let retryLimit = 0;
@@ -771,7 +748,7 @@ class Mysql {
     }
 
     async cleanupCoinAdvice(coin_id, limitNum) {
-        /* Only keep the last 60 */
+        /* Only keep the last 20 */
         let [rows, fields] = await this.connection.query(
             `DELETE FROM coin_advice
             WHERE timestamp IN
@@ -783,7 +760,7 @@ class Mysql {
                         FROM coin_advice
                         WHERE coin_id = ${mysqlCon.escape(coin_id)}
                         ORDER BY timestamp DESC
-                        LIMIT 20,60
+                        LIMIT 0,20
                     ) a
             )`
         );
@@ -793,6 +770,39 @@ class Mysql {
         const [rows, fields] = await this.connection.query(
             'TRUNCATE TABLE coin_advice'
         );
+    }
+
+    async storeTradeRecord(bot_id, results) {
+        let timestamp = results["timestamp"];
+        let timestampDate = new Date(Number(timestamp) * 1000);
+        let stampFullDate = timestampDate
+            .toLocaleDateString('en-AU')
+            .slice(0, 10)
+            .split('/')
+            .reverse()
+            .join('-');
+        let stampFullTime = timestampDate.toLocaleTimeString('en-AU', {
+            hour12: false,
+        });
+
+        /* Deadlock because the row is locked. So I've had to add deadlock testing and retry once a deadlock occurs. */
+        let queryDeadlock = false;
+        let retryLimit = 0;
+
+        do {
+            try {
+                queryDeadlock = false;
+
+                let [rows, fields] = await this.connection.query(
+                    `INSERT INTO bot_trade_history (bot_id, time, date, timestamp, trade_id, trade_type, trade_volume, trade_price, coin_exchange_id, profit_loss) VALUES ('${bot_id}', '${stampFullTime}', '${stampFullDate}','${timestamp}','${results['tradeId']}', '${results['tradeType']}', ${results['tradeVolume']}, ${results['tradePrice']}, '${results['coinExchangeId']}', ${results['profitLoss']}) ON DUPLICATE KEY UPDATE trade_id='${results['tradeId']}', trade_type='${results['tradeType']}', trade_volume=${results['tradeVolume']}, trade_price=${results['tradePrice']}, coin_exchange_id='${results['coinExchangeId']}', profit_loss=${results['profitLoss']}`
+                );
+            } catch (err) {
+                console.log(err);
+                queryDeadlock = true;
+            }
+
+            retryLimit++;
+        } while (queryDeadlock === true && retryLimit < 10);
     }
 }
 

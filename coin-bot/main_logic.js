@@ -38,7 +38,7 @@ const API = require('../utils/api.js');
 const { calculateGraphGradientsTrendsPerChange } = require('../utils/math.js');
 const { rotateArray, outputError } = require('../utils/general.js');
 const TimeNow = require('../utils/timeNow.js');
-const NETWORK = require('../legacy/config/network-config.js');
+const Exchange = require('../exchanges/exchange.js');
 
 const util = require('util');
 const fs = require('fs');
@@ -74,7 +74,10 @@ class MainLogic {
             'MACD',
             'Advice',
         ]);
-        //this.state = eventConstants.SEEKING_COIN;
+       
+        /* Init the Exchange object */
+        this.exchange = new Exchange();
+        this.exchange.setCurrent("kraken");
 
         this.init();
     }
@@ -127,7 +130,7 @@ class MainLogic {
         await this.cleanOldData();
         await this.getCoinConfig();
         await this.setupSimulatedTimeNow();
-        await this.setupKraken();
+        await this.setupExchange();
         await this.setupQueues();
     }
 
@@ -175,13 +178,8 @@ class MainLogic {
         }
     }
 
-    async setupKraken() {
-        /* Initialise Kraken API */
-        this.kraken = require('kraken-api-wrapper')(
-            this.coinBotConfig['api_key'],
-            this.coinBotConfig['priv_api_key']
-        );
-        this.kraken.setOtp(this.coinBotConfig['2fa_pass']);
+    async setupExchange() {
+        this.exchange.curr.initApi(this.coinBotConfig['api_key'], this.coinBotConfig['priv_api_key'], this.coinBotConfig['2fa_pass']);
     }
 
     async setupQueues() {
@@ -497,7 +495,7 @@ class MainLogic {
                 this.processLocks.lock('OHLC', coin['id']);
                 this.getOHLC(
                     coin['id'],
-                    coin['coin_id_kraken'],
+                    coin[`coin_id_${this.exchange.name}`],
                     this.OHLCStoreNum
                 );
             });
@@ -509,17 +507,15 @@ class MainLogic {
         //if (coinId != 1) return;
 
         console.log(`Acquiring OHLC: ${coinPair}`);
-        this.kraken
-            .OHLC({ pair: coinPair, interval: 1 })
-            .then(async (result) => {
-                /* This gets the result array in the proper order */
+        this.exchange.curr.OHLC(coinPair, 1, async(result) => {
+            /* This gets the result array in the proper order */
                 try {
                     let ohlcDesc = this.getOHLCArray(result, coinPair);
 
                     /* DEBUG: Reset for multiple coins */
-                    if (coinId == 1) {
+                    //if (coinId == 1) {
                         this.calculateOHLCTrends(coinId, ohlcDesc);
-                    }
+                    //}
 
                     let limiterIndex = 0;
                     for (const ohlcEl of ohlcDesc) {
@@ -535,8 +531,7 @@ class MainLogic {
                 }
                 /* Unlock ohlc here so we can do calculations on this element - do we need this per coin? */
                 this.processLocks.unlock('OHLC');
-            })
-            .catch((err) => console.error(err));
+        });
     }
 
     getOHLCArray(ohlcResult, coinPair) {
@@ -598,7 +593,7 @@ class MainLogic {
         this.coinConfigArr.forEach((coin) => {
             let trend = 'RSI';
             this.RSIProcessingQueue.enqueue(async () => {
-                console.log(`Processing ${trend}: ${coin['coin_id_kraken']}`);
+                console.log(`Processing ${trend}: ${coin[`coin_id_${this.exchange.name}`]}`);
 
                 this.processTrendWithLock(this.RSIProcessor, trend, coin['id']);
             });
@@ -611,7 +606,7 @@ class MainLogic {
         this.coinConfigArr.forEach((coin) => {
             let trend = 'Stochastic';
             this.StochasticProcessingQueue.enqueue(async () => {
-                console.log(`Processing ${trend}: ${coin['coin_id_kraken']}`);
+                console.log(`Processing ${trend}: ${coin[`coin_id_${this.exchange.name}`]}`);
 
                 this.processTrendWithLock(
                     this.StochasticProcessor,
@@ -628,7 +623,7 @@ class MainLogic {
         this.coinConfigArr.forEach((coin) => {
             let trend = 'Bollinger';
             this.BollingerProcessingQueue.enqueue(async () => {
-                console.log(`Processing ${trend}: ${coin['coin_id_kraken']}`);
+                console.log(`Processing ${trend}: ${coin[`coin_id_${this.exchange.name}`]}`);
 
                 this.processTrendWithLock(
                     this.BollingerProcessor,
@@ -645,7 +640,7 @@ class MainLogic {
         this.coinConfigArr.forEach((coin) => {
             let trend = 'EMA';
             this.EMAProcessingQueue.enqueue(async () => {
-                console.log(`Processing ${trend}: ${coin['coin_id_kraken']}`);
+                console.log(`Processing ${trend}: ${coin[`coin_id_${this.exchange.name}`]}`);
 
                 this.processTrendWithLock(this.EMAProcessor, trend, coin['id']);
             });
@@ -658,7 +653,7 @@ class MainLogic {
         this.coinConfigArr.forEach((coin) => {
             let trend = 'MACD';
             this.MACDProcessingQueue.enqueue(async () => {
-                console.log(`Processing ${trend}: ${coin['coin_id_kraken']}`);
+                console.log(`Processing ${trend}: ${coin[`coin_id_${this.exchange.name}`]}`);
 
                 this.processTrendWithLock(
                     this.MACDProcessor,
@@ -677,7 +672,7 @@ class MainLogic {
         this.coinConfigArr.forEach((coin) => {
             let trend = 'Advice';
             this.GeneralAdviceQueue.enqueue(async () => {
-                console.log(`Processing ${trend}: ${coin['coin_id_kraken']}`);
+                console.log(`Processing ${trend}: ${coin[`coin_id_${this.exchange.name}`]}`);
 
                 this.calculateAdviceWithLock(
                     this.GeneralAdviceProcessor,
@@ -705,9 +700,10 @@ class MainLogic {
     async calculateAdviceWithLock(advisor, trend, coinId) {
         this.processLocks.lock(trend, coinId);
         /* DEBUG */
-        if (coinId === 1) {
+        //if (coinId === 1) {
             let advice = await advisor.advise(coinId);
             if (advice !== false) {
+                console.log(advice);
                 await this.mysqlCon.storeCoinAdvice(
                     coinId,
                     this.currTimestamp,
@@ -715,7 +711,7 @@ class MainLogic {
                 );
                 await this.mysqlCon.cleanupCoinAdvice();
             }
-        }
+        //}
         let unlocked = this.processLocks.awaitLock(trend, coinId);
 
         if (unlocked === false) {
@@ -732,11 +728,7 @@ class MainLogic {
                 let coinId = coin['id'];
                 let coinName = coin['coin_name'];
 
-                /* We only draw this for Bitcoin for now */
-                //if (coinId !== 1) {
-                //    return;
-                //}
-                console.log(`Plotting ${trend}: ${coin['coin_id_kraken']}`);
+                console.log(`Plotting ${trend}: ${coin[`coin_id_${this.exchange.name}`]}`);
 
                 let resultsOHLC = await this.mysqlCon.getCoinOHLC(coinId);
 

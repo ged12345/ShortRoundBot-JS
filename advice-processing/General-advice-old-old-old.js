@@ -441,44 +441,44 @@ class GeneralTrendAdvice {
         /* If the MACD histogram percentage change is currently negative */
         
         if (MACDTotalPercentageChange > 25) {
-            tradeBuyPercentage += 70;
-        } else if (MACDTotalPercentageChange > 20) {
-            tradeBuyPercentage += 65;
-        } else if (MACDTotalPercentageChange > 15) {
-            tradeBuyPercentage += 60;
-        } else if (MACDTotalPercentageChange > 10) {
-            tradeBuyPercentage += 50;
-        } else if (MACDTotalPercentageChange > 7.5) {
             tradeBuyPercentage += 40;
-        } else if (MACDTotalPercentageChange > 5) {
+        } else if (MACDTotalPercentageChange > 20) {
             tradeBuyPercentage += 30;
-        } else if (MACDTotalPercentageChange > 2.5) {
+        } else if (MACDTotalPercentageChange > 15) {
+            tradeBuyPercentage += 25;
+        } else if (MACDTotalPercentageChange > 10) {
             tradeBuyPercentage += 20;
-        } else if (MACDTotalPercentageChange > 1) {
+        } else if (MACDTotalPercentageChange > 7.5) {
             tradeBuyPercentage += 15;
-        } else if (MACDTotalPercentageChange > 0.5) {
+        } else if (MACDTotalPercentageChange > 5) {
+            tradeBuyPercentage += 12.5;
+        } else if (MACDTotalPercentageChange > 2.5) {
             tradeBuyPercentage += 10;
+        } else if (MACDTotalPercentageChange > 1) {
+            tradeBuyPercentage += 7.5;
+        } else if (MACDTotalPercentageChange > 0.5) {
+            tradeBuyPercentage += 5;
         }
 
         /* If the MACD histogram percentage change is currently negative */
         if (MACDTotalPercentageChange < -25) {
-            tradeSellPercentage += 70;
-        } else if (MACDTotalPercentageChange < -20) {
-            tradeSellPercentage += 65;
-        } else if (MACDTotalPercentageChange < -15) {
-            tradeSellPercentage += 60;
-        } else if (MACDTotalPercentageChange < -10) {
-            tradeSellPercentage += 50;
-        } else if (MACDTotalPercentageChange < -7.5) {
             tradeSellPercentage += 40;
-        } else if (MACDTotalPercentageChange < -5) {
+        } else if (MACDTotalPercentageChange < -20) {
             tradeSellPercentage += 30;
-        } else if (MACDTotalPercentageChange < -2.5) {
+        } else if (MACDTotalPercentageChange < -15) {
+            tradeSellPercentage += 25;
+        } else if (MACDTotalPercentageChange < -10) {
             tradeSellPercentage += 20;
-        } else if (MACDTotalPercentageChange < -1) {
+        } else if (MACDTotalPercentageChange < -7.5) {
             tradeSellPercentage += 15;
-        } else if (MACDTotalPercentageChange < -0.5) {
+        } else if (MACDTotalPercentageChange < -5) {
+            tradeSellPercentage += 12.5;
+        } else if (MACDTotalPercentageChange < -2.5) {
             tradeSellPercentage += 10;
+        } else if (MACDTotalPercentageChange < -1) {
+            tradeSellPercentage += 7.5;
+        } else if (MACDTotalPercentageChange < -0.5) {
+            tradeSellPercentage += 5;
         }
 
         console.log('MACDTrade Buy: ', tradeBuyPercentage);
@@ -578,8 +578,7 @@ class GeneralTrendAdvice {
 
         /* When the Fast is above the slow, we'll add to the buy percentage - from observation, anytime this happens, there's a good chance of buy in*/
         if(currStochFastK > currStochSlowD) {
-            let stochMultipleFactor = (((currStochFastK/currStochSlowD) - 1)/ 2.5) + 1;
-            //console.log("STOCH MULT: ", stochMultipleFactor);
+            let stochMultipleFactor = (1 + ((currStochFastK/currStochSlowD) - 1)/ 2.0);
             tradeBuyPercentage *= stochMultipleFactor;
             tradeSellPercentage /= stochMultipleFactor;
         }
@@ -604,7 +603,7 @@ class GeneralTrendAdvice {
         /* Trend for PerB seems to be if the current price trend is negative and PerB falls below or very cose to zero threshold, there is a price revrsal i.e. a buy buy buy! */
         /* Note: Whether the price is going up or down matters when we look at these signals - if they're both moving in opposite directions (divergence), there's usually a trend flip */
         if (
-            currPerB < 0 &&
+            currPerB < 2.5 &&
             CloseCurrPercentageChange < 0
         ) {
             tradeBuyPercentage += 60;

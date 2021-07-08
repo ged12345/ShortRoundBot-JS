@@ -1,18 +1,8 @@
-const NETWORK = require('../legacy/config/network-config.js');
 const MainLogic = require('./main_logic.js').MainLogic;
 const queue = require('../utils/queue.js');
 const sleep = require('../utils/general.js').sleep;
 
-const kraken = require('kraken-api-wrapper')(
-    NETWORK.config.apiKey,
-    NETWORK.config.privateApiKey
-);
-kraken.setOtp(NETWORK.config.twoFactor);
-
-const exchangeName = 'kraken';
-//const exchangeName = 'binance';
-
-const main = new MainLogic(kraken, exchangeName);
+const main = new MainLogic();
 let unassignedBot = false;
 
 init();
@@ -21,35 +11,6 @@ async function init() {
     let heartbeatId = setInterval(async () => {
         main.processQueues();
     }, 100);
-
-    /*kraken
-    .Ticker({ pair: "BTCUSD" })
-    .then((result) => console.log(result))
-    .catch((err) => console.error(err));
-
-    kraken
-    .OHLC({ pair: "BTCUSD", interval })
-    .then((result) => console.log(result))
-    .catch((err) => console.error(err));*/
-
-    /* Basic bot logic for now */
-    /*let tradeToken = null;
-    network
-        .apiGet("http://localhost:1408/api/lock_bot?botId=1&coinId=1")
-        .then((res) => {
-            console.log(res);
-            tradeToken = res.token;
-            console.log(res.token);
-            network
-                .apiPost(`http://localhost:1408/api/release_bot`, {
-                    botId: 1,
-                    token: tradeToken,
-                })
-                .then((res) => {
-                    console.log(res);
-                });
-        });
-    */
 }
 
 /* Run exit handler and cleanup */

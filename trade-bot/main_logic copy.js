@@ -10,15 +10,15 @@ const {
     calculateSellUrgencyFactor,
     getRandomInt,
 } = require('../utils/math.js');
-const Exchange = require('../exchanges/exchange.js');
-
 class MainLogic {
     // Need to "lock" bot when new info comes in.
 
-    constructor() {
+    constructor(kraken, exchangeName) {
+        this.kraken = kraken;
         this.primeCode = encryptCodeIn(code);
         this.lockToken = null;
         this.lockedCoinId = 0;
+        this.exchangeName = exchangeName;
         this.exchangeCoinId = '';
         this.state = eventConstants.SEEKING_COIN;
         this.queueSetupComplete = false;
@@ -69,9 +69,6 @@ class MainLogic {
             }
         };
 
-        /* Init the Exchange object */
-        this.exchange = new Exchange();
-        this.exchange.setCurrent("kraken");
 
         this.init();
     }
@@ -79,7 +76,6 @@ class MainLogic {
     async init() {
         await this.getBotConfig();
         await this.getBotInfo();
-        await this.setupExchange();
         await this.setupQueues();
         await this.setupUnprofitableCoins();
     }
@@ -148,10 +144,6 @@ class MainLogic {
         await botInfoResults.then(function (result) {
             botInfoResults = result;
         });
-    }
-
-    async setupExchange() {
-        this.exchange.curr.initApi(this.trade_api_config['api_key'], this.trade_api_config ['priv_api_key'], this.trade_api_config ['2fa_pass']);
     }
 
     async setupQueues() {
@@ -246,7 +238,9 @@ class MainLogic {
                 this.getLockedAdvice();
                 /* IMPORTANT: Monitor trades and cancel others if one condition has been reached */
 
-                this.trackOrders();
+                // DEBUG
+                this.simulateTrackOrders();
+                //trackOrders();
             }
             if (this.state === eventConstants.TRADE_LOCKED) {
                 /* Here we perform the actual trade order (can't do bracketed via API */
@@ -254,17 +248,81 @@ class MainLogic {
                 this.state = eventConstants.PREPARING_TRADE;
 
                 /* We format a kraken trade order */
-                this.prepareOrder();
+                // DEBUG
+                this.simulatePrepareOrder();
+                //prepareOrder();
 
                 this.state = eventConstants.ORDER_FINALISED;
             }
         }
     }
 
+    simulateTrackOrders() {
+        if (result1[`${this.stopLossTXID}`]['status'] == 'closed') {
+            this.totalCurrentFloat +=
+                Number(result1[`${this.stopLossTXID}`]['cost']) -
+                Number(result1[`${this.stopLossTXID}`]['fee']);
+
+            this.totalLoss -=
+                Number(result1[`${this.stopLossTXID}`]['cost']) -
+                Number(result1[`${this.stopLossTXID}`]['fee']) -
+                this.orderPrice;
+
+            this.stopLossTXID = '';
+        }
+
+        if (result1[`${this.takeProfitTXID}`]['status'] == 'closed') {
+            this.totalCurrentFloat +=
+                Number(result1[`${this.takeProfitTXID}`]['cost']) -
+                Number(result1[`${this.takeProfitTXID}`]['fee']);
+
+            this.totalLoss -=
+                Number(result1[`${this.takeProfitTXID}`]['cost']) -
+                Number(result1[`${this.takeProfitTXID}`]['fee']) -
+                this.orderPrice;
+
+            this.takeProfitTXID = '';
+        }
+
+        if (this.takeProfitTXID === '' || this.stopLossTXID === '') {
+            finaliseOrder();
+        }
+
+        /* Check the current ticker and work out percentage change in our locked coin, then compare with the price we bought at. If there's been a reasonable drop, sell immediately */
+
+        /* TO-DO: Ticker - update this to take into account the simulated timestamp I've added */
+            Ticker({ pair: this.exchangeCoinId })
+            .then(async (result) => {
+                this.oldTrackTradeClosePrice = Number(
+                    this.newTrackTradeClosePrice
+                );
+                this.newTrackTradeClosePrice = Number(result['c'][0]);
+                this.oldTrackTradeClosePrice = Number(this.orderPrice);
+
+                /* If the price has dropped by 2.5% */
+                if (
+                    (this.newTrackTradeClosePrice -
+                        this.oldTrackTradeClosePrice) /
+                        this.newTrackTradeClosePrice <
+                    -0.025
+                ) {
+                    /* DEBUG */
+                    this.simulateSellEarly();
+                    //this.sellEarly();
+                }
+            })
+            .catch((err) => {
+                console.error(err);
+                return false;
+            });
+    }
+
     trackOrders() {
         /* Check our current open orders */
-        this.exchange.curr.queryOrders(this.exchangeCoinId, this.stopLossTXID, async(result) => {
-            if (result[`${this.stopLossTXID}`]['status'] === 'closed') {
+        this.kraken
+            .QueryOrders({ txid: this.stopLossTXID })
+            .then(async (result) => {
+                if (result[`${this.stopLossTXID}`]['status'] == 'closed') {
                     this.totalCurrentFloat +=
                         Number(result[`${this.stopLossTXID}`]['cost']) -
                         Number(result[`${this.stopLossTXID}`]['fee']);
@@ -276,69 +334,97 @@ class MainLogic {
 
                     this.stopLossTXID = '';
                 }
-                
-                this.exchange.curr.queryOrders(this.exchangeCoinId, this.takeProfitTXID , async(result) => {
-                    if (result[`${this.takeProfitTXID}`]['status'] === 'closed') {
-                        this.totalCurrentFloat +=
-                            Number(result[`${this.takeProfitTXID}`]['cost']) -
-                            Number(result[`${this.takeProfitTXID}`]['fee']);
+            })
+            .catch((err) => {
+                console.error(err);
+                return false;
+            })
+            .QueryOrders({ txid: this.takeProfitTXID })
+            .then(async (result) => {
+                if (result[`${this.takeProfitTXID}`]['status'] == 'closed') {
+                    this.totalCurrentFloat +=
+                        Number(result[`${this.takeProfitTXID}`]['cost']) -
+                        Number(result[`${this.takeProfitTXID}`]['fee']);
 
-                        this.totalLoss -=
-                            Number(result1[`${this.takeProfitTXID}`]['cost']) -
-                            Number(result1[`${this.takeProfitTXID}`]['fee']) -
-                            this.orderPrice;
+                    this.totalLoss -=
+                        Number(result1[`${this.takeProfitTXID}`]['cost']) -
+                        Number(result1[`${this.takeProfitTXID}`]['fee']) -
+                        this.orderPrice;
 
-                        this.takeProfitTXID = '';
-                    }
+                    this.takeProfitTXID = '';
+                }
 
-                    if (this.takeProfitTXID === '' || this.stopLossTXID === '') {
-                        this.finaliseTrade();
-                    }
-                });
-        });
+                if (this.takeProfitTXID === '' || this.stopLossTXID === '') {
+                    finaliseOrder();
+                }
+            })
+            .catch((err) => {
+                console.error(err);
+                return false;
+            });
 
         /* Check the current ticker and work out percentage change in our locked coin, then compare with the price we bought at. If there's been a reasonable drop, sell immediately */
 
         /* TO-DO: Ticker - update this to take into account the simulated timestamp I've added */
 
-        this.exchange.curr.ticker(this.exchangeCoinId, async(result) => {
-            this.oldTrackTradeClosePrice = this.newTrackTradeClosePrice;
-            this.newTrackTradeClosePrice = Number(result['c'][0]);
-            this.oldTrackTradeClosePrice = this.orderPrice;
+        this.kraken
+            .Ticker({ pair: this.exchangeCoinId })
+            .then(async (result) => {
+                this.oldTrackTradeClosePrice = this.newTrackTradeClosePrice;
+                this.newTrackTradeClosePrice = Number(result['c'][0]);
+                this.oldTrackTradeClosePrice = this.orderPrice;
 
-            /* If the price has dropped by 0.5% */
-            if (
-                (this.newTrackTradeClosePrice -
-                    this.oldTrackTradeClosePrice) /
-                    this.newTrackTradeClosePrice <
-                -0.005
-            ) {
-                this.sellEarly();
-            }
+                /* If the price has dropped by 0.5% */
+                if (
+                    (this.newTrackTradeClosePrice -
+                        this.oldTrackTradeClosePrice) /
+                        this.newTrackTradeClosePrice <
+                    -0.005
+                ) {
+                    /* DEBUG */
+                    this.simulateSellEarly();
+                    //this.sellEarly();
+                }
 
-            /* If the price has risen, we bring up the stop-loss */
-            if (
-                (this.newTrackTradeClosePrice -
-                    this.oldTrackTradeClosePrice) /
-                    this.newTrackTradeClosePrice >
-                0.025
-            ) {
-                this.exchange.curr.cancelOrder(this.exchangeCoinId, txid, async(result) => {
-                    this.stopLossTXID = '';
-
-                    this.exchange.curr.addOrder({
-                        pair: this.exchangeCoinId,
-                        ordertype: 'stop-loss',
-                        type: 'sell',
-                        volume: this.orderVolume,
-                        price: this.newTrackTradeClosePrice * 0.9965,
-                    }, async(result) => {
-                        this.stopLossTXID = result['txid'];
-                    });
-                });
-                this.sellEarly();
-            }
-        });
+                /* If the price has risen, we bring up the stop-loss */
+                if (
+                    (this.newTrackTradeClosePrice -
+                        this.oldTrackTradeClosePrice) /
+                        this.newTrackTradeClosePrice >
+                    0.025
+                ) {
+                    this.kraken
+                        .CancelOrder({ txid: this.stopLossTXID })
+                        .then(async (result) => {
+                            this.stopLossTXID = '';
+                        })
+                        .catch((err) => {
+                            console.error(err);
+                            return false;
+                        })
+                        .AddOrder({
+                            pair: this.exchangeCoinId,
+                            ordertype: 'stop-loss',
+                            type: 'sell',
+                            volume: this.orderVolume,
+                            price: this.newTrackTradeClosePrice * 0.9965,
+                        })
+                        .then(async (result) => {
+                            this.stopLossTXID = result['txid'];
+                        })
+                        .catch((err) => {
+                            console.error(err);
+                            return false;
+                        });
+                    /* DEBUG */
+                    this.simulateSellEarly();
+                    //this.sellEarly();
+                }
+            })
+            .catch((err) => {
+                console.error(err);
+                return false;
+            });
     }
 
     lockBot() {
@@ -364,14 +450,16 @@ class MainLogic {
 
             let suitableCoins = [];
             advice['coins'].forEach((coinAdvice) => {
-                if (coinAdvice['coin_advice'][0]['advice'] ===
-                            'DEFINITE_BUY' || (coinAdvice['coin_advice'][0]['advice'] === 'POSSIBLE_BUY' && Number(coinAdvice['coin_advice'][0]['probability']) >= 85)) {
+                if (Number(coinAdvice['coin_advice']['probability']) >= 75) {
+                    if (
+                        coinAdvice['coin_advice']['advice'] ===
+                            'DEFINITE_BUY' ||
+                        coinAdvice['coin_advice']['advice'] === 'POSSIBLE_BUY'
+                    ) {
                         suitableCoins.push(coinAdvice);
+                    }
                 }
             });
-
-            /* Sort array by probability and advice type (DEFINITE_BUY being ahead of POSSIBLE_BUY) */
-
 
             /* Choose a random coin */
             let chosenCoin =
@@ -403,64 +491,112 @@ class MainLogic {
         });
     }
 
+    simulatePrepareOrder() {
+        /* We grab the current ticker price */
+
+        /* TO-DO: Ticker - update this to take into account the simulated timestamp I've added */
+        this.kraken
+            .Ticker({ pair: this.exchangeCoinId })
+            .then(async (result) => {
+                /* Bid price is highest price asked atm */
+                let currentBidPrice = Number(result['b'][0]);
+                let currentAskPrice = Number(result['a'][0]);
+                let currentClosePrice = Number(result['c'][0]);
+                let topLimitPrice = currentBidPrice * 1.025; // 2.5%
+                let bottomLimitPrice = currentAskPrice * 0.98; // 2%
+
+                this.takeProfitPrice = topLimitPrice;
+                this.stopLossPrice = bottomLimitPrice;
+                this.orderPrice = currentClosePrice;
+                this.newTrackTradeClosePrice = this.orderPrice;
+
+                /* Let's calculate the volume based on our float and current price */
+                this.orderVolume = currentClosePrice / this.wageredFloat;
+
+                console.log(
+                    `Prepare simulated order: ${currentClosePrice} ${currentBidPrice} ${currentAskPrice} ${topLimitPrice} ${bottomLimitPrice}`
+                );
+
+                this.initialTradeTimestamp = Date.now();
+                return true;
+            })
+            .catch((err) => console.error(err));
+    }
+
     prepareOrder() {
         /* We grab the current ticker price */
 
         /* TO-DO: Ticker - update this to take into account the simulated timestamp I've added */
-        this.exchange.curr.ticker(this.exchangeCoinId, async(result) => {
-            //console.log(result);
-            /* Bid price is highest price asked atm */
-            let currentBidPrice = Number(result['b']);
-            let currentAskPrice = Number(result['a']);
-            let currentClosePrice = Number(result['c']);
-            let topLimitPrice = currentBidPrice * 1.003; // 0.3%
-            let bottomLimitPrice = currentAskPrice * 0.9975; // 0.25%
+        this.kraken
+            .Ticker({ pair: this.exchangeCoinId })
+            .then(async (result) => {
+                //console.log(result);
+                /* Bid price is highest price asked atm */
+                let currentBidPrice = Number(result['b'][0]);
+                let currentAskPrice = Number(result['a'][0]);
+                let currentClosePrice = Number(result['c'][0]);
+                let topLimitPrice = currentBidPrice * 1.003; // 0.3%
+                let bottomLimitPrice = currentAskPrice * 0.9975; // 0.25%
 
-            this.takeProfitPrice = topLimitPrice;
-            this.stopLossPrice = bottomLimitPrice;
-            this.orderPrice = currentClosePrice;
-            this.newTrackTradeClosePrice = this.orderPrice;
+                this.takeProfitPrice = topLimitPrice;
+                this.stopLossPrice = bottomLimitPrice;
+                this.orderPrice = currentClosePrice;
+                this.newTrackTradeClosePrice = this.orderPrice;
 
-            /* Let's calculate the volume based on our float and current price */
-            this.orderVolume = currentClosePrice / this.wageredFloat;
+                /* Let's calculate the volume based on our float and current price */
+                this.orderVolume = currentClosePrice / this.wageredFloat;
 
-            console.log(
-                `Prepare order: ${currentBidPrice} ${currentAskPrice} ${topLimitPrice} ${bottomLimitPrice}`
-            );
+                console.log(
+                    `Prepare order: ${currentBidPrice} ${currentAskPrice} ${topLimitPrice} ${bottomLimitPrice}`
+                );
 
-            /* Initial purchase of coin */
-            this.exchange.curr.addOrder({
-                    pair: this.exchangeCoinId,
-                    ordertype: 'market',
-                    type: 'buy',
-                    volume: this.orderVolume,
-                }, async(result) => {
-
+                /* Initial purchase of coin */
+                this.kraken
+                    .AddOrder({
+                        pair: this.exchangeCoinId,
+                        ordertype: 'market',
+                        type: 'buy',
+                        volume: this.orderVolume,
+                    })
+                    .then(async (result) => {})
+                    .catch((err) => {
+                        console.error(err);
+                        return false;
+                    })
                     /* Take profit order (immediate sell at market price once we hit limit) for top limit price (actual limit trade may not be filled - we may do this later if not making enough, with monitoring) */
-                    this.exchange.curr.addOrder({
-                            pair: this.exchangeCoinId,
-                            ordertype: 'take-profit',
-                            type: 'sell',
-                            volume: this.orderVolume,
-                            price: topLimitPrice,
-                        }, async(result) => {
-                            this.takeProfitTXID = result['txid'];
-
-                            /* Take stop loss for bottom limit price */
-                            this.exchange.curr.addOrder({
-                                pair: this.exchangeCoinId,
-                                ordertype: 'stop-loss',
-                                type: 'sell',
-                                volume: this.orderVolume,
-                                price: bottomLimitPrice,
-                            }, async(result) => {
-                                this.stopLossTXID = result['txid'];
-                            });
+                    .AddOrder({
+                        pair: this.exchangeCoinId,
+                        ordertype: 'take-profit',
+                        type: 'sell',
+                        volume: this.orderVolume,
+                        price: topLimitPrice,
+                    })
+                    .then(async (result) => {
+                        this.takeProfitTXID = result['txid'];
+                    })
+                    .catch((err) => {
+                        console.error(err);
+                        return false;
+                    }) /* Take stop loss for bottom limit price */
+                    .AddOrder({
+                        pair: this.exchangeCoinId,
+                        ordertype: 'stop-loss',
+                        type: 'sell',
+                        volume: this.orderVolume,
+                        price: bottomLimitPrice,
+                    })
+                    .then(async (result) => {
+                        this.stopLossTXID = result['txid'];
+                    })
+                    .catch((err) => {
+                        console.error(err);
+                        return false;
                     });
-            });
-            this.initialTradeTimestamp = Date.now();
-            return true;
-        });
+
+                this.initialTradeTimestamp = Date.now();
+                return true;
+            })
+            .catch((err) => console.error(err));
     }
 
     checkAdvice() {
@@ -493,37 +629,68 @@ class MainLogic {
 
         /* We need to determine if we sell early based on max trade time and whether the coin has appreciated in price by a certain margin in a certain time */
 
-        this.sellEarly();
+        /* UNCOMMENT LATER */
+        /* sellEarly(); */
+        simulateSellEarly();
 
         return true;
     }
 
+    sellEarlySimulation() {
+        console.log('Selling early.');
+        simulateCancelOrders();
+    }
+
     sellEarly() {
-        this.exchange.curr.addOrder({pair: this.exchangeCoinId,
+        this.kraken
+            .AddOrder({
+                pair: this.exchangeCoinId,
                 ordertype: 'market',
                 type: 'sell',
                 volume: this.orderVolume,
-            }, async(result) => {
-
+            })
+            .then(async (result) => {})
+            .catch((err) => {
+                console.error(err);
+                return false;
             });
-        this.cancelOrders();
+        cancelOrders();
+    }
+
+    simulateCancelOrders() {
+        this.takeProfitTXID = '';
+        this.stopLossTXID = '';
     }
 
     cancelOrders() {
         if (this.takeProfitTXID !== '') {
-            this.exchange.curr.cancelOrder(this.exchangeCoinId, this.takeProfitTXID, 
-                async(result) => {
+            this.kraken
+                .CancelOrder({ txid: this.takeProfitTXID })
+                .then(async (result) => {
+                    this.takeProfitTXID = '';
+                })
+                .catch((err) => {
+                    console.error(err);
+                    return false;
                 });
         } else if (this.stopLossTXID !== '') {
-            this.exchange.curr.cancelOrder(this.exchangeCoinId, this.stopLossTXID, 
-                async(result) => {
+            this.kraken
+                .CancelOrder({ txid: this.stopLossTXID })
+                .then(async (result) => {
+                    this.stopLossTXID = '';
+                })
+                .catch((err) => {
+                    console.error(err);
+                    return false;
                 });
         }
     }
 
     finaliseTrade() {
         /* We should cancel stop loss or any existing trades here */
-        this.cancelOrders();
+        /* DEBUG */
+        simulateCancelOrders();
+        // cancelOrders();
 
         /* Wipe out current trade timestamp etc.at end of trade */
         this.currentTradeTimestamp = null;
@@ -562,7 +729,7 @@ class MainLogic {
 
     setupUnprofitableCoins() {
         /* Reset the unproftiable coins ever hour */
-        setInterval(this.resetUnprofitableCoins, 1000 * 60 * 60);
+        setInterval(resetUnprofitableCoins, 1000 * 60 * 60);
     }
 
     resetUnprofitableCoins() {

@@ -140,8 +140,6 @@ class GeneralTrendAdvice {
         /* let currPerB = Number(resultsMACD['per_b']); */
         let currPerB = Number(resultsBoll[resultsBoll.length - 1]['per_b']);
         let currClosePrice = resultsOHLC[resultsOHLC.length - 1]['close'];
-        let currStochFastK = Number(resultsStochastics[resultsStochastics.length - 1]['k_fast']);
-        let currStochSlowD = Number(resultsStochastics[resultsStochastics.length - 1]['d_slow']);
         let coinStatus = '';
         let coinAdvice = COIN_ADVICE.HOLD;
 
@@ -441,105 +439,80 @@ class GeneralTrendAdvice {
         /* If the MACD histogram percentage change is currently negative */
         
         if (MACDTotalPercentageChange > 25) {
-            tradeBuyPercentage += 70;
-        } else if (MACDTotalPercentageChange > 20) {
-            tradeBuyPercentage += 65;
-        } else if (MACDTotalPercentageChange > 15) {
-            tradeBuyPercentage += 60;
-        } else if (MACDTotalPercentageChange > 10) {
-            tradeBuyPercentage += 50;
-        } else if (MACDTotalPercentageChange > 7.5) {
             tradeBuyPercentage += 40;
-        } else if (MACDTotalPercentageChange > 5) {
+        } else if (MACDTotalPercentageChange > 20) {
             tradeBuyPercentage += 30;
-        } else if (MACDTotalPercentageChange > 2.5) {
+        } else if (MACDTotalPercentageChange > 15) {
+            tradeBuyPercentage += 25;
+        } else if (MACDTotalPercentageChange > 10) {
             tradeBuyPercentage += 20;
-        } else if (MACDTotalPercentageChange > 1) {
+        } else if (MACDTotalPercentageChange > 7.5) {
             tradeBuyPercentage += 15;
-        } else if (MACDTotalPercentageChange > 0.5) {
+        } else if (MACDTotalPercentageChange > 5) {
+            tradeBuyPercentage += 12.5;
+        } else if (MACDTotalPercentageChange > 2.5) {
             tradeBuyPercentage += 10;
+        } else if (MACDTotalPercentageChange > 1) {
+            tradeBuyPercentage += 7.5;
+        } else if (MACDTotalPercentageChange > 0.5) {
+            tradeBuyPercentage += 5;
         }
 
         /* If the MACD histogram percentage change is currently negative */
         if (MACDTotalPercentageChange < -25) {
-            tradeSellPercentage += 70;
-        } else if (MACDTotalPercentageChange < -20) {
-            tradeSellPercentage += 65;
-        } else if (MACDTotalPercentageChange < -15) {
-            tradeSellPercentage += 60;
-        } else if (MACDTotalPercentageChange < -10) {
-            tradeSellPercentage += 50;
-        } else if (MACDTotalPercentageChange < -7.5) {
             tradeSellPercentage += 40;
-        } else if (MACDTotalPercentageChange < -5) {
+        } else if (MACDTotalPercentageChange < -20) {
             tradeSellPercentage += 30;
-        } else if (MACDTotalPercentageChange < -2.5) {
+        } else if (MACDTotalPercentageChange < -15) {
+            tradeSellPercentage += 25;
+        } else if (MACDTotalPercentageChange < -10) {
             tradeSellPercentage += 20;
-        } else if (MACDTotalPercentageChange < -1) {
+        } else if (MACDTotalPercentageChange < -7.5) {
             tradeSellPercentage += 15;
-        } else if (MACDTotalPercentageChange < -0.5) {
+        } else if (MACDTotalPercentageChange < -5) {
+            tradeSellPercentage += 12.5;
+        } else if (MACDTotalPercentageChange < -2.5) {
             tradeSellPercentage += 10;
+        } else if (MACDTotalPercentageChange < -1) {
+            tradeSellPercentage += 7.5;
+        } else if (MACDTotalPercentageChange < -0.5) {
+            tradeSellPercentage += 5;
         }
 
         console.log('MACDTrade Buy: ', tradeBuyPercentage);
         console.log('MACDTrade Sell: ', tradeSellPercentage);
 
-        /* Note: Whether the price is going up or down matters when we look at these signals - if they're both moving in opposite directions (divergence), there's usually a trend flip */
-        if (currRSI > 90 && CloseCurrPercentageChange > 0) {
-            tradeBuyPercentage -= 60;
-            tradeSellPercentage += 60;
-        } else if (currRSI > 85 && CloseCurrPercentageChange > 0) {
-            tradeBuyPercentage -= 55;
-            tradeSellPercentage += 55;
-        } else if (currRSI > 80 && CloseCurrPercentageChange > 0) {
-            tradeBuyPercentage -= 50;
-            tradeSellPercentage += 50;
-        } else if (currRSI > 73 && CloseCurrPercentageChange > 0) {
-            tradeBuyPercentage -= 45;
-            tradeSellPercentage += 45;
-        } else if (currRSI > 66 && CloseCurrPercentageChange > 0) {
-            tradeBuyPercentage -= 40;
-            tradeSellPercentage += 40;
-        } else if (currRSI < 10 && CloseCurrPercentageChange < 0) {
-            tradeBuyPercentage += 60;
-            tradeSellPercentage -= 60;
-        } else if (currRSI < 15 && CloseCurrPercentageChange < 0) {
-            tradeBuyPercentage += 55;
-            tradeSellPercentage -= 55;
-        } else if (currRSI < 20 && CloseCurrPercentageChange < 0) {
-            tradeBuyPercentage += 50;
-            tradeSellPercentage -= 50;
-        } else if (currRSI < 26 && CloseCurrPercentageChange < 0) {
-            tradeBuyPercentage += 45;
-            tradeSellPercentage -= 45;
-        } else if (currRSI < 33 && CloseCurrPercentageChange < 0) {
-            tradeBuyPercentage += 40;
-            tradeSellPercentage -= 40;
-        }  else {
-            /* RSI */
-            if (RSITotalPercentageChange > 0 && RSITotalPercentageChange > 25) {
-                tradeBuyPercentage += 7.5;
-            }
+        /* RSI */
+        if (RSITotalPercentageChange > 0 && RSITotalPercentageChange > 25) {
+            tradeBuyPercentage += 7.5;
+        }
 
-            if (RSITotalChangeAllAveraged > 50) {
-                tradeBuyPercentage += 50;
-            } else if (RSITotalChangeAllAveraged > 40) {
-                tradeBuyPercentage += 45;
-            } else if (RSITotalChangeAllAveraged > 30) {
-                tradeBuyPercentage += 40;
-            } else if (RSITotalChangeAllAveraged > 25) {
-                tradeBuyPercentage += 35;
-            } else if (RSITotalChangeAllAveraged > 20) {
-                tradeBuyPercentage += 30;
-            } else if (RSITotalChangeAllAveraged > 15) {
-                tradeBuyPercentage += 25;
-            } else if (RSITotalChangeAllAveraged > 10) {
-                tradeBuyPercentage += 20;
-            }  else if (RSITotalChangeAllAveraged > 5) {
-                tradeBuyPercentage += 15;
-            } else if (RSITotalChangeAllAveraged > 2.5) {
-                tradeBuyPercentage += 10;
-            } 
+        if (RSITotalChangeAllAveraged > 50) {
+            tradeBuyPercentage += 50;
+        } else if (RSITotalChangeAllAveraged > 40) {
+            tradeBuyPercentage += 45;
+        } else if (RSITotalChangeAllAveraged > 30) {
+            tradeBuyPercentage += 40;
+        } else if (RSITotalChangeAllAveraged > 25) {
+            tradeBuyPercentage += 35;
+        } else if (RSITotalChangeAllAveraged > 20) {
+            tradeBuyPercentage += 30;
+        } else if (RSITotalChangeAllAveraged > 15) {
+            tradeBuyPercentage += 25;
+        } else if (RSITotalChangeAllAveraged > 10) {
+            tradeBuyPercentage += 20;
+        }  else if (RSITotalChangeAllAveraged > 5) {
+            tradeBuyPercentage += 15;
+        } else if (RSITotalChangeAllAveraged > 2.5) {
+            tradeBuyPercentage += 10;
+        } 
+
+        if (currRSI > 90) {
+            tradeBuyPercentage += 15;
+        }
+
+        if (currRSI > 66) {
+            tradeBuyPercentage += 10;
         }
 
         console.log('RSITrade Buy: ', tradeBuyPercentage);
@@ -576,14 +549,6 @@ class GeneralTrendAdvice {
             tradeBuyPercentage += 10;
         } 
 
-        /* When the Fast is above the slow, we'll add to the buy percentage - from observation, anytime this happens, there's a good chance of buy in*/
-        if(currStochFastK > currStochSlowD) {
-            let stochMultipleFactor = (((currStochFastK/currStochSlowD) - 1)/ 2.5) + 1;
-            //console.log("STOCH MULT: ", stochMultipleFactor);
-            tradeBuyPercentage *= stochMultipleFactor;
-            tradeSellPercentage /= stochMultipleFactor;
-        }
-
         console.log('Stoch 1:', Number(currResultsTrends['Stoch_per_change1']));
         console.log('Stoch 2:', Number(currResultsTrends['Stoch_per_change2']));
         console.log('Stoch 3:', Number(currResultsTrends['Stoch_per_change3']));
@@ -602,45 +567,22 @@ class GeneralTrendAdvice {
         }*/
 
         /* Trend for PerB seems to be if the current price trend is negative and PerB falls below or very cose to zero threshold, there is a price revrsal i.e. a buy buy buy! */
-        /* Note: Whether the price is going up or down matters when we look at these signals - if they're both moving in opposite directions (divergence), there's usually a trend flip */
         if (
-            currPerB < 0 &&
-            CloseCurrPercentageChange < 0
-        ) {
-            tradeBuyPercentage += 60;
-            tradeSellPercentage -= 60;
-        } else if (
             currPerB < 2.5 &&
+            CloseCurr1And2PercentageChange < 0 &&
             CloseCurrPercentageChange < 0
         ) {
-            tradeBuyPercentage += 45;
-            tradeSellPercentage -= 45;
-        } else if (
-            currPerB < 5 &&
-            CloseCurrPercentageChange < 0
-        ) {
-            tradeBuyPercentage += 30;
-            tradeSellPercentage -= 30;
-        } else if (
-            currPerB > 100.0 &&
-            CloseCurrPercentageChange > 0
-        ) {
-            tradeBuyPercentage -= 60;
-            tradeSellPercentage += 60;
-        } else if (
+            tradeBuyPercentage += 50;
+            tradeSellPercentage += 50;
+        }
+        else if (
             currPerB > 97.5 &&
+            CloseCurr1And2PercentageChange > 0 &&
             CloseCurrPercentageChange > 0
         ) {
-            tradeBuyPercentage -= 45;
-            tradeSellPercentage += 45;
-        } else if (
-            currPerB > 95 &&
-            CloseCurrPercentageChange > 0
-        ) {
-            tradeBuyPercentage -= 30;
-            tradeSellPercentage += 30;
-        } 
-        else {
+            tradeBuyPercentage -= 50;
+            tradeSellPercentage += 50;
+        } else {
             /* Note: We should only add these other metrics if the two cases above do not occur. When we hit hte top of a PerB range and the trend is already upward, we really want to stamp down on buying.
 
             /* Bollinginger - PerB */

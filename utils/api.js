@@ -103,6 +103,18 @@ const setBotInfo = async (botId, botInfo, cb) => {
         });
 };
 
+const addTradeRecord = async (botId, tradeRecord, cb) => {
+    networkCalls
+        .apiPost(`http://localhost:1408/api/add_trade_record`, {
+            botId: botId,
+            tradeRecord: tradeRecord,
+        })
+        .then((res) => {
+            //console.log(res);
+            cb(true);
+        });
+};
+
 module.exports = {
     lockBot,
     releaseBot,
@@ -113,4 +125,5 @@ module.exports = {
     unassignBot,
     getBotInfo,
     setBotInfo,
+    addTradeRecord
 };

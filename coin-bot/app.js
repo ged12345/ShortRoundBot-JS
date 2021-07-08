@@ -1,4 +1,3 @@
-const NETWORK = require('../legacy/config/network-config.js');
 //const coin = require("./coin/main_logic.js");
 const MainLogic = require('./main_logic.js').MainLogic;
 const queue = require('../utils/queue.js');
@@ -19,16 +18,6 @@ app.use(bodyParser.json()); // support json encoded bodies
 app.use(bodyParser.urlencoded({ extended: true })); // support encoded bodies
 
 const mysql = new MysqlCon();
-
-const exchangeName = 'kraken';
-//const exchangeName = 'binance';
-
-/* Initialise Kraken API */
-const kraken = require('kraken-api-wrapper')(
-    NETWORK.config.apiKey,
-    NETWORK.config.privateApiKey
-);
-kraken.setOtp(NETWORK.config.twoFactor);
 
 /* Functions */
 const checkDebug = (argv, logger) => {
@@ -64,6 +53,7 @@ checkDebug(process.argv, logger);
 const main = new MainLogic(mysql);
 init();
 
+/* Mai heartbeat that drives the CoinBot */
 async function init() {
     let heartbeatId = setInterval(async () => {
         main.processQueues();
@@ -104,8 +94,9 @@ app.get('/api/advice', async (req, res, next) => {
                 resolve({
                     coin_id: el.id,
                     coin_name: el.coin_name,
-                    coin_exchange_id: el[`coin_id_${exchangeName}`],
-                    coin_advice: adviceArr,
+                    coin_exchange_id: el[`coin_id_${this.exchange.name}`],
+                    /* Return what we have until 5 are available, then return last 5 */
+                    coin_advice: adviceArr.slice(Math.max(adviceArr.length - 5, 0)),
                 });
             } else {
                 resolve();
@@ -147,7 +138,7 @@ app.get('/api/locked_advice', async (req, res, next) => {
                     resolve({
                         coin_id: el.id,
                         coin_name: el.coin_name,
-                        coin_exchange_id: el[`coin_id_${exchangeName}`],
+                        coin_exchange_id: el[`coin_id_${this.exchange.name}`],
                         coin_advice: adviceArr,
                     });
                 }
@@ -311,4 +302,18 @@ app.post('/api/set_bot_info', async (req, res, next) => {
     }
 
     mysql.storeBotInformation(botId, botInfo);
+});
+
+app.post('/api/add_trade_record', async (req, res, next) => {
+    let botId = req.body.botId;
+    let tradeRecord = req.body.tradeRecord;
+
+    if (botId === undefined || tradeRecord === undefined) {
+        res.json({
+            response: 400,
+        });
+        return;
+    }
+
+    mysql.storeTradeRecord(botId, tradeRecord);
 });
