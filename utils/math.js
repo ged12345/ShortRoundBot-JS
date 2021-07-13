@@ -131,38 +131,40 @@ function calculateSellUrgencyFactor(
     currentClose,
     initialTimestamp,
     currTimestamp,
-    minCoinAppreciationPercentPerMin,
+    initialFloat,
     maxTradeTime
 ) {
     /* We return a sell urgency factor here, from 0.0 to 1.0 */
     let sellUrgencyFactor = 0.0;
-    let closeInterval = currentClose - initialClose;
-    let timestampInterval = currTimestamp - initialTimestamp;
-    let timePassedInSecs = timestampInterval / 1000.0;
+    let closeInterval = Number(currentClose - initialClose);
+    let timestampInterval = Number(currTimestamp - initialTimestamp);
+    let timePassedInSecs = Number(timestampInterval / 1000.0);
 
-    /* We let the price go into the negative briefly, but not too deeply. We have our stop-loss set as a just in case, but we my want to sell if there is a clear downtrend establishing */
-    if (closeInterval < 0 && timePassedInSecs <= 60) {
-        sellUrgencyFactor = 0.25;
-    } else if (
-        closeInterval < 0 &&
-        timePassedInSecs > 60 &&
-        timePassedInSecs <= 120
-    ) {
-        sellUrgencyFactor = 0.55;
-    } else if (closeInterval < 0 && timePassedInSecs > 120) {
-        sellUrgencyFactor = 0.75;
-    } else if (
-        closeInterval > 0 &&
-        closeInterval <
-            initialClose +
-                initialClose *
-                    minCoinAppreciationPercentPerMin *
-                    (timePassedInSecs / 60.0)
-    ) {
-        sellUrgencyFactor = 0.5;
+    /* We also need to sell based on if we've made a profit? If we've made more than 0.003 percent, we immediately sell the coin, and consider selling at 0.002 */
+    let percentProfit = (closeInterval / initialClose) * initialFloat;
+
+    if (closeInterval > 0 && percentProfit > 0.005) {
+        sellUrgencyFactor = 1.0;
+    } else if (closeInterval > 0 && percentProfit > 0.004) {
+        sellUrgencyFactor = 0.85;
+    } else if (closeInterval < 0 && percentProfit > 0.003) {
+        sellUrgencyFactor = 1.0;
+    } else if (closeInterval < 0 && percentProfit > 0.002) {
+        sellUrgencyFactor = 0.85;
     } else if (closeInterval > 0 && timePassedInSecs > maxTradeTime) {
         /* Sell, as we've held onto this coin too long */
         sellUrgencyFactor = 1.0;
+    } else if (
+        closeInterval > 0 &&
+        timePassedInSecs > maxTradeTime / 1.5 &&
+        percentProfit > 0.001
+    ) {
+        /* Add in a little randomness - if half the max time has gone back and we're in the black and we've made some profit, immediately sell if stop-loss hasn't kicked in */
+        sellUrgencyFactor = 0.85;
+    } else if (closeInterval < 0 && timePassedInSecs > maxTradeTime / 2.0) {
+        /* Add in a little randomness - if half the max time has gone back and we're in the red, immediately sell if stop-loss hasn't kicked in */
+
+        sellUrgencyFactor = 0.75;
     }
 
     return sellUrgencyFactor;

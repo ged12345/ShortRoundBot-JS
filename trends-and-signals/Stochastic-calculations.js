@@ -97,14 +97,21 @@ class StochasticCalculations {
             close: Number(lastElOHLC['close']),
             high: highestTraded,
             low: lowestTraded,
-            kFast: new Decimal(Number(lastElOHLC['close']))
-                .minus(lowestTraded)
-                .dividedBy(new Decimal(highestTraded).minus(lowestTraded))
-                .times(100),
+            kFast: -1,
             dSlow: -1,
             kFull: -1,
             dFull: -1,
         };
+
+        /* Would cause divide by zero error */
+        if (new Decimal(highestTraded).minus(lowestTraded).equals(0)) {
+            currStochastic['kFast'] = new Decimal(100);
+        } else {
+            currStochastic['kFast'] = new Decimal(Number(lastElOHLC['close']))
+                .minus(lowestTraded)
+                .dividedBy(new Decimal(highestTraded).minus(lowestTraded))
+                .times(100);
+        }
 
         if (currStochastic['kFast'].lessThan(0)) {
             currStochastic['kFast'] = 0;
@@ -203,10 +210,10 @@ class StochasticCalculations {
                 'Stoch DEBUG: '
             );
         } else {*/
-            stoch_t1to3 = calculateGraphGradientsTrendsPerChange(
-                stochArr.reverse().slice(0, 4).reverse(),
-                false
-            );
+        stoch_t1to3 = calculateGraphGradientsTrendsPerChange(
+            stochArr.reverse().slice(0, 4).reverse(),
+            false
+        );
         //}
 
         if (stoch_t1to3) {

@@ -603,13 +603,6 @@ class GeneralTrendAdvice {
             //console.log("STOCH MULT: ", stochMultipleFactor);
             tradeBuyPercentage *= stochMultipleFactor;
             tradeSellPercentage /= stochMultipleFactor;
-        } else if (currStochFastK < currStochSlowD) {
-            /* Half as much as when the Fast is above the Slow, but has a downward drag factor */
-            let stochMultipleFactor =
-                (currStochFastK / currStochSlowD - 1) / 4 + 1;
-            //console.log("STOCH MULT: ", stochMultipleFactor);
-            tradeBuyPercentage /= stochMultipleFactor;
-            tradeSellPercentage *= stochMultipleFactor;
         }
 
         console.log('Stoch 1:', Number(currResultsTrends['Stoch_per_change1']));

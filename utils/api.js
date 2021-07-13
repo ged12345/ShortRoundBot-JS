@@ -28,8 +28,11 @@ const releaseBot = async (botId, token, cb) => {
 
 const getAdvice = async (code, name, cb) => {
     /* We start calling in the advice every half second */
+    let encodedCode = encodeURIComponent(code);
     networkCalls
-        .apiGet(`http://localhost:1408/api/advice?code=${code}&name=${name}`)
+        .apiGet(
+            `http://localhost:1408/api/advice?code=${encodedCode}&name=${name}`
+        )
         .then((res) => {
             //console.log(res);
             cb(res);
@@ -125,5 +128,5 @@ module.exports = {
     unassignBot,
     getBotInfo,
     setBotInfo,
-    addTradeRecord
+    addTradeRecord,
 };

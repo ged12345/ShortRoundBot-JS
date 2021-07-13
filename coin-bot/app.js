@@ -10,6 +10,8 @@ const {
 const logger = require('../utils/logger.js').logger;
 const MysqlCon = require('../utils/mysql2.js').Mysql;
 
+const Exchange = require('../exchanges/exchange.js');
+
 const express = require('express');
 const app = express();
 
@@ -18,6 +20,8 @@ app.use(bodyParser.json()); // support json encoded bodies
 app.use(bodyParser.urlencoded({ extended: true })); // support encoded bodies
 
 const mysql = new MysqlCon();
+const exchange = new Exchange();
+exchange.setCurrent('kraken');
 
 /* Functions */
 const checkDebug = (argv, logger) => {
@@ -50,7 +54,7 @@ const checkSalt = async (code, name) => {
 checkDebug(process.argv, logger);
 
 /* Main code proper */
-const main = new MainLogic(mysql);
+const main = new MainLogic(mysql, exchange);
 init();
 
 /* Mai heartbeat that drives the CoinBot */
@@ -70,7 +74,9 @@ app.get('/api/advice', async (req, res, next) => {
     let code = req.query.code;
     let name = req.query.name;
 
-    let hasSalt = await checkSalt(code, name);
+    let decodedCode = decodeURIComponent(code);
+
+    let hasSalt = await checkSalt(decodedCode, name);
 
     if (hasSalt !== true) {
         res.json({
@@ -94,9 +100,11 @@ app.get('/api/advice', async (req, res, next) => {
                 resolve({
                     coin_id: el.id,
                     coin_name: el.coin_name,
-                    coin_exchange_id: el[`coin_id_${this.exchange.name}`],
+                    coin_exchange_id: el[`coin_id_${exchange.name}`],
                     /* Return what we have until 5 are available, then return last 5 */
-                    coin_advice: adviceArr.slice(Math.max(adviceArr.length - 5, 0)),
+                    coin_advice: adviceArr.slice(
+                        Math.max(adviceArr.length - 5, 0)
+                    ),
                 });
             } else {
                 resolve();
@@ -138,7 +146,7 @@ app.get('/api/locked_advice', async (req, res, next) => {
                     resolve({
                         coin_id: el.id,
                         coin_name: el.coin_name,
-                        coin_exchange_id: el[`coin_id_${this.exchange.name}`],
+                        coin_exchange_id: el[`coin_id_${exchange.name}`],
                         coin_advice: adviceArr,
                     });
                 }
