@@ -164,7 +164,7 @@ class Mysql {
         const [rows, fields] = await this.connection.query(
             'SELECT id, coin_name, coin_id_kraken, coin_id_binance FROM coin'
         );
-        
+
         /*console.log("Data received from Db:");
         console.log(rows);*/
         return rows;
@@ -736,7 +736,7 @@ class Mysql {
                 queryDeadlock = false;
 
                 let [rows, fields] = await this.connection.query(
-                    `INSERT INTO coin_advice (coin_id, time, date, timestamp, status, advice, buy_probability, sell_probability,resistance_price, support_price, stop_loss_price, token) VALUES ('${coin_id}', '${stampFullTime}', '${stampFullDate}','${timestamp}','${results['coinStatus']}', '${results['coinAdvice']}', '${results['tradeBuy']}', '${results['tradeSell']}', NULL, NULL, NULL, NULL) ON DUPLICATE KEY UPDATE status='${results['coinStatus']}', advice='${results['coinAdvice']}', buy_probability=${results['tradeBuy']}, sell_probability=${results['tradeSell']}`
+                    `INSERT INTO coin_advice (coin_id, time, date, timestamp, status, advice, buy_probability, sell_probability, profitable_uptrend, resistance_price, support_price, stop_loss_price, token) VALUES ('${coin_id}', '${stampFullTime}', '${stampFullDate}','${timestamp}','${results['coinStatus']}', '${results['coinAdvice']}', '${results['tradeBuy']}', '${results['tradeSell']}', '${results['profitableUptrend']}', NULL, NULL, NULL, NULL) ON DUPLICATE KEY UPDATE status='${results['coinStatus']}', advice='${results['coinAdvice']}', buy_probability=${results['tradeBuy']}, sell_probability=${results['tradeSell']}, profitable_uptrend='${results['profitableUptrend']}'`
                 );
             } catch (err) {
                 console.log(err);
@@ -764,6 +764,8 @@ class Mysql {
                     ) a
             )`
         );
+
+        // Change LIMIT to 20,60 later
     }
 
     async emptyCoinAdvice() {
@@ -773,7 +775,7 @@ class Mysql {
     }
 
     async storeTradeRecord(bot_id, results) {
-        let timestamp = results["timestamp"];
+        let timestamp = results['timestamp'];
         let timestampDate = new Date(Number(timestamp) * 1000);
         let stampFullDate = timestampDate
             .toLocaleDateString('en-AU')

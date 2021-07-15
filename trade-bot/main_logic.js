@@ -56,6 +56,9 @@ class MainLogic {
         this.orderPrice = 0;
         this.orderVolume = 0;
 
+        /* Set when we're in a long running trend upwards, as we should fight against selling */
+        this.profitableUptrend = false;
+
         /* The last five coins are lower probability of making profit - we only allow three instances of these an hour, unless we lose too much money and hold up the bots. */
         this.unprofitableCoins = {
             coinIdArray: [4, 5, 6, 7, 8],
@@ -443,8 +446,6 @@ class MainLogic {
                 return;
             }
 
-            console.log('HERE');
-
             /* Sort array by probability and advice type (DEFINITE_BUY being ahead of POSSIBLE_BUY) */
 
             /* Choose coin */
@@ -591,7 +592,8 @@ class MainLogic {
             this.currentClosePrice,
             this.initialTradeTimestamp,
             currentTimestamp,
-            this.maxTradeTime / 1000.0
+            this.maxTradeTime / 1000.0,
+            this.profitableUptrend
         );
 
         let urgencyCheck1 = 0.7 + Math.random();

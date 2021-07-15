@@ -56,7 +56,6 @@ class GeneralTrendAdvice {
 
         let tradeBuyPercentage = 0;
         let tradeSellPercentage = 0;
-        let profitableUptrend = false;
 
         let currResultsTrends = resultsTrends[resultsTrends.length - 1];
 
@@ -258,43 +257,36 @@ class GeneralTrendAdvice {
             CloseCurr1And2PercentageChange < -1
         ) {
             tradeSellPercentage += 50;
-            tradeBuyPercentage -= 20;
         } else if (
             currResultsTrends['close_shape'] === TREND_SHAPE.CRASHING &&
             CloseCurr1And2PercentageChange < -0.5
         ) {
             tradeSellPercentage += 45;
-            tradeBuyPercentage -= 17.5;
         } else if (
             currResultsTrends['close_shape'] === TREND_SHAPE.CRASHING &&
             CloseCurr1And2PercentageChange < -0.25
         ) {
             tradeSellPercentage += 40;
-            tradeBuyPercentage -= 15;
         } else if (
             currResultsTrends['close_shape'] === TREND_SHAPE.CRASHING &&
             CloseCurr1And2PercentageChange < -0.1
         ) {
             tradeSellPercentage += 30;
-            tradeBuyPercentage -= 12.5;
         } /* Added these last two - may be messing us up */ else if (
             currResultsTrends['close_shape'] === TREND_SHAPE.CRASHING &&
             CloseCurr1And2PercentageChange < -0.05
         ) {
             tradeSellPercentage += 25;
-            tradeBuyPercentage -= 10;
         } else if (
             currResultsTrends['close_shape'] === TREND_SHAPE.CRASHING &&
             CloseCurr1And2PercentageChange < -0.025
         ) {
             tradeSellPercentage += 20;
-            tradeBuyPercentage -= 7.5;
         } else if (
             currResultsTrends['close_shape'] === TREND_SHAPE.CRASHING &&
             CloseCurr1And2PercentageChange < -0.0125
         ) {
             tradeSellPercentage += 15;
-            tradeBuyPercentage -= 5;
         }
 
         if (
@@ -302,43 +294,36 @@ class GeneralTrendAdvice {
             CloseCurr1And2PercentageChange < -1
         ) {
             tradeSellPercentage += 40;
-            tradeBuyPercentage -= 15;
         } else if (
             currResultsTrends['close_shape'] === TREND_SHAPE.DROPPING_DOWN &&
             CloseCurr1And2PercentageChange < -0.5
         ) {
             tradeSellPercentage += 30;
-            tradeBuyPercentage -= 10;
         } else if (
             currResultsTrends['close_shape'] === TREND_SHAPE.DROPPING_DOWN &&
             CloseCurr1And2PercentageChange < -0.25
         ) {
             tradeSellPercentage += 25;
-            tradeBuyPercentage -= 7.5;
         } else if (
             currResultsTrends['close_shape'] === TREND_SHAPE.DROPPING_DOWN &&
             CloseCurr1And2PercentageChange < -0.1
         ) {
             tradeSellPercentage += 20;
-            tradeBuyPercentage -= 5;
         } /* Added these last two - may be messing us up */ else if (
             currResultsTrends['close_shape'] === TREND_SHAPE.DROPPING_DOWN &&
             CloseCurr1And2PercentageChange < -0.05
         ) {
             tradeSellPercentage += 15;
-            tradeBuyPercentage -= 2.5;
         } else if (
             currResultsTrends['close_shape'] === TREND_SHAPE.DROPPING_DOWN &&
             CloseCurr1And2PercentageChange < -0.025
         ) {
             tradeSellPercentage += 10;
-            tradeBuyPercentage -= 1.25;
         } else if (
             currResultsTrends['close_shape'] === TREND_SHAPE.DROPPING_DOWN &&
             CloseCurr1And2PercentageChange < -0.0125
         ) {
             tradeSellPercentage += 5;
-            tradeBuyPercentage -= 0.75;
         }
 
         /*
@@ -628,7 +613,7 @@ class GeneralTrendAdvice {
             /* Half as much as when the Fast is above the Slow, but has a downward drag factor */
 
             let stochMultipleFactor =
-                (currStochFastK / currStochSlowD - 1) / 3 + 1;
+                (currStochFastK / currStochSlowD - 1) / 4 + 1;
             //console.log("STOCH MULT: ", stochMultipleFactor);
             tradeBuyPercentage /= stochMultipleFactor;
             tradeSellPercentage *= stochMultipleFactor;
@@ -646,6 +631,9 @@ class GeneralTrendAdvice {
         console.log('StochTrade Sell: ', tradeSellPercentage);
 
         console.log('Current PerB: ', currPerB);
+        /*if (currPerB > 98) {
+            tradeBuyPercentage += 25;
+        }*/
 
         /* Trend for PerB seems to be if the current price trend is negative and PerB falls below or very cose to zero threshold, there is a price revrsal i.e. a buy buy buy! */
         /* Note: Whether the price is going up or down matters when we look at these signals - if they're both moving in opposite directions (divergence), there's usually a trend flip */
@@ -728,16 +716,6 @@ class GeneralTrendAdvice {
         } else if (currPerB <= 5 && currStochFastK <= 5 && currRSI <= 33) {
             tradeBuyPercentage += 50;
             tradeSellPercentage -= 50;
-        }
-
-        /* Profitable uptrend detector */
-        if (
-            CloseTotalChangeAllAveraged > 2 &&
-            StochTotalChangeAllAveraged > 2 &&
-            RSITotalChangeAllAveraged > 2 &&
-            PerBTotalChangeAllAveraged > 2
-        ) {
-            profitableUptrend = true;
         }
 
         if (tradeBuyPercentage > 90) {
@@ -861,7 +839,6 @@ class GeneralTrendAdvice {
             coinStatus: coinStatus,
             coinAdvice: coinAdvice,
             initialClose: currClosePrice,
-            profitableUptrend: profitableUptrend ? 1 : 0,
         };
     }
 }

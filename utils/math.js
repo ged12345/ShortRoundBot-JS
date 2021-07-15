@@ -132,7 +132,8 @@ function calculateSellUrgencyFactor(
     initialTimestamp,
     currTimestamp,
     initialFloat,
-    maxTradeTime
+    maxTradeTime,
+    profitableUptrend
 ) {
     /* We return a sell urgency factor here, from 0.0 to 1.0 */
     let sellUrgencyFactor = 0.0;
@@ -143,7 +144,13 @@ function calculateSellUrgencyFactor(
     /* We also need to sell based on if we've made a profit? If we've made more than 0.003 percent, we immediately sell the coin, and consider selling at 0.002 */
     let percentProfit = (closeInterval / initialClose) * initialFloat;
 
-    if (closeInterval > 0 && percentProfit > 0.005) {
+    /* If we're in a profitable uptrend, we want to resist selling */
+    if (profitableUptrend == true && closeInterval > 0) {
+        sellUrgencyFactor = 0.0;
+    } else if (profitableUptrend == true && closeInterval < 0) {
+        /* Small percentage chance of selling if we've dipped down */
+        sellUrgencyFactor = 0.71;
+    } else if (closeInterval > 0 && percentProfit > 0.005) {
         sellUrgencyFactor = 1.0;
     } else if (closeInterval > 0 && percentProfit > 0.004) {
         sellUrgencyFactor = 0.85;
