@@ -258,43 +258,43 @@ class GeneralTrendAdvice {
             CloseCurr1And2PercentageChange < -1
         ) {
             tradeSellPercentage += 50;
-            tradeBuyPercentage -= 20;
+            tradeBuyPercentage -= 35;
         } else if (
             currResultsTrends['close_shape'] === TREND_SHAPE.CRASHING &&
             CloseCurr1And2PercentageChange < -0.5
         ) {
             tradeSellPercentage += 45;
-            tradeBuyPercentage -= 17.5;
+            tradeBuyPercentage -= 32.5;
         } else if (
             currResultsTrends['close_shape'] === TREND_SHAPE.CRASHING &&
             CloseCurr1And2PercentageChange < -0.25
         ) {
             tradeSellPercentage += 40;
-            tradeBuyPercentage -= 15;
+            tradeBuyPercentage -= 30;
         } else if (
             currResultsTrends['close_shape'] === TREND_SHAPE.CRASHING &&
             CloseCurr1And2PercentageChange < -0.1
         ) {
             tradeSellPercentage += 30;
-            tradeBuyPercentage -= 12.5;
+            tradeBuyPercentage -= 27.5;
         } /* Added these last two - may be messing us up */ else if (
             currResultsTrends['close_shape'] === TREND_SHAPE.CRASHING &&
             CloseCurr1And2PercentageChange < -0.05
         ) {
             tradeSellPercentage += 25;
-            tradeBuyPercentage -= 10;
+            tradeBuyPercentage -= 25;
         } else if (
             currResultsTrends['close_shape'] === TREND_SHAPE.CRASHING &&
             CloseCurr1And2PercentageChange < -0.025
         ) {
             tradeSellPercentage += 20;
-            tradeBuyPercentage -= 7.5;
+            tradeBuyPercentage -= 22.5;
         } else if (
             currResultsTrends['close_shape'] === TREND_SHAPE.CRASHING &&
             CloseCurr1And2PercentageChange < -0.0125
         ) {
             tradeSellPercentage += 15;
-            tradeBuyPercentage -= 5;
+            tradeBuyPercentage -= 20;
         }
 
         if (
