@@ -24,7 +24,8 @@ const BOT_EVENT = {
     PREPARING_TRADE: 'preparing_trade',
     ORDER_FINALISED:
         'order_finalised' /* We've made our orders on the exchange - money time*/,
-    LOOKING_TO_BUY: 'looking_to_buy',
+    LOOKING_FOR_BEST_BUY: 'looking_for_best_buy',
+    FOUND_BEST_BUY: 'found_best_buy',
     HOLDING: 'holding',
     LOOKING_TO_SELL: 'looking_to_sell',
     // For "IMMEDIATE_SELL" - we just shortcut and sell at whatever price

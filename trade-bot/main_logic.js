@@ -257,17 +257,12 @@ class MainLogic {
     mainTradeOrderLogic() {
         /* Locked advice will be more specific: If the coin is currently falling sharply, lots of sell orders (asks) and volume compared to bids in Order Book, the coin bot may put out a SELL_IMMEDIATELY request, if somehow we've missed the boat. */
         if (this.lockToken !== null) {
-            if (
-                this.state === eventConstants.TRADE_LOCKED ||
-                this.state === eventConstants.FINALISING_TRADE ||
-                this.state === eventConstants.ORDER_FINALISED
-            ) {
+            if (this.state === eventConstants.ORDER_FINALISED) {
                 this.getLockedAdvice();
                 /* IMPORTANT: Monitor trades and cancel others if one condition has been reached */
 
                 this.trackOrders();
-            }
-            if (this.state === eventConstants.TRADE_LOCKED) {
+            } else if (this.state === eventConstants.TRADE_LOCKED) {
                 /* Here we perform the actual trade order (can't do bracketed via API */
                 console.log('Status: Preparing trade!');
                 this.state = eventConstants.PREPARING_TRADE;
@@ -434,7 +429,7 @@ class MainLogic {
             if (
                 (coinAdvice['coin_advice'][0]['advice'] === 'definite_buy' &&
                     Number(coinAdvice['coin_advice'][0]['probability']) >=
-                        100) ||
+                        110) ||
                 (coinAdvice['coin_advice'][0]['advice'] === 'possible_buy' &&
                     Number(coinAdvice['coin_advice'][0]['probability']) >= 95)
             ) {

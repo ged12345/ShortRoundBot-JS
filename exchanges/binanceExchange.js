@@ -65,6 +65,10 @@ class BinanceExchange {
         });
     }
 
+    async cancelAllOrders(coinPair, cb) {
+        await this.api.cancelAll(coinPair);
+    }
+
     addOrder(orderDetails, cb) {
         let orderType = '';
         if (orderDetails.ordertype === 'stop-loss') {
@@ -135,6 +139,18 @@ class BinanceExchange {
 
             cb(orderQuery);
         });
+    }
+
+    closedOrders(txid, cb) {
+        this.api.
+            .ClosedOrders()
+            .then(async (result) => {
+                cb(result);
+            })
+            .catch((err) => {
+                console.error(err);
+                return false;
+            });
     }
 }
 

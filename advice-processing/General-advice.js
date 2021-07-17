@@ -26,9 +26,9 @@ class GeneralTrendAdvice {
 
     async advise(coinId) {
         let resultsOHLC = await this.mysqlCon.getCoinOHLC(coinId);
-        let resultsHistoricBoll = await this.mysqlCon.getHistoricBollinger(
+        /*let resultsHistoricBoll = await this.mysqlCon.getHistoricBollinger(
             coinId
-        );
+        );*/
         let resultsBoll = await this.mysqlCon.getProcessedBollinger(coinId);
         let resultsEMA = await this.mysqlCon.getProcessedEMA(coinId);
         let resultsRSI = await this.mysqlCon.getProcessedRSI(coinId);
@@ -38,6 +38,7 @@ class GeneralTrendAdvice {
         let resultsMACD = await this.mysqlCon.getProcessedMACD(coinId);
 
         let resultsTrends = await this.mysqlCon.getTrends(coinId);
+        let resultsAdvice = await this.mysqlCon.getCoinAdvice(coinId);
 
         if (resultsOHLC.length === 0) {
             console.log('Advice: None yet, OHLC not prepared yet.');
@@ -57,6 +58,11 @@ class GeneralTrendAdvice {
         let tradeBuyPercentage = 0;
         let tradeSellPercentage = 0;
         let profitableUptrend = false;
+        let prevProfitableUptrend = false;
+        if (resultsAdvice.length > 0) {
+            prevProfitableUptrend =
+                resultsAdvice[resultsAdvice.length - 1]['profitable_uptrend'];
+        }
 
         let currResultsTrends = resultsTrends[resultsTrends.length - 1];
 
@@ -731,13 +737,26 @@ class GeneralTrendAdvice {
         }
 
         /* Profitable uptrend detector */
+        console.log('Close All Averaged: ', CloseTotalChangeAllAveraged);
+        console.log('Stoch All Averaged: ', StochTotalChangeAllAveraged);
+        console.log('RSI All Averaged: ', RSITotalChangeAllAveraged);
+        console.log('PerB All Averaged: ', PerBTotalChangeAllAveraged);
+
         if (
-            CloseTotalChangeAllAveraged > 2 &&
+            CloseTotalChangeAllAveraged > 0 &&
             StochTotalChangeAllAveraged > 2 &&
             RSITotalChangeAllAveraged > 2 &&
             PerBTotalChangeAllAveraged > 2
         ) {
             profitableUptrend = true;
+        } else if (prevProfitableUptrend === true) {
+            if (
+                StochTotalChangeAllAveraged > 0 ||
+                SITotalChangeAllAveraged > 0 ||
+                PerBTotalChangeAllAveraged > 0
+            ) {
+                profitableUptrend = true;
+            }
         }
 
         if (tradeBuyPercentage > 90) {
