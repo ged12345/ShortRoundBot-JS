@@ -848,7 +848,7 @@ class GeneralTrendAdvice {
             coinAdvice === COIN_ADVICE.DEFINITE_BUY ||
             coinAdvice === COIN_ADVICE.POSSIBLE_BUY
         ) {
-            outputError('Timestamp: ', timestamp);
+            outputError('Timestamp: ' + timestamp);
             outputError('Definite Buy');
             outputError('Close');
             outputError('Close 1: ' + currResultsTrends['close_per_change1']);
@@ -862,12 +862,12 @@ class GeneralTrendAdvice {
             outputError('RSI 1: ' + currResultsTrends['RSI_per_change1']);
             outputError('RSI 2: ' + currResultsTrends['RSI_per_change2']);
             outputError('RSI 3: ' + currResultsTrends['RSI_per_change3']);
-            outputError('Curr RSI: ', currRSI);
+            outputError('Curr RSI: ' + currRSI);
             outputError('PerB');
             outputError('PerB 1: ' + currResultsTrends['PerB_per_change1']);
             outputError('PerB 2: ' + currResultsTrends['PerB_per_change2']);
             outputError('PerB 3: ' + currResultsTrends['PerB_per_change3']);
-            outputError('Curr PerB: ', currPerB);
+            outputError('Curr PerB: ' + currPerB);
             outputError('Stoch');
             outputError('Stoch 1: ' + currResultsTrends['Stoch_per_change1']);
             outputError('Stoch 2: ' + currResultsTrends['Stoch_per_change2']);

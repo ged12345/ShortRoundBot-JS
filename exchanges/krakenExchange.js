@@ -15,7 +15,11 @@ class KrakenExchange {
 
     OHLC(coinPair, interval, cb) {
         this.api
-            .OHLC({ pair: coinPair, interval: interval })
+            .OHLC({
+                nonce: (Date.now() * 1000).toString(),
+                pair: coinPair,
+                interval: interval,
+            })
             .then(async (result) => {
                 cb(result);
             })
@@ -24,7 +28,10 @@ class KrakenExchange {
 
     ticker(coinPair, cb) {
         this.api
-            .Ticker({ pair: coinPair })
+            .Ticker({
+                nonce: (Date.now() * 1000).toString(),
+                pair: coinPair,
+            })
             .then(async (result) => {
                 let closeAskBid = {
                     a: 0,
@@ -46,7 +53,10 @@ class KrakenExchange {
 
     cancelOrder(coinPair, txid, cb) {
         this.api
-            .CancelOrder({ txid: txid })
+            .CancelOrder({
+                nonce: (Date.now() * 1000).toString(),
+                txid: txid,
+            })
             .then(async (result) => {
                 cb(result);
             })
@@ -57,8 +67,10 @@ class KrakenExchange {
     }
 
     async cancelAllOrders(coinPair, cb) {
+        let coinPairAPI = coinPair;
+        coinPairAPI['nonce'] = (Date.now() * 1000).toString();
         this.api
-            .CancelAll(orderDetails)
+            .CancelAll(coinPairAPI)
             .then(async (result) => {
                 cb(result);
             })
@@ -69,8 +81,11 @@ class KrakenExchange {
     }
 
     addOrder(orderDetails, cb) {
+        let orderDetailsAPI = orderDetails;
+        orderDetailsAPI['nonce'] = (Date.now() * 1000).toString();
+
         this.api
-            .AddOrder(orderDetails)
+            .AddOrder(orderDetailsAPI)
             .then(async (result) => {
                 cb(result);
             })
@@ -82,7 +97,10 @@ class KrakenExchange {
 
     queryOrders(txid, cb) {
         this.api
-            .QueryOrders({ txid: this.stopLossTXID })
+            .QueryOrders({
+                nonce: (Date.now() * 1000).toString(),
+                txid: this.stopLossTXID,
+            })
             .then(async (result) => {
                 cb(result);
             })

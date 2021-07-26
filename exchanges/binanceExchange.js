@@ -142,7 +142,7 @@ class BinanceExchange {
     }
 
     closedOrders(txid, cb) {
-        this.api.
+        this.api
             .ClosedOrders()
             .then(async (result) => {
                 cb(result);

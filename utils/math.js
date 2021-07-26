@@ -142,7 +142,7 @@ function calculateSellUrgencyFactor(
     let timePassedInSecs = Number(timestampInterval / 1000.0);
 
     /* We also need to sell based on if we've made a profit? If we've made more than 0.003 percent, we immediately sell the coin, and consider selling at 0.002 */
-    let percentProfit = (closeInterval / initialClose) * initialFloat;
+    let percentProfit = currentClose / initialClose - 1;
 
     /* If we're in a profitable uptrend, we want to resist selling */
     if (profitableUptrend == true && closeInterval > 0) {
@@ -153,9 +153,17 @@ function calculateSellUrgencyFactor(
     } else if (closeInterval > 0 && percentProfit > 0.005) {
         sellUrgencyFactor = 1.0;
     } else if (closeInterval > 0 && percentProfit > 0.004) {
+        sellUrgencyFactor = 0.9;
+    } else if (closeInterval > 0 && percentProfit > 0.003) {
         sellUrgencyFactor = 0.85;
+    } else if (closeInterval > 0 && percentProfit > 0.002) {
+        sellUrgencyFactor = 0.8;
+    } else if (closeInterval > 0 && percentProfit > 0.001) {
+        sellUrgencyFactor = 0.715;
     } else if (closeInterval < 0 && percentProfit > 0.003) {
         sellUrgencyFactor = 1.0;
+    } else if (closeInterval < 0 && percentProfit > 0.0025) {
+        sellUrgencyFactor = 0.925;
     } else if (closeInterval < 0 && percentProfit > 0.002) {
         sellUrgencyFactor = 0.85;
     } else if (closeInterval > 0 && timePassedInSecs > maxTradeTime) {
@@ -164,9 +172,16 @@ function calculateSellUrgencyFactor(
     } else if (
         closeInterval > 0 &&
         timePassedInSecs > maxTradeTime / 1.5 &&
-        percentProfit > 0.001
+        percentProfit > 0.002
     ) {
         /* Add in a little randomness - if half the max time has gone back and we're in the black and we've made some profit, immediately sell if stop-loss hasn't kicked in */
+        sellUrgencyFactor = 0.9;
+    } else if (
+        closeInterval > 0 &&
+        timePassedInSecs > maxTradeTime / 1.5 &&
+        percentProfit > 0.001
+    ) {
+        /* Add in a little randomness - if 3/4 the max time has gone back and we're in the black and we've made some profit, immediately sell if stop-loss hasn't kicked in */
         sellUrgencyFactor = 0.85;
     } else if (closeInterval < 0 && timePassedInSecs > maxTradeTime / 2.0) {
         /* Add in a little randomness - if half the max time has gone back and we're in the red, immediately sell if stop-loss hasn't kicked in */

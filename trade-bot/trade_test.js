@@ -1,20 +1,9 @@
-const Queuer = require('../utils/queuer.js').Queuer;
-const Queue = require('../utils/queue.js');
 const API = require('../utils/api.js');
-const { encryptCodeIn, decryptAES } = require('../utils/general.js');
 const eventConstants = require('./constants.js').BOT_EVENT;
 const coinAdviceConstants = require('../coin-bot/constants.js').COIN_ADVICE;
-const code = require('./constants.js').BOT_CODE['primer'];
-const botNames = require('./constants.js').BOT_NAMES;
-const {
-    calculateSellUrgencyFactor,
-    getRandomInt,
-} = require('../utils/math.js');
 const Exchange = require('../exchanges/exchange.js');
 
-class MainLogic {
-    // Need to "lock" bot when new info comes in.
-
+class BestTradeFinder {
     constructor() {
         /* Init the Exchange object */
         this.exchange = new Exchange();
@@ -22,12 +11,41 @@ class MainLogic {
 
         this.wageredFloat = 1.0;
         this.state = eventConstants.SEEKING_COIN;
-
         this.exchangeCoinId = 'XXBTZUSD';
 
+        this.exchange.curr.addOrder(
+            {
+                pair: this.exchangeCoinId,
+                ordertype: 'market',
+                type: 'buy',
+                volume: `${(
+                    this.orderVolume - (currVol === null ? 0 : currVol)
+                ).toFixed(1)}`,
+            },
+            async (result) => {
+                /* Take profit order (immediate sell at market price once we hit limit) for top limit price (actual limit trade may not be filled - we may do this later if not making enough, with monitoring) */
+                prepareStopLossTakeProfit();
+                cb(result['txid']);
+            }
+        );
+
         this.setupExchange();
-        this.prepareOrder();
+        this.prepareOrder('buy', 'XXBTZUSD');
     }
+
+    /*constructor(botId, exchange, wageredFloat, tradeObject) {
+        this.botId = botId;
+        this.exchange = exchange;
+        this.wagerFloat = wageredFloat;
+        this.tradeStoreObject = {
+            trade_id: null,
+            trade_type: null,
+            trade_volume: 0,
+            trade_price: 0,
+            coin_exchange_id: "",
+            profit_loss: 0,
+        };
+    }*/
 
     async setupExchange() {
         this.exchange.curr.initApi(
@@ -37,8 +55,11 @@ class MainLogic {
         );
     }
 
-    prepareOrder() {
+    prepareOrder(type, exchangeCoinId) {
         this.state = eventConstants.LOOKING_FOR_BEST_BUY;
+        this.tradeStoreObject.trade_type = type;
+        this.exchangeCoinId = this.tradeStoreObject.coin_exchange_id =
+            exchangeCoinId;
 
         /* How long do we have left in this minute */
         let currSeconds = (Date.now() / 1000.0) % 60;
@@ -48,8 +69,10 @@ class MainLogic {
         console.log(currSeconds);
         if (currSeconds >= 50) {
             console.log('MARKET ORDER PLACED!! Under 10 seconds left.');
-            this.prepareMarketOrder(async () => {
-                this.state = eventConstants.FOUND_BEST_BUY;
+            this.prepareMarketOrder(type, async (txid) => {
+                /*API.addTradeRecord(botId, () => {
+                    this.state = eventConstants.FOUND_BEST_SELL;
+                });*/
             });
         } else {
             /* Here we attempt a limit order 2/3 of the way towards the lowest price of this minute. Note: Will this keep being updated over this minute? We will have to re-check in a loop */
@@ -63,16 +86,16 @@ class MainLogic {
                 let currLowest = Number(currOhlcResult[0][3]);
                 let currHighest = Number(currOhlcResult[0][2]);
 
-                if (Math.abs(currClose - currLowest) / currClose < 0.0002) {
+                if (Math.abs(currClose - currHighest) / currClose < 0.0002) {
                     /* Just do a market order if close and lowest are close */
                     console.log(
                         'MARKET ORDER PLACED!! ' +
                             currClose +
                             ' : ' +
-                            currLowest
+                            currHighest
                     );
                     process.exit(1);
-                    this.prepareMarketOrder(async () => {
+                    this.prepareMarketOrder(type, async () => {
                         this.state = eventConstants.FOUND_BEST_BUY;
                     });
                 } else {
@@ -85,32 +108,37 @@ class MainLogic {
 
                     /* Check and see how big a spread between high and low - If this is bigger than a certain percentage, we aim for half of the highest to avoid trying to fill a price too high */
 
+                    let priceRangeAmount = 0;
+
                     if (currHighest / currLowest - 1 > 0.01) {
-                        var lowestPriceRangeAmount =
+                        priceRangeAmount =
                             (currHighest - currLowest / 2.0) / 3.0;
-                        var lowestPrice1 = currLowest + lowestPriceRangeAmount;
-                        var lowestPrice2 =
-                            currLowest + lowestPriceRangeAmount * 2;
                     } else {
-                        var lowestPriceRangeAmount =
-                            (currHighest - currLowest) / 3.0;
-                        var lowestPrice1 = currLowest + lowestPriceRangeAmount;
-                        var lowestPrice2 =
-                            currLowest + lowestPriceRangeAmount * 2;
+                        priceRangeAmount = (currHighest - currLowest) / 3.0;
+                    }
+
+                    if (type === 'buy') {
+                        var price1 = currLowest + priceRangeAmount;
+                        var price2 = currLowest + priceRangeAmount * 2;
+                    } else if (type === 'sell') {
+                        var price1 = currHighest - priceRangeAmount;
+                        var price2 = currHighest - priceRangeAmount * 2;
                     }
 
                     /* Next we:
-                    1. Buy the coin
+                    1. Buy/sell the coin
                     2. Enter a loop where we query whether the order has filled completely
                     3. If the first order hasn't filled by the time we reach timeToWait1, we add order 2 and go back to looping until timeToWait2 has been reached. At this point, if neither has been filled, we cancel both, and then put in a market order. */
 
-                    console.log('Wait for filled buy order.');
+                    console.log('Wait for filled order.');
 
-                    this.waitForFilledBuyOrder(
+                    this.waitForFilledOrder(
+                        type,
+                        type === 'sell' ? 'take-profit' : 'limit',
                         timeToWait1,
-                        lowestPrice1,
+                        price1,
                         timeToWait2,
-                        lowestPrice2
+                        price2
                     );
                 }
             });
@@ -119,11 +147,13 @@ class MainLogic {
         return;
     }
 
-    async waitForFilledBuyOrder(
+    async waitForFilledOrder(
+        type,
+        orderType,
         timeToWait1,
-        price1Lowest,
+        price1,
         timeToWait2,
-        price2Lowest
+        price2
     ) {
         let filledFullOrder = false;
         let order1Complete = false;
@@ -139,34 +169,33 @@ class MainLogic {
 
         let limitIndex = 0;
 
-        console.log('Price 1 Lowest: ' + price1Lowest);
+        console.log('Price 1 Lowest: ' + price1);
         console.log('Time 1 to Wait: ' + timeToWait1);
-        console.log('Price 2 Lowest: ' + price2Lowest);
+        console.log('Price 2 Lowest: ' + price2);
         console.log('Time 2 to Wait: ' + timeToWait2);
 
-        process.exit(1);
+        //process.exit(1);
 
         while (filledFullOrder === false && limitIndex < 62) {
             /* How long we have left in this minute */
-            let currSeconds = Date.now() % 60;
+            let currSeconds = (Date.now() / 1000.0) % 60;
             console.log('Curr seconds: ' + currSeconds);
 
             if (order1Complete === false) {
-                orderVolObj['order1Vol'] = this.wageredFloat / price1Lowest;
+                orderVolObj['order1Vol'] = this.wageredFloat / price1;
 
                 this.exchange.curr.addOrder(
                     {
                         pair: this.exchangeCoinId,
-                        ordertype: 'limit',
-                        type: 'buy',
+                        ordertype: 'take-profit',
+                        type: 'sell',
                         volume: orderVolObj['order1Vol'],
-                        price: price1Lowest,
+                        price: price1,
                     },
                     async (result) => {
-                        this.prepareStopLossTakeProfit();
                         console.log(
                             'Order 1 Complete: ' +
-                                price1Lowest +
+                                price1 +
                                 ' ' +
                                 orderVolObj['order1Vol']
                         );
@@ -180,24 +209,23 @@ class MainLogic {
                 currSeconds > timeToWait1 &&
                 filledFullOrder === false
             ) {
-                orderVolObj['order2Vol'] = this.wageredFloat / price2Lowest;
+                orderVolObj['order2Vol'] = this.wageredFloat / price2;
 
                 /* Setup the second order */
                 this.exchange.curr.addOrder(
                     {
                         pair: this.exchangeCoinId,
-                        ordertype: 'limit',
-                        type: 'buy',
+                        ordertype: 'take-profit',
+                        type: 'sell',
                         volume: orderVolObj['order2Vol'],
-                        price: price2Lowest,
+                        price: price2,
                     },
                     async (result) => {
                         order2TXID = result['txid'];
                         order2Complete = true;
-                        this.prepareStopLossTakeProfit();
                         console.log(
                             'Order 2 Complete: ' +
-                                price2Lowest +
+                                price2 +
                                 ' ' +
                                 orderVolObj['order2Vol']
                         );
@@ -214,9 +242,13 @@ class MainLogic {
                 console.log('Cancel all orders and prepare market order.');
                 /* Prepare a market order and cancel the two others */
                 this.exchange.curr.cancelAllOrders(() => {
-                    this.prepareMarketOrder(async () => {
-                        this.state = eventConstants.FOUND_BEST_BUY;
-                    }, orderVolObj['order1Vol'] + orderVolObj['order2Vol']);
+                    this.prepareMarketOrder(
+                        type,
+                        async () => {
+                            this.state = eventConstants.FOUND_BEST_BUY;
+                        },
+                        orderVolObj['order1Vol'] + orderVolObj['order2Vol']
+                    );
                 });
                 break;
             }
@@ -225,13 +257,13 @@ class MainLogic {
             await new Promise((r) => setTimeout(r, 1000));
 
             /* Query orders to see if they've filled */
-            this.queryBuyOrders(
+            this.queryOrders(
                 order1Complete,
                 order1TXID,
                 orderVolObj,
                 'order1ExecVol',
                 async () => {
-                    this.queryBuyOrders(
+                    this.queryOrders(
                         order2Complete,
                         order2TXID,
                         orderVolObj,
@@ -245,7 +277,7 @@ class MainLogic {
         }
     }
 
-    queryBuyOrders(orderComplete, orderTXID, orderVolObj, execVolId, cb) {
+    queryOrders(orderComplete, orderTXID, orderVolObj, execVolId, cb) {
         if (orderComplete) {
             this.exchange.curr.queryOrders(
                 this.exchangeCoinId,
@@ -286,15 +318,14 @@ class MainLogic {
         }
     }
 
-    prepareMarketOrder(cb, currVol = null) {
+    prepareMarketOrder(type, cb, currVol = null) {
         /* We grab the current ticker price */
 
-        cb();
-        return;
-
+        //cb();
+        //return;
         /* TO-DO: Ticker - update this to take into account the simulated timestamp I've added */
         this.exchange.curr.ticker(this.exchangeCoinId, async (result) => {
-            console.log(result);
+            console.log('Ticker: ', result);
             /* Bid price is highest price asked atm */
             let currentBidPrice = Number(result['b']);
             let currentAskPrice = Number(result['a']);
@@ -314,21 +345,32 @@ class MainLogic {
                 `Prepare order: ${currentBidPrice} ${currentAskPrice} ${topLimitPrice} ${bottomLimitPrice}`
             );
 
+            console.log({
+                pair: this.exchangeCoinId,
+                ordertype: 'market',
+                type: type,
+                volume: (
+                    this.orderVolume - (currVol === null ? 0 : currVol)
+                ).toString(10),
+            });
+
             /* Initial purchase of coin */
             this.exchange.curr.addOrder(
                 {
                     pair: this.exchangeCoinId,
                     ordertype: 'market',
-                    type: 'buy',
-                    volume: this.orderVolume - (currVol === null ? 0 : currVol),
+                    type: type,
+                    volume: (
+                        this.orderVolume - (currVol === null ? 0 : currVol)
+                    ).toString(10),
                 },
                 async (result) => {
                     /* Take profit order (immediate sell at market price once we hit limit) for top limit price (actual limit trade may not be filled - we may do this later if not making enough, with monitoring) */
-                    this.prepareStopLossTakeProfit();
+                    prepareStopLossTakeProfit();
+                    cb(result['txid']);
                 }
             );
             this.initialTradeTimestamp = Date.now();
-            cb();
         });
     }
 
@@ -361,37 +403,8 @@ class MainLogic {
             }
         );*/
     }
-
-    sellEarly() {
-        this.exchange.curr.addOrder(
-            {
-                pair: this.exchangeCoinId,
-                ordertype: 'market',
-                type: 'sell',
-                volume: this.orderVolume,
-            },
-            async (result) => {
-                /* We cancel the other orders */
-                this.cancelOrders();
-            }
-        );
-    }
-
-    cancelOrders() {
-        if (this.takeProfitTXID !== '') {
-            this.exchange.curr.cancelOrder(
-                this.exchangeCoinId,
-                this.takeProfitTXID,
-                async (result) => {}
-            );
-        } else if (this.stopLossTXID !== '') {
-            this.exchange.curr.cancelOrder(
-                this.exchangeCoinId,
-                this.stopLossTXID,
-                async (result) => {}
-            );
-        }
-    }
 }
 
-let logic = new MainLogic();
+let logic = new BestTradeFinder();
+
+module.exports = BestTradeFinder;

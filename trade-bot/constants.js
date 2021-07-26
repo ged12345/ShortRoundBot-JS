@@ -27,6 +27,8 @@ const BOT_EVENT = {
     LOOKING_FOR_BEST_BUY: 'looking_for_best_buy',
     FOUND_BEST_BUY: 'found_best_buy',
     HOLDING: 'holding',
+    LOOKING_FOR_BEST_SELL: 'looking_for_best_sell',
+    FOUND_BEST_SELL: 'found_best_sell',
     LOOKING_TO_SELL: 'looking_to_sell',
     // For "IMMEDIATE_SELL" - we just shortcut and sell at whatever price
     IMMEDIATE_SELL: 'immediate_sell',
