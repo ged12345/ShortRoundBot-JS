@@ -4,5 +4,8 @@
     },
     "scripts": {
         "test:unit": "jest"
+    },
+    "dependencies": {
+        "baudio": "^2.1.4"
     }
 }

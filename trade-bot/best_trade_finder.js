@@ -290,7 +290,9 @@ class BestTradeFinder {
                     if (
                         orderVolObj['order1ExecVol'] +
                             orderVolObj['order2ExecVol'] >
-                        (orderVolObj['order1Vol'] + orderVolObj['order2Vol']) /
+                        (0.99975 *
+                            (orderVolObj['order1Vol'] +
+                                orderVolObj['order2Vol'])) /
                             2.0
                     ) {
                         /* Both orders filled enough to equal our desired amount. Cancel partly filled now */

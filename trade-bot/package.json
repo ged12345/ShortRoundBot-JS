@@ -14,7 +14,8 @@
         "forever": "^0.10.10",
         "kraken-api-wrapper": "^0.2.0",
         "mysql": "^2.18.1",
-        "node-fetch": "^2.6.1"
+        "node-fetch": "^2.6.1",
+        "tone": "^14.7.77"
     },
     "devDependencies": {
         "jest": "^26.6.3"

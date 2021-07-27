@@ -317,7 +317,7 @@ class MainLogic {
             if (
                 (coinAdvice['coin_advice'][0]['advice'] === 'definite_buy' &&
                     Number(coinAdvice['coin_advice'][0]['probability']) >=
-                        110) ||
+                        100) ||
                 (coinAdvice['coin_advice'][0]['advice'] === 'possible_buy' &&
                     Number(coinAdvice['coin_advice'][0]['probability']) >= 95)
             ) {
