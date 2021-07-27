@@ -34,7 +34,7 @@ class PriceAlert {
         let runOnceSecondSecs = false;
         let matchedPrice = false;
         let timeToWait = 10;
-        let recheckToWait = 40;
+        let recheckToWait = 30;
 
         do {
             let currSeconds = (Date.now() / 1000.0) % 60;
@@ -48,8 +48,6 @@ class PriceAlert {
             ) {
                 runOnceSecondSecs = false;
             }
-
-            //console.log(matchedPrice + ' ' + runOnceTenSecs);
 
             if (
                 (matchedPrice === false &&
@@ -108,6 +106,7 @@ class PriceAlert {
                 runOnceSecondSecs = true;
                 runOnceFirstSecs = true;
             }
+            await this.sleep(200);
         } while (true);
     }
 
