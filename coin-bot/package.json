@@ -12,6 +12,7 @@
     "description": "",
     "dependencies": {
         "body-parser": "^1.19.0",
+        "bybit-api": "^2.0.7",
         "decimal.js": "^10.2.1",
         "express": "^4.17.1",
         "forever": "^0.10.10",

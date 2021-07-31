@@ -22,8 +22,8 @@ class PriceAlert {
 
     async setupExchange() {
         this.exchange.curr.initApi(
-            'xqqQr3bPDV7UoYMIp7VxdKNL/qNCJGa4x46AKds8b80N6m20MclDUL9g',
-            'FWcXq02U6hLCFqMDrltZfDufY9cv+zoTCpnu1715ugQxRB1D94vPtL2BaXE0ZqBB8RZxkVGCPUs3VQP+IkBcLw==',
+            'Np2ome6dVCWO0VleWFxbFJF/HwwQZvK1sLaXQgvqtFFOmhqW1fbpaGlM',
+            'v1QclXs1qahxpc1sYIOj2Yxvu+McEDXV/6Xeai3qO/QahYupRAl5CuxcWWx3Ppl7t1p21zA8L/Q8BmuQKEwERA==',
             'Jinxed80!!Jinxed80!!'
         );
     }
@@ -41,7 +41,8 @@ class PriceAlert {
 
             if (currSeconds % timeToWait > 1 && currSeconds % timeToWait < 2) {
                 runOnceFirstSecs = false;
-            } else if (
+            }
+            if (
                 matchedPrice === true &&
                 currSeconds % recheckToWait > 0 &&
                 currSeconds % recheckToWait < 0.1
@@ -106,7 +107,7 @@ class PriceAlert {
                 runOnceSecondSecs = true;
                 runOnceFirstSecs = true;
             }
-            await this.sleep(200);
+            //await this.sleep(200);
         } while (true);
     }
 

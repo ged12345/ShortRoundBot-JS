@@ -4,33 +4,33 @@ const coinAdviceConstants = require('../coin-bot/constants.js').COIN_ADVICE;
 const Exchange = require('../exchanges/exchange.js');
 
 class BestTradeFinder {
-    constructor() {
+    constructor(type) {
         /* Init the Exchange object */
         this.exchange = new Exchange();
         this.exchange.setCurrent('kraken');
+        this.exchange.curr.initApi(
+            'xqqQr3bPDV7UoYMIp7VxdKNL/qNCJGa4x46AKds8b80N6m20MclDUL9g',
+            'FWcXq02U6hLCFqMDrltZfDufY9cv+zoTCpnu1715ugQxRB1D94vPtL2BaXE0ZqBB8RZxkVGCPUs3VQP+IkBcLw==',
+            'Jinxed80!!Jinxed80!!'
+        );
 
-        this.wageredFloat = 1.0;
+        this.wageredFloat = 25.0;
         this.state = eventConstants.SEEKING_COIN;
         this.exchangeCoinId = 'XXBTZUSD';
 
-        this.exchange.curr.addOrder(
-            {
-                pair: this.exchangeCoinId,
-                ordertype: 'market',
-                type: 'buy',
-                volume: `${(
-                    this.orderVolume - (currVol === null ? 0 : currVol)
-                ).toFixed(1)}`,
-            },
-            async (result) => {
-                /* Take profit order (immediate sell at market price once we hit limit) for top limit price (actual limit trade may not be filled - we may do this later if not making enough, with monitoring) */
-                prepareStopLossTakeProfit();
-                cb(result['txid']);
-            }
-        );
+        this.botId = 1;
+
+        this.tradeStoreObject = {
+            trade_id: null,
+            trade_type: null,
+            trade_volume: 0,
+            trade_price: 0,
+            coin_exchange_id: '',
+            profit_loss: 0,
+        };
 
         this.setupExchange();
-        this.prepareOrder('buy', 'XXBTZUSD');
+        this.prepareOrder(type, 'XXBTZUSD');
     }
 
     /*constructor(botId, exchange, wageredFloat, tradeObject) {
@@ -67,7 +67,7 @@ class BestTradeFinder {
         /* If there's less than 10 seconds left, we perform a market price order */
 
         console.log(currSeconds);
-        if (currSeconds >= 50) {
+        if (currSeconds >= 54) {
             console.log('MARKET ORDER PLACED!! Under 10 seconds left.');
             this.prepareMarketOrder(type, async (txid) => {
                 /*API.addTradeRecord(botId, () => {
@@ -94,7 +94,7 @@ class BestTradeFinder {
                             ' : ' +
                             currHighest
                     );
-                    process.exit(1);
+                    //process.exit(1);
                     this.prepareMarketOrder(type, async () => {
                         this.state = eventConstants.FOUND_BEST_BUY;
                     });
@@ -186,11 +186,12 @@ class BestTradeFinder {
 
                 this.exchange.curr.addOrder(
                     {
+                        nonce: Date.now().toString(),
                         pair: this.exchangeCoinId,
                         ordertype: 'take-profit',
                         type: 'sell',
                         volume: orderVolObj['order1Vol'],
-                        price: price1,
+                        price: price1.toFixed(1),
                     },
                     async (result) => {
                         console.log(
@@ -214,11 +215,12 @@ class BestTradeFinder {
                 /* Setup the second order */
                 this.exchange.curr.addOrder(
                     {
+                        nonce: Date.now().toString(),
                         pair: this.exchangeCoinId,
                         ordertype: 'take-profit',
                         type: 'sell',
                         volume: orderVolObj['order2Vol'],
-                        price: price2,
+                        price: price2.toFixed(1),
                     },
                     async (result) => {
                         order2TXID = result['txid'];
@@ -288,7 +290,9 @@ class BestTradeFinder {
                     if (
                         orderVolObj['order1ExecVol'] +
                             orderVolObj['order2ExecVol'] >
-                        (orderVolObj['order1Vol'] + orderVolObj['order2Vol']) /
+                        (0.99975 *
+                            (orderVolObj['order1Vol'] +
+                                orderVolObj['order2Vol'])) /
                             2.0
                     ) {
                         /* Both orders filled enough to equal our desired amount. Cancel partly filled now */
@@ -339,7 +343,7 @@ class BestTradeFinder {
             this.newTrackTradeClosePrice = this.orderPrice;
 
             /* Let's calculate the volume based on our float and current price */
-            this.orderVolume = currentClosePrice / this.wageredFloat;
+            this.orderVolume = this.wageredFloat / currentClosePrice;
 
             console.log(
                 `Prepare order: ${currentBidPrice} ${currentAskPrice} ${topLimitPrice} ${bottomLimitPrice}`
@@ -349,24 +353,26 @@ class BestTradeFinder {
                 pair: this.exchangeCoinId,
                 ordertype: 'market',
                 type: type,
-                volume: (
+                volume: `${(
                     this.orderVolume - (currVol === null ? 0 : currVol)
-                ).toString(10),
+                ).toFixed(8)}`,
+                nonce: Date.now().toString(),
             });
 
             /* Initial purchase of coin */
             this.exchange.curr.addOrder(
                 {
+                    nonce: Date.now().toString(),
                     pair: this.exchangeCoinId,
                     ordertype: 'market',
                     type: type,
-                    volume: (
+                    volume: `${(
                         this.orderVolume - (currVol === null ? 0 : currVol)
-                    ).toString(10),
+                    ).toFixed(8)}`,
                 },
                 async (result) => {
                     /* Take profit order (immediate sell at market price once we hit limit) for top limit price (actual limit trade may not be filled - we may do this later if not making enough, with monitoring) */
-                    prepareStopLossTakeProfit();
+                    this.prepareStopLossTakeProfit();
                     cb(result['txid']);
                 }
             );
@@ -378,6 +384,7 @@ class BestTradeFinder {
         /* Take profit order (immediate sell at market price once we hit limit) for top limit price (actual limit trade may not be filled - we may do this later if not making enough, with monitoring) */
         /*this.exchange.curr.addOrder(
             {
+                nonce: Date.now().toString(),
                 pair: this.exchangeCoinId,
                 ordertype: 'take-profit',
                 type: 'sell',
@@ -390,6 +397,7 @@ class BestTradeFinder {
                 /* Take stop loss for bottom limit price */
         /*this.exchange.curr.addOrder(
                 {
+                    nonce: Date.now().toString(),
                     pair: this.exchangeCoinId,
                     ordertype: 'stop-loss',
                     type: 'sell',
@@ -405,6 +413,7 @@ class BestTradeFinder {
     }
 }
 
-let logic = new BestTradeFinder();
+var args = process.argv.slice(2);
+let logic = new BestTradeFinder(args[0]);
 
 module.exports = BestTradeFinder;

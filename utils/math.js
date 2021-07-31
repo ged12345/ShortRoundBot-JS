@@ -50,16 +50,54 @@ function calculateGraphGradientsTrendsPerChange(
             Number(pointArr[2]) !== Number(0.0)
                 ? (pointArr[3] / pointArr[2] - 1.0) * 100
                 : 0;
+        perChangeArr[3] =
+            Number(pointArr[3]) !== Number(0.0)
+                ? (pointArr[4] / pointArr[3] - 1.0) * 100
+                : 0;
+        perChangeArr[4] =
+            Number(pointArr[4]) !== Number(0.0)
+                ? (pointArr[5] / pointArr[4] - 1.0) * 100
+                : 0;
+        perChangeArr[5] =
+            Number(pointArr[5]) !== Number(0.0)
+                ? (pointArr[6] / pointArr[5] - 1.0) * 100
+                : 0;
+        perChangeArr[6] =
+            Number(pointArr[6]) !== Number(0.0)
+                ? (pointArr[7] / pointArr[6] - 1.0) * 100
+                : 0;
+        perChangeArr[7] =
+            (perChangeArr[0] +
+                perChangeArr[1] +
+                perChangeArr[2] +
+                perChangeArr[3] +
+                perChangeArr[4] +
+                perChangeArr[5] +
+                perChangeArr[6]) /
+            7;
         if (debug !== '') {
             console.log(debug, ' ', pointArr);
         }
     } else {
-        if (debug !== '') {
-            console.log(debug, ' ', pointArr);
-        }
         perChangeArr[0] = pointArr[1] - pointArr[0];
         perChangeArr[1] = pointArr[2] - pointArr[1];
         perChangeArr[2] = pointArr[3] - pointArr[2];
+        perChangeArr[3] = pointArr[4] - pointArr[3];
+        perChangeArr[4] = pointArr[5] - pointArr[4];
+        perChangeArr[5] = pointArr[6] - pointArr[5];
+        perChangeArr[6] = pointArr[7] - pointArr[6];
+        perChangeArr[7] =
+            (perChangeArr[0] +
+                perChangeArr[1] +
+                perChangeArr[2] +
+                perChangeArr[3] +
+                perChangeArr[4] +
+                perChangeArr[5] +
+                perChangeArr[6]) /
+            7;
+        if (debug !== '') {
+            console.log(debug, ' ', pointArr, ' ', perChangeArr);
+        }
     }
 
     /*

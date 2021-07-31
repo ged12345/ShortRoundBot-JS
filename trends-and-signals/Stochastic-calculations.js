@@ -211,7 +211,7 @@ class StochasticCalculations {
             );
         } else {*/
         stoch_t1to3 = calculateGraphGradientsTrendsPerChange(
-            stochArr.reverse().slice(0, 4).reverse(),
+            stochArr.reverse().slice(0, 8).reverse(),
             false
         );
         //}

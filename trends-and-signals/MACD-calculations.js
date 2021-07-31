@@ -286,7 +286,7 @@ class MACDCalculations {
         let timestamp = resultsMACDs[resultsMACDs.length - 1]['timestamp'];
 
         const macd_t1to3 = calculateGraphGradientsTrendsPerChange(
-            MACDArr.reverse().slice(0, 4).reverse(),
+            MACDArr.reverse().slice(0, 8).reverse(),
             true
         );
 

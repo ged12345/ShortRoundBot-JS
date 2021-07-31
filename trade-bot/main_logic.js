@@ -11,7 +11,7 @@ const {
     getRandomInt,
 } = require('../utils/math.js');
 const Exchange = require('../exchanges/exchange.js');
-const BestTradeFinder = require('./best_trade_finder.js');
+const BestTradeFinder = require('./best_trade_finder-highfee.js');
 
 class MainLogic {
     // Need to "lock" bot when new info comes in.
@@ -317,7 +317,7 @@ class MainLogic {
             if (
                 (coinAdvice['coin_advice'][0]['advice'] === 'definite_buy' &&
                     Number(coinAdvice['coin_advice'][0]['probability']) >=
-                        100) ||
+                        105) ||
                 (coinAdvice['coin_advice'][0]['advice'] === 'possible_buy' &&
                     Number(coinAdvice['coin_advice'][0]['probability']) >= 95)
             ) {
@@ -559,6 +559,7 @@ class MainLogic {
 
     sellEarly() {
         /* We cancel the other orders */
+        /* NOPE - WE NEVER DO MARKET AS THE COSTS ARE TOO HIGH - LIMIT = lower, usually */
         this.exchange.curr.cancelAllOrders(() => {
             this.exchange.curr.addOrder(
                 {

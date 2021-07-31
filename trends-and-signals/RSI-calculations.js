@@ -305,7 +305,7 @@ class RSICalculations {
         //console.log('RSI: ' + RSIArr.reverse().slice(0, 4));
 
         const rsi_t1to3 = calculateGraphGradientsTrendsPerChange(
-            RSIArr.reverse().slice(0, 4).reverse(),
+            RSIArr.reverse().slice(0, 8).reverse(),
             false
         );
 

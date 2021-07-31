@@ -667,9 +667,14 @@ class Mysql {
                 queryDeadlock = false;
 
                 let [rows, fields] = await this.connection.query(
-                    `INSERT INTO coin_trends (coin_id, time, date, timestamp, ${type}_t1_2, ${type}_t2_3, ${type}_shape, ${type}_per_change1, ${type}_per_change2, ${type}_per_change3) VALUES ('${coin_id}', '${stampFullTime}', '${stampFullDate}','${timestamp}','${results[1][0]}', '${results[1][1]}', '${results[2]}', '${results[3][0]}', '${results[3][1]}', '${results[3][2]}') ON DUPLICATE KEY UPDATE ${type}_t1_2=${results[1][0]}, ${type}_t2_3=${results[1][1]}, ${type}_shape='${results[2]}', ${type}_per_change1=${results[3][0]}, ${type}_per_change2=${results[3][1]}, ${type}_per_change3=${results[3][2]}`
+                    `INSERT INTO coin_trends (coin_id, time, date, timestamp, ${type}_t1_2, ${type}_t2_3, ${type}_shape, ${type}_per_change1, ${type}_per_change2, ${type}_per_change3, ${type}_per_change1_7) VALUES ('${coin_id}', '${stampFullTime}', '${stampFullDate}','${timestamp}','${results[1][0]}', '${results[1][1]}', '${results[2]}', '${results[3][0]}', '${results[3][1]}', '${results[3][2]}', '${results[3][7]}') ON DUPLICATE KEY UPDATE ${type}_t1_2=${results[1][0]}, ${type}_t2_3=${results[1][1]}, ${type}_shape='${results[2]}', ${type}_per_change1=${results[3][0]}, ${type}_per_change2=${results[3][1]}, ${type}_per_change3=${results[3][2]}, ${type}_per_change1_7='${results[3][7]}'`
                 );
             } catch (err) {
+                /*console.log(err);
+                console.log(
+                    `INSERT INTO coin_trends (coin_id, time, date, timestamp, ${type}_t1_2, ${type}_t2_3, ${type}_shape, ${type}_per_change1, ${type}_per_change2, ${type}_per_change3, ${type}_per_change1_7) VALUES ('${coin_id}', '${stampFullTime}', '${stampFullDate}','${timestamp}','${results[1][0]}', '${results[1][1]}', '${results[2]}', '${results[3][0]}', '${results[3][1]}', '${results[3][2]}', '${results[3][7]}') ON DUPLICATE KEY UPDATE ${type}_t1_2=${results[1][0]}, ${type}_t2_3=${results[1][1]}, ${type}_shape='${results[2]}', ${type}_per_change1=${results[3][0]}, ${type}_per_change2=${results[3][1]}, ${type}_per_change3=${results[3][2]}, ${type}_per_change1_7='${results[3][7]}'`
+                );
+                process.exit(1);*/
                 queryDeadlock = true;
             }
 
@@ -760,7 +765,7 @@ class Mysql {
                         FROM coin_advice
                         WHERE coin_id = ${mysqlCon.escape(coin_id)}
                         ORDER BY timestamp DESC
-                        LIMIT 20,60
+                        LIMIT 40, 60
                     ) a
             )`
         );

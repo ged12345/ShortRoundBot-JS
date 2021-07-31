@@ -785,7 +785,7 @@ class MainLogic {
         });
 
         const close_t1to3 = calculateGraphGradientsTrendsPerChange(
-            closeArr.slice(0, 4).reverse(),
+            closeArr.slice(0, 8).reverse(),
             true
         );
 
@@ -942,7 +942,7 @@ class MainLogic {
                     this.currTimestamp,
                     advice
                 );
-                await this.mysqlCon.cleanupCoinAdvice();
+                await this.mysqlCon.cleanupCoinAdvice(coinId);
             }
         }
         let unlocked = this.processLocks.awaitLock(trend, coinId);

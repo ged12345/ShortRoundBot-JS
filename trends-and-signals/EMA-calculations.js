@@ -155,7 +155,7 @@ class EMACalculations {
         //console.log('EMA: ' + EMAArr.reverse().slice(0, 4));
 
         const ema_t1to3 = calculateGraphGradientsTrendsPerChange(
-            EMAArr.reverse().slice(0, 4).reverse(),
+            EMAArr.reverse().slice(0, 8).reverse(),
             true
         );
 

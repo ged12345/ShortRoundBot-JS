@@ -86,6 +86,10 @@ class GeneralTrendAdvice {
                 CloseCurrPercentageChange * 5) /
             9.0;
 
+        let CloseTotalChange1to7Averaged = Number(
+            currResultsTrends['close_per_change1_7']
+        );
+
         console.log(
             Number(currResultsTrends['close_per_change1']),
             Number(currResultsTrends['close_per_change2']),
@@ -186,11 +190,19 @@ class GeneralTrendAdvice {
 
         console.log(stampFullTime);
 
-        /* CLOSE */
+        /* 31/07: If we're in a downward trend, we put pressure on the tradeBuyPercentage */
+        if (
+            CloseTotalChange1to7Averaged < -0.25 &&
+            CloseTotalPercentageChange < 0.5
+        ) {
+            tradeBuyPercentage -= 40;
+        }
+
         if (
             currResultsTrends['close_shape'] === TREND_SHAPE.CRASHING &&
             CloseTotalChangeAllAveraged < -0.5
         ) {
+            /* CLOSE */
             tradeSellPercentage = 95;
         } else if (
             currResultsTrends['close_shape'] === TREND_SHAPE.CRASHING &&
@@ -713,25 +725,29 @@ class GeneralTrendAdvice {
 
         /* I've noticed when these indicators hit above their top marks together, this signals a selling trend change */
         if (
-            (currPerB >= 95 && currRSI >= 66) ||
-            (currPerB >= 95 && currStochFastK >= 95) ||
-            (currStochFastK >= 95 && currRSI >= 66)
+            (currPerB >= 92.5 && currRSI >= 66) ||
+            (currPerB >= 92.5 && currStochFastK >= 92.5) ||
+            (currStochFastK >= 92.5 && currRSI >= 66)
         ) {
             tradeBuyPercentage -= 25;
             tradeSellPercentage += 25;
-        } else if (currPerB >= 95 && currStochFastK >= 95 && currRSI >= 66) {
+        } else if (
+            currPerB >= 92.5 &&
+            currStochFastK >= 92.5 &&
+            currRSI >= 66
+        ) {
             tradeBuyPercentage -= 50;
             tradeSellPercentage += 50;
         }
 
         if (
-            (currPerB <= 5 && currRSI <= 33) ||
-            (currPerB <= 5 && currStochFastK <= 5) ||
-            (currStochFastK <= 5 && currRSI <= 33)
+            (currPerB <= 7.5 && currRSI <= 33) ||
+            (currPerB <= 7.5 && currStochFastK <= 7.5) ||
+            (currStochFastK <= 7.5 && currRSI <= 33)
         ) {
             tradeBuyPercentage += 25;
             tradeSellPercentage -= 25;
-        } else if (currPerB <= 5 && currStochFastK <= 5 && currRSI <= 33) {
+        } else if (currPerB <= 7.5 && currStochFastK <= 7.5 && currRSI <= 33) {
             tradeBuyPercentage += 50;
             tradeSellPercentage -= 50;
         }
