@@ -190,27 +190,28 @@ class GeneralTrendAdvice {
 
         console.log(stampFullTime);
 
-        /* 31/07: If we're in a downward trend, we put pressure on the tradeBuyPercentage */
+        /* 31/06: If we're in a downward trend, we put pressure on the tradeBuyPercentage */
+        /* 02/07 */
         if (
             CloseTotalChange1to7Averaged < -0.1 &&
             CloseTotalPercentageChange < -0.1
         ) {
-            tradeBuyPercentage -= 40;
+            tradeBuyPercentage -= 60;
         } else if (
             CloseTotalChange1to7Averaged < -0.15 &&
             CloseTotalPercentageChange < -0.15
         ) {
-            tradeBuyPercentage -= 70;
+            tradeBuyPercentage -= 90;
         } else if (
             CloseTotalChange1to7Averaged < -0.2 &&
             CloseTotalPercentageChange < -0.2
         ) {
-            tradeBuyPercentage -= 85;
+            tradeBuyPercentage -= 105;
         } else if (
             CloseTotalChange1to7Averaged < -0.25 &&
             CloseTotalPercentageChange < -0.25
         ) {
-            tradeBuyPercentage -= 100;
+            tradeBuyPercentage -= 120;
         }
 
         if (
@@ -757,11 +758,12 @@ class GeneralTrendAdvice {
             (currPerB <= 10 && currStochFastK <= 7.5) ||
             (currStochFastK <= 7.5 && currRSI <= 35)
         ) {
-            tradeBuyPercentage += 55;
-            tradeSellPercentage -= 55;
+            /* 02/07: Upped the buy percentage */
+            tradeBuyPercentage += 75;
+            tradeSellPercentage -= 75;
         } else if (currPerB <= 10 && currStochFastK <= 7.5 && currRSI <= 35) {
-            tradeBuyPercentage += 80;
-            tradeSellPercentage -= 80;
+            tradeBuyPercentage += 100;
+            tradeSellPercentage -= 100;
         }
 
         /* Profitable uptrend detector */

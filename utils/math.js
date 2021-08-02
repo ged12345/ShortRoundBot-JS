@@ -12,7 +12,7 @@ function calculateGraphGradientsTrendsPerChange(
 
     let gradientArr = [];
     let trendArr = [];
-    let shape = TREND_SHAPE.FLAT;
+    let currShape = TREND_SHAPE.FLAT;
 
     pointArr.forEach((currPt, index) => {
         if (index > 0) {
