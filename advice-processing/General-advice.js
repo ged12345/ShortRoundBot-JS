@@ -746,11 +746,11 @@ class GeneralTrendAdvice {
             (currPerB >= 90 && currStochFastK >= 92.5) ||
             (currStochFastK >= 92.5 && currRSI >= 65)
         ) {
-            tradeBuyPercentage -= 55;
-            tradeSellPercentage += 55;
+            tradeBuyPercentage -= 75;
+            tradeSellPercentage += 75;
         } else if (currPerB >= 90 && currStochFastK >= 92.5 && currRSI >= 65) {
-            tradeBuyPercentage -= 80;
-            tradeSellPercentage += 80;
+            tradeBuyPercentage -= 100;
+            tradeSellPercentage += 100;
         }
 
         if (
