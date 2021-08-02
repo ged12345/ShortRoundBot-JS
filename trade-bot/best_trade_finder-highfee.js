@@ -230,6 +230,7 @@ class BestTradeFinder {
                 this.partFilledOrder === false &&
                 this.fullFilledOrder === false
             ) {
+                console.log('Order 2 - cancelAllOrders');
                 this.exchange.curr.cancelAllOrders(() => {
                     orderVolObj['order2Vol'] = this.wageredFloat / price2;
 
@@ -318,6 +319,7 @@ class BestTradeFinder {
             /* Query orders to see if they've filled */
 
             if (order3Complete === true) {
+                console.log('Query: Order 3 Complete');
                 this.queryOrders(
                     order3Complete,
                     order3TXID,
@@ -325,20 +327,22 @@ class BestTradeFinder {
                     'order3ExecVol',
                     async () => {}
                 );
-            } else if (order1Complete === true) {
-                this.queryOrders(
-                    order1Complete,
-                    order1TXID,
-                    orderVolObj,
-                    'order1ExecVol',
-                    async () => {}
-                );
             } else if (order2Complete === true) {
+                console.log('Query: Order 2 Complete');
                 this.queryOrders(
                     order2Complete,
                     order2TXID,
                     orderVolObj,
                     'order2ExecVol',
+                    async () => {}
+                );
+            } else if (order1Complete === true) {
+                console.log('Query: Order 1 Complete');
+                this.queryOrders(
+                    order1Complete,
+                    order1TXID,
+                    orderVolObj,
+                    'order1ExecVol',
                     async () => {}
                 );
             }

@@ -195,22 +195,22 @@ class GeneralTrendAdvice {
             CloseTotalChange1to7Averaged < -0.1 &&
             CloseTotalPercentageChange < -0.1
         ) {
-            tradeBuyPercentage -= 40;
+            tradeBuyPercentage -= 20;
         } else if (
             CloseTotalChange1to7Averaged < -0.15 &&
             CloseTotalPercentageChange < -0.15
         ) {
-            tradeBuyPercentage -= 70;
+            tradeBuyPercentage -= 50;
         } else if (
             CloseTotalChange1to7Averaged < -0.2 &&
             CloseTotalPercentageChange < -0.2
         ) {
-            tradeBuyPercentage -= 85;
+            tradeBuyPercentage -= 65;
         } else if (
             CloseTotalChange1to7Averaged < -0.25 &&
             CloseTotalPercentageChange < -0.25
         ) {
-            tradeBuyPercentage -= 100;
+            tradeBuyPercentage -= 80;
         }
 
         if (
@@ -745,23 +745,23 @@ class GeneralTrendAdvice {
             (currPerB >= 90 && currStochFastK >= 92.5) ||
             (currStochFastK >= 92.5 && currRSI >= 65)
         ) {
-            tradeBuyPercentage -= 55;
-            tradeSellPercentage += 55;
+            tradeBuyPercentage -= 25;
+            tradeSellPercentage += 25;
         } else if (currPerB >= 90 && currStochFastK >= 92.5 && currRSI >= 65) {
-            tradeBuyPercentage -= 80;
-            tradeSellPercentage += 80;
+            tradeBuyPercentage -= 50;
+            tradeSellPercentage += 50;
         }
 
         if (
-            (currPerB <= 10 && currRSI <= 35) ||
+            (currPerB <= 10 && currRSI <= 34) ||
             (currPerB <= 10 && currStochFastK <= 7.5) ||
-            (currStochFastK <= 7.5 && currRSI <= 35)
+            (currStochFastK <= 7.5 && currRSI <= 34)
         ) {
-            tradeBuyPercentage += 55;
-            tradeSellPercentage -= 55;
-        } else if (currPerB <= 10 && currStochFastK <= 7.5 && currRSI <= 35) {
-            tradeBuyPercentage += 80;
-            tradeSellPercentage -= 80;
+            tradeBuyPercentage += 25;
+            tradeSellPercentage -= 25;
+        } else if (currPerB <= 10 && currStochFastK <= 7.5 && currRSI <= 34) {
+            tradeBuyPercentage += 50;
+            tradeSellPercentage -= 50;
         }
 
         /* Profitable uptrend detector */

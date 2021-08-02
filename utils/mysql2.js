@@ -765,7 +765,7 @@ class Mysql {
                         FROM coin_advice
                         WHERE coin_id = ${mysqlCon.escape(coin_id)}
                         ORDER BY timestamp DESC
-                        LIMIT 40, 60
+                        LIMIT 120, 60
                     ) a
             )`
         );
