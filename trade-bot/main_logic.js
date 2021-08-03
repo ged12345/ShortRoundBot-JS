@@ -317,9 +317,9 @@ class MainLogic {
             if (
                 (coinAdvice['coin_advice'][0]['advice'] === 'definite_buy' &&
                     Number(coinAdvice['coin_advice'][0]['probability']) >=
-                        105) ||
-                (coinAdvice['coin_advice'][0]['advice'] === 'possible_buy' &&
-                    Number(coinAdvice['coin_advice'][0]['probability']) >= 95)
+                        110) ||
+                (coinAdvice['coin_advice'][0]['advice'] === 'definite_buy' &&
+                    Math.random() > 0.75)
             ) {
                 suitableCoins.push(coinAdvice);
             }

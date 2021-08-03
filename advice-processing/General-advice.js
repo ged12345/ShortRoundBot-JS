@@ -746,11 +746,11 @@ class GeneralTrendAdvice {
             (currPerB >= 90 && currStochFastK >= 92.5) ||
             (currStochFastK >= 92.5 && currRSI >= 65)
         ) {
-            tradeBuyPercentage -= 75;
-            tradeSellPercentage += 75;
+            tradeBuyPercentage -= 95;
+            tradeSellPercentage += 95;
         } else if (currPerB >= 90 && currStochFastK >= 92.5 && currRSI >= 65) {
-            tradeBuyPercentage -= 100;
-            tradeSellPercentage += 100;
+            tradeBuyPercentage -= 120;
+            tradeSellPercentage += 120;
         }
 
         if (
@@ -759,11 +759,11 @@ class GeneralTrendAdvice {
             (currStochFastK <= 7.5 && currRSI <= 35)
         ) {
             /* 02/07: Upped the buy percentage */
-            tradeBuyPercentage += 75;
-            tradeSellPercentage -= 75;
+            tradeBuyPercentage += 95;
+            tradeSellPercentage -= 95;
         } else if (currPerB <= 10 && currStochFastK <= 7.5 && currRSI <= 35) {
-            tradeBuyPercentage += 100;
-            tradeSellPercentage -= 100;
+            tradeBuyPercentage += 120;
+            tradeSellPercentage -= 120;
         }
 
         /* Profitable uptrend detector */
