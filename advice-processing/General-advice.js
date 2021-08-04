@@ -193,25 +193,40 @@ class GeneralTrendAdvice {
         /* 31/06: If we're in a downward trend, we put pressure on the tradeBuyPercentage */
         /* 02/07 */
         if (
-            CloseTotalChange1to7Averaged < -0.1 &&
-            CloseTotalPercentageChange < -0.1
+            CloseTotalChange1to7Averaged < -0.3 ||
+            CloseTotalPercentageChange < -0.3
         ) {
-            tradeBuyPercentage -= 60;
+            tradeBuyPercentage -= 180;
         } else if (
-            CloseTotalChange1to7Averaged < -0.15 &&
-            CloseTotalPercentageChange < -0.15
-        ) {
-            tradeBuyPercentage -= 90;
-        } else if (
-            CloseTotalChange1to7Averaged < -0.2 &&
-            CloseTotalPercentageChange < -0.2
-        ) {
-            tradeBuyPercentage -= 105;
-        } else if (
-            CloseTotalChange1to7Averaged < -0.25 &&
+            CloseTotalChange1to7Averaged < -0.25 ||
             CloseTotalPercentageChange < -0.25
         ) {
+            tradeBuyPercentage -= 150;
+        } else if (
+            CloseTotalChange1to7Averaged < -0.2 ||
+            CloseTotalPercentageChange < -0.2
+        ) {
+            tradeBuyPercentage -= 135;
+        } else if (
+            CloseTotalChange1to7Averaged < -0.175 ||
+            CloseTotalPercentageChange < -0.175
+        ) {
+            tradeBuyPercentage -= 127.5;
+        } else if (
+            CloseTotalChange1to7Averaged < -0.15 ||
+            CloseTotalPercentageChange < -0.15
+        ) {
             tradeBuyPercentage -= 120;
+        } else if (
+            CloseTotalChange1to7Averaged < -0.125 ||
+            CloseTotalPercentageChange < -0.125
+        ) {
+            tradeBuyPercentage -= 100;
+        } else if (
+            CloseTotalChange1to7Averaged < -0.1 ||
+            CloseTotalPercentageChange < -0.1
+        ) {
+            tradeBuyPercentage -= 80;
         }
 
         if (
@@ -739,39 +754,6 @@ class GeneralTrendAdvice {
         console.log('PerBTrade Buy: ', tradeBuyPercentage);
         console.log('PerBTrade Sell: ', tradeSellPercentage);
 
-        /* I've noticed when these indicators hit above their top marks together, this signals a selling trend change */
-        /* 01/07/21: Changed PerB to between 90 and 10 */
-        if (
-            (currPerB >= 90 && currRSI >= 65) ||
-            (currPerB >= 90 && currStochFastK >= 92.5) ||
-            (currStochFastK >= 92.5 && currRSI >= 65)
-        ) {
-            tradeBuyPercentage -= 95;
-            tradeSellPercentage += 95;
-        } else if (currPerB >= 90 && currStochFastK >= 92.5 && currRSI >= 65) {
-            tradeBuyPercentage -= 120;
-            tradeSellPercentage += 120;
-        }
-
-        if (
-            (currPerB <= 10 && currRSI <= 35) ||
-            (currPerB <= 10 && currStochFastK <= 7.5) ||
-            (currStochFastK <= 7.5 && currRSI <= 35)
-        ) {
-            /* 02/07: Upped the buy percentage */
-            tradeBuyPercentage += 95;
-            tradeSellPercentage -= 95;
-        } else if (currPerB <= 10 && currStochFastK <= 7.5 && currRSI <= 35) {
-            tradeBuyPercentage += 120;
-            tradeSellPercentage -= 120;
-        }
-
-        /* Profitable uptrend detector */
-        console.log('Close All Averaged: ', CloseTotalChangeAllAveraged);
-        console.log('Stoch All Averaged: ', StochTotalChangeAllAveraged);
-        console.log('RSI All Averaged: ', RSITotalChangeAllAveraged);
-        console.log('PerB All Averaged: ', PerBTotalChangeAllAveraged);
-
         if (
             CloseTotalChangeAllAveraged > 0 &&
             StochTotalChangeAllAveraged > 2 &&
@@ -788,6 +770,75 @@ class GeneralTrendAdvice {
                 profitableUptrend = true;
             }
         }
+
+        /* I've noticed when these indicators hit above their top marks together, this signals a selling trend change */
+        /* 01/07/21: Changed PerB to between 90 and 10 */
+        /* 04/07/21: Added profitable uptrend so when in uptrend, we flip the top part to encourage buying */
+        /* 05/07/21: CloseTotalPercentageChange for 1-3 - needs to be above zero and profitable uptrend to add the buy accelerator */
+        if (profitableUptrend && CloseTotalPercentageChange > 0) {
+            if (
+                (currPerB >= 90 && currRSI >= 65) ||
+                (currPerB >= 90 && currStochFastK >= 92.5) ||
+                (currStochFastK >= 92.5 && currRSI >= 65)
+            ) {
+                tradeBuyPercentage += 40;
+                tradeSellPercentage += 40;
+            } else if (
+                currPerB >= 90 &&
+                currStochFastK >= 92.5 &&
+                currRSI >= 65
+            ) {
+                tradeBuyPercentage -= 60;
+                tradeSellPercentage += 60;
+            } /* Added on 05/07 */ else if (currPerB > 105) {
+                tradeBuyPercentage += 30;
+                tradeSellPercentage += 30;
+            } else if (currPerB > 95) {
+                tradeBuyPercentage += 20;
+                tradeSellPercentage += 20;
+            }
+        } else {
+            if (
+                (currPerB >= 90 && currRSI >= 65) ||
+                (currPerB >= 90 && currStochFastK >= 92.5) ||
+                (currStochFastK >= 92.5 && currRSI >= 65)
+            ) {
+                tradeBuyPercentage -= 95;
+                tradeSellPercentage += 95;
+            } else if (
+                currPerB >= 90 &&
+                currStochFastK >= 92.5 &&
+                currRSI >= 65
+            ) {
+                tradeBuyPercentage -= 120;
+                tradeSellPercentage += 120;
+            } /* Added on 05/07 */ else if (currPerB > 105) {
+                tradeBuyPercentage -= 75;
+                tradeSellPercentage -= 75;
+            } else if (currPerB > 95) {
+                tradeBuyPercentage += 60;
+                tradeSellPercentage += 60;
+            }
+        }
+
+        if (
+            (currPerB <= 10 && currRSI <= 35) ||
+            (currPerB <= 10 && currStochFastK <= 7.5) ||
+            (currStochFastK <= 7.5 && currRSI <= 35)
+        ) {
+            /* 02/07: Upped the buy percentage */
+            tradeBuyPercentage += 85;
+            tradeSellPercentage -= 85;
+        } else if (currPerB <= 10 && currStochFastK <= 7.5 && currRSI <= 35) {
+            tradeBuyPercentage += 110;
+            tradeSellPercentage -= 110;
+        }
+
+        /* Profitable uptrend detector */
+        console.log('Close All Averaged: ', CloseTotalChangeAllAveraged);
+        console.log('Stoch All Averaged: ', StochTotalChangeAllAveraged);
+        console.log('RSI All Averaged: ', RSITotalChangeAllAveraged);
+        console.log('PerB All Averaged: ', PerBTotalChangeAllAveraged);
 
         if (tradeBuyPercentage > 90) {
             coinAdvice = COIN_ADVICE.DEFINITE_BUY;
