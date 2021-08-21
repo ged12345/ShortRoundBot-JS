@@ -774,28 +774,29 @@ class GeneralTrendAdvice {
         /* I've noticed when these indicators hit above their top marks together, this signals a selling trend change */
         /* 01/07/21: Changed PerB to between 90 and 10 */
         /* 04/07/21: Added profitable uptrend so when in uptrend, we flip the top part to encourage buying */
-        /* 05/07/21: CloseTotalPercentageChange for 1-3 - needs to be above zero and profitable uptrend to add the buy accelerator */
-        if (profitableUptrend && CloseTotalPercentageChange > 0) {
+        /* 05/07/21: Added CloseTotalPercentageChange for 1-3 check - needs to be above zero and profitable uptrend to add the buy accelerator */
+        //if (profitableUptrend && CloseTotalPercentageChange > 0) {
+        if (CloseTotalPercentageChange > 0.01) {
             if (
                 (currPerB >= 90 && currRSI >= 65) ||
                 (currPerB >= 90 && currStochFastK >= 92.5) ||
                 (currStochFastK >= 92.5 && currRSI >= 65)
             ) {
                 tradeBuyPercentage += 40;
-                tradeSellPercentage += 40;
+                tradeSellPercentage -= 40;
             } else if (
                 currPerB >= 90 &&
                 currStochFastK >= 92.5 &&
                 currRSI >= 65
             ) {
-                tradeBuyPercentage -= 60;
-                tradeSellPercentage += 60;
+                tradeBuyPercentage += 60;
+                tradeSellPercentage -= 60;
             } /* Added on 05/07 */ else if (currPerB > 105) {
                 tradeBuyPercentage += 30;
-                tradeSellPercentage += 30;
+                tradeSellPercentage -= 30;
             } else if (currPerB > 95) {
                 tradeBuyPercentage += 20;
-                tradeSellPercentage += 20;
+                tradeSellPercentage -= 20;
             }
         } else {
             if (
