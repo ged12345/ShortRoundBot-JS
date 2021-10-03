@@ -14,7 +14,7 @@ class BestTradeFinder {
             'Jinxed80!!Jinxed80!!'
         );
 
-        this.wageredFloat = 25.0;
+        this.wageredFloat = 20.0;
         this.state = eventConstants.SEEKING_COIN;
         this.exchangeCoinId = 'XXBTZUSD';
 
@@ -359,6 +359,16 @@ class BestTradeFinder {
                 nonce: Date.now().toString(),
             });
 
+            /* Note: '0' on a sell specifies 'sell all coin' */
+            let marketVolume = 0;
+
+            /* On a market buy, if we already have some bitcoin purchased, we only purchase the remaining volume to fulfill our current oer with the wagered amount (takes into account not fully selling all our coin the previous round.)
+            if (type === 'buy') {
+                marketVolume = `${(
+                    this.orderVolume - (currVol === null ? 0 : currVol)
+                ).toFixed(8)}`;
+            }
+
             /* Initial purchase of coin */
             this.exchange.curr.addOrder(
                 {
@@ -366,9 +376,7 @@ class BestTradeFinder {
                     pair: this.exchangeCoinId,
                     ordertype: 'market',
                     type: type,
-                    volume: `${(
-                        this.orderVolume - (currVol === null ? 0 : currVol)
-                    ).toFixed(8)}`,
+                    volume: marketVolume,
                 },
                 async (result) => {
                     /* Take profit order (immediate sell at market price once we hit limit) for top limit price (actual limit trade may not be filled - we may do this later if not making enough, with monitoring) */
