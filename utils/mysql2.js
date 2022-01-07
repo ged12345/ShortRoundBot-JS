@@ -19,9 +19,9 @@ class Mysql {
         });*/
     }
 
-    async getBotInformation(botId) {
+    async getBotInformation(botId, exchangeId) {
         const [rows, fields] = await this.connection.query(
-            `SELECT * FROM bot WHERE bot_id = '${botId}'`
+            `SELECT * FROM bot WHERE bot_id = '${botId}', `
         );
 
         //console.log("Data received from Db:");
@@ -32,7 +32,7 @@ class Mysql {
 
     async getCoinConfig(botId) {
         const [rows, fields] = await this.connection.query(
-            `SELECT * FROM coin_config WHERE bot_id = '1'`
+            `SELECT * FROM coin_config WHERE bot_id = '${botId}'`
         );
 
         //console.log("Data received from Db:");
@@ -162,7 +162,7 @@ class Mysql {
 
     async getCoinList() {
         const [rows, fields] = await this.connection.query(
-            'SELECT id, coin_name, coin_id_kraken, coin_id_binance FROM coin'
+            'SELECT id, coin_name, coin_id_kraken, coin_id_binance, coin_id_bitby FROM coin'
         );
 
         /*console.log("Data received from Db:");

@@ -98,7 +98,7 @@ class MainLogic {
 
         /* Init the Exchange object */
         this.exchange = new Exchange();
-        this.exchange.setCurrent('kraken');
+        this.exchange.setCurrent('bybit');
 
         this.bestTradeFinder = null;
 

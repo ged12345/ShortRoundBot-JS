@@ -21,7 +21,7 @@ app.use(bodyParser.urlencoded({ extended: true })); // support encoded bodies
 
 const mysql = new MysqlCon();
 const exchange = new Exchange();
-exchange.setCurrent('kraken');
+exchange.setCurrent('bybit');
 
 /* Functions */
 const checkDebug = (argv, logger) => {

@@ -133,7 +133,8 @@ class MainLogic {
     }
 
     async getCoinConfig() {
-        this.coinBotConfig = await this.mysqlCon.getCoinConfig();
+        /* Exchange 3, bot 1 for coin bot */
+        this.coinBotConfig = await this.mysqlCon.getCoinConfig(1, 3);
         this.coinConfigArr = await this.mysqlCon.getCoinList();
     }
 
@@ -653,7 +654,9 @@ class MainLogic {
 
     processQueues() {
         /* Here we process both incoming coin bot advice (locked or not) and monitor bots current trades */
-        if (this.queueSetupComplete === true && this.shouldProcessQueues()) {
+        if (
+            this.queueSetupComplete === true /*&& this.shouldProcessQueues()*/
+        ) {
             this.coinDataAcquisitionQueuer.processQueues();
             this.coinTrendsAndSignalsProcessingQueuer.processQueues();
             this.coinAdviceGenerationQueuer.processQueues();
@@ -702,6 +705,7 @@ class MainLogic {
         this.coinConfigArr.forEach((coin) => {
             this.OHLCAcquisitionQueue.enqueue(async () => {
                 this.processLocks.lock('OHLC', coin['id']);
+
                 this.getOHLC(
                     coin['id'],
                     coin[`coin_id_${this.exchange.name}`],

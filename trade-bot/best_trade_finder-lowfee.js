@@ -7,6 +7,10 @@ class BestTradeFinder {
     constructor(type) {
         /* Init the Exchange object */
         this.exchange = new Exchange();
+        /* Testet account (for testing)
+            LmJXBHvH4O9iOuLfSL
+            87e5mc5UORaI1G0t3K4v6rG1MYu1rwD2V5K5
+        */
         this.exchange.setCurrent('kraken');
         this.exchange.curr.initApi(
             'xqqQr3bPDV7UoYMIp7VxdKNL/qNCJGa4x46AKds8b80N6m20MclDUL9g',
