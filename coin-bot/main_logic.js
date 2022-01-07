@@ -706,6 +706,9 @@ class MainLogic {
             this.OHLCAcquisitionQueue.enqueue(async () => {
                 this.processLocks.lock('OHLC', coin['id']);
 
+                console.log(coin);
+                console.log(`${this.exchange.name}`);
+
                 this.getOHLC(
                     coin['id'],
                     coin[`coin_id_${this.exchange.name}`],

@@ -162,7 +162,7 @@ class Mysql {
 
     async getCoinList() {
         const [rows, fields] = await this.connection.query(
-            'SELECT id, coin_name, coin_id_kraken, coin_id_binance, coin_id_bitby FROM coin'
+            'SELECT id, coin_name, coin_id_kraken, coin_id_binance, coin_id_bybit FROM coin'
         );
 
         /*console.log("Data received from Db:");
