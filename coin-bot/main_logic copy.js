@@ -162,9 +162,8 @@ class MainLogic {
             10
         );
 
-        /* Line 82 in the queuer - if TimeNow is simulated, we override the queue elapsed interval */
         if (
-            /* This is if we want to simulate from one time to another , so we can log results more easily and overcome the start-up time until results */
+            /* This is if we want to simulate from one time to another , so we can log results mor eeasily and overcome the start-up time until results */
             this.simulatedStartTimestamp !== -1 &&
             this.simulatedEndTimestamp !== -1
         ) {
@@ -174,7 +173,7 @@ class MainLogic {
                 1,
                 5000
             );
-        } /* If we're simulated from a certain time but we don't know the end time (every minute) - remember that it takes a number of minutes to properly simulate results, as usual*/ else if (
+        } /* If we're simulated from a certain time but we don't know the end time (every minute) - remember that it takes a number of minutes to properly simulate reaults, as usual*/ else if (
             this.simulatedStartTimestamp !== -1
         ) {
             TimeNow.setStartTime(this.simulateStartTimestamp);
@@ -208,14 +207,40 @@ class MainLogic {
         //let OHLCFrequency = 60000 / numberOfCoins;
 
         let OHLCFrequency = 6000 / numberOfCoins;
-
-        /* Add OHLC processing */
-        this.enqueueQueue(
-            1000,
-            processingInterval,
-            this.coinDataAcquisitionQueuer,
+        this.coinDataAcquisitionQueuer.enqueueQueue(
             this.OHLCAcquisitionQueue,
-            OHLCFrequency
+            OHLCFrequency /* We only acquire this info once a minute */,
+            1000 /* Just after the close */
+        );
+
+        this.coinDataAcquisitionQueuer.enqueueQueue(
+            this.OHLCAcquisitionQueue,
+            OHLCFrequency /* We only acquire this info once a minute */,
+            11000 /* Just after the close */
+        );
+
+        this.coinDataAcquisitionQueuer.enqueueQueue(
+            this.OHLCAcquisitionQueue,
+            OHLCFrequency /* We only acquire this info once a minute */,
+            21000 /* Just after the close */
+        );
+
+        this.coinDataAcquisitionQueuer.enqueueQueue(
+            this.OHLCAcquisitionQueue,
+            OHLCFrequency /* We only acquire this info once a minute */,
+            31000 /* Just after the close */
+        );
+
+        this.coinDataAcquisitionQueuer.enqueueQueue(
+            this.OHLCAcquisitionQueue,
+            OHLCFrequency /* We only acquire this info once a minute */,
+            41000 /* Just after the close */
+        );
+
+        this.coinDataAcquisitionQueuer.enqueueQueue(
+            this.OHLCAcquisitionQueue,
+            OHLCFrequency /* We only acquire this info once a minute */,
+            51000 /* Just after the close */
         );
 
         this.RSIProcessingQueue = new Queue();
@@ -229,103 +254,282 @@ class MainLogic {
         const trendsAndSignalsNumber = 1;
         const trendsAndSignalsFrequency =
             60000 / (trendsAndSignalsNumber * numberOfCoins);
+        
         const processingInterval = 10000;
-
-        /* Add RSI processing */
-        this.enqueueQueue(
-            3000,
-            processingInterval,
-            this.coinTrendsAndSignalsProcessingQueuer,
+        for (
+            let lockedInterval = lockedInterval;
+            i < 60000;
+            lockedInterval += processingInterval
+        ) {
+            this.coinTrendsAndSignalsProcessingQueuer.enqueueQueue(
+                this.RSIProcessingQueue,
+                trendsAndSignalsFrequency /* We only acquire this info once a minute */,
+                lockedInterval
+            );
+        }
+        
+        this.coinTrendsAndSignalsProcessingQueuer.enqueueQueue(
             this.RSIProcessingQueue,
-            trendsAndSignalsFrequency
+            trendsAndSignalsFrequency /* We only acquire this info once a minute */,
+            3000
         );
 
-        /* Add Stochastic processing */
-        this.enqueueQueue(
-            4000,
-            processingInterval,
-            this.coinTrendsAndSignalsProcessingQueuer,
+        this.coinTrendsAndSignalsProcessingQueuer.enqueueQueue(
+            this.RSIProcessingQueue,
+            trendsAndSignalsFrequency /* We only acquire this info once a minute */,
+            13000
+        );
+
+        this.coinTrendsAndSignalsProcessingQueuer.enqueueQueue(
+            this.RSIProcessingQueue,
+            trendsAndSignalsFrequency /* We only acquire this info once a minute */,
+            23000
+        );
+
+        this.coinTrendsAndSignalsProcessingQueuer.enqueueQueue(
+            this.RSIProcessingQueue,
+            trendsAndSignalsFrequency /* We only acquire this info once a minute */,
+            33000
+        );
+
+        this.coinTrendsAndSignalsProcessingQueuer.enqueueQueue(
+            this.RSIProcessingQueue,
+            trendsAndSignalsFrequency /* We only acquire this info once a minute */,
+            43000
+        );
+
+        this.coinTrendsAndSignalsProcessingQueuer.enqueueQueue(
+            this.RSIProcessingQueue,
+            trendsAndSignalsFrequency /* We only acquire this info once a minute */,
+            53000
+        );
+
+        this.coinTrendsAndSignalsProcessingQueuer.enqueueQueue(
             this.StochasticProcessingQueue,
-            trendsAndSignalsFrequency
+            trendsAndSignalsFrequency /* We only acquire this info once a minute */,
+
+            4000
         );
 
-        /* Add Bollinger processing */
-        this.enqueueQueue(
-            5000,
-            processingInterval,
-            this.coinTrendsAndSignalsProcessingQueuer,
+        this.coinTrendsAndSignalsProcessingQueuer.enqueueQueue(
+            this.StochasticProcessingQueue,
+            trendsAndSignalsFrequency /* We only acquire this info once a minute */,
+            14000
+        );
+
+        this.coinTrendsAndSignalsProcessingQueuer.enqueueQueue(
+            this.StochasticProcessingQueue,
+            trendsAndSignalsFrequency /* We only acquire this info once a minute */,
+            24000
+        );
+
+        this.coinTrendsAndSignalsProcessingQueuer.enqueueQueue(
+            this.StochasticProcessingQueue,
+            trendsAndSignalsFrequency /* We only acquire this info once a minute */,
+
+            34000
+        );
+
+        this.coinTrendsAndSignalsProcessingQueuer.enqueueQueue(
+            this.StochasticProcessingQueue,
+            trendsAndSignalsFrequency /* We only acquire this info once a minute */,
+            44000
+        );
+
+        this.coinTrendsAndSignalsProcessingQueuer.enqueueQueue(
+            this.StochasticProcessingQueue,
+            trendsAndSignalsFrequency /* We only acquire this info once a minute */,
+            54000
+        );
+
+        this.coinTrendsAndSignalsProcessingQueuer.enqueueQueue(
             this.BollingerProcessingQueue,
-            trendsAndSignalsFrequency
+            trendsAndSignalsFrequency /* We only acquire this info once a minute */,
+            5000
         );
 
-        /* Add EMA processing */
-        this.enqueueQueue(
-            6000,
-            processingInterval,
-            this.coinTrendsAndSignalsProcessingQueuer,
+        this.coinTrendsAndSignalsProcessingQueuer.enqueueQueue(
+            this.BollingerProcessingQueue,
+            trendsAndSignalsFrequency /* We only acquire this info once a minute */,
+            15000
+        );
+
+        this.coinTrendsAndSignalsProcessingQueuer.enqueueQueue(
+            this.BollingerProcessingQueue,
+            trendsAndSignalsFrequency /* We only acquire this info once a minute */,
+            25000
+        );
+
+        this.coinTrendsAndSignalsProcessingQueuer.enqueueQueue(
+            this.BollingerProcessingQueue,
+            trendsAndSignalsFrequency /* We only acquire this info once a minute */,
+            35000
+        );
+
+        this.coinTrendsAndSignalsProcessingQueuer.enqueueQueue(
+            this.BollingerProcessingQueue,
+            trendsAndSignalsFrequency /* We only acquire this info once a minute */,
+            45000
+        );
+
+        this.coinTrendsAndSignalsProcessingQueuer.enqueueQueue(
+            this.BollingerProcessingQueue,
+            trendsAndSignalsFrequency /* We only acquire this info once a minute */,
+
+            55000
+        );
+
+        this.coinTrendsAndSignalsProcessingQueuer.enqueueQueue(
             this.EMAProcessingQueue,
-            trendsAndSignalsFrequency
+            trendsAndSignalsFrequency /* We only acquire this info once a minute */,
+            6000
         );
 
-        /* Add MACD processing */
-        this.enqueueQueue(
-            7000,
-            processingInterval,
-            this.coinTrendsAndSignalsProcessingQueuer,
+        this.coinTrendsAndSignalsProcessingQueuer.enqueueQueue(
+            this.EMAProcessingQueue,
+            trendsAndSignalsFrequency /* We only acquire this info once a minute */,
+            16000
+        );
+
+        this.coinTrendsAndSignalsProcessingQueuer.enqueueQueue(
+            this.EMAProcessingQueue,
+            trendsAndSignalsFrequency /* We only acquire this info once a minute */,
+            26000
+        );
+
+        this.coinTrendsAndSignalsProcessingQueuer.enqueueQueue(
+            this.EMAProcessingQueue,
+            trendsAndSignalsFrequency /* We only acquire this info once a minute */,
+            36000
+        );
+
+        this.coinTrendsAndSignalsProcessingQueuer.enqueueQueue(
+            this.EMAProcessingQueue,
+            trendsAndSignalsFrequency /* We only acquire this info once a minute */,
+
+            46000
+        );
+
+        this.coinTrendsAndSignalsProcessingQueuer.enqueueQueue(
+            this.EMAProcessingQueue,
+            trendsAndSignalsFrequency /* We only acquire this info once a minute */,
+            56000
+        );
+
+        this.coinTrendsAndSignalsProcessingQueuer.enqueueQueue(
             this.MACDProcessingQueue,
-            trendsAndSignalsFrequency
+            trendsAndSignalsFrequency /* We only acquire this info once a minute */,
+            7000
+        );
+
+        this.coinTrendsAndSignalsProcessingQueuer.enqueueQueue(
+            this.MACDProcessingQueue,
+            trendsAndSignalsFrequency /* We only acquire this info once a minute */,
+            17000
+        );
+
+        this.coinTrendsAndSignalsProcessingQueuer.enqueueQueue(
+            this.MACDProcessingQueue,
+            trendsAndSignalsFrequency /* We only acquire this info once a minute */,
+            27000
+        );
+
+        this.coinTrendsAndSignalsProcessingQueuer.enqueueQueue(
+            this.MACDProcessingQueue,
+            trendsAndSignalsFrequency /* We only acquire this info once a minute */,
+            37000
+        );
+
+        this.coinTrendsAndSignalsProcessingQueuer.enqueueQueue(
+            this.MACDProcessingQueue,
+            trendsAndSignalsFrequency /* We only acquire this info once a minute */,
+            47000
+        );
+
+        this.coinTrendsAndSignalsProcessingQueuer.enqueueQueue(
+            this.MACDProcessingQueue,
+            trendsAndSignalsFrequency /* We only acquire this info once a minute */,
+            57000
         );
 
         /* Calculating general advice info */
         this.GeneralAdviceQueue = new Queue();
         this.setupGeneralCoinAdviceQueue();
 
-        /* Add General Advice queue processing */
-        this.enqueueQueue(
-            9000,
-            processingInterval,
-            this.coinAdviceGenerationQueuer,
+        this.coinAdviceGenerationQueuer.enqueueQueue(
             this.GeneralAdviceQueue,
-            trendsAndSignalsFrequency
+            trendsAndSignalsFrequency /* We only acquire this info once a minute */,
+            9000
+        );
+
+        this.coinAdviceGenerationQueuer.enqueueQueue(
+            this.GeneralAdviceQueue,
+            trendsAndSignalsFrequency /* We only acquire this info once a minute */,
+            19000
+        );
+
+        this.coinAdviceGenerationQueuer.enqueueQueue(
+            this.GeneralAdviceQueue,
+            trendsAndSignalsFrequency /* We only acquire this info once a minute */,
+            29000
+        );
+
+        this.coinAdviceGenerationQueuer.enqueueQueue(
+            this.GeneralAdviceQueue,
+            trendsAndSignalsFrequency /* We only acquire this info once a minute */,
+            39000
+        );
+
+        this.coinAdviceGenerationQueuer.enqueueQueue(
+            this.GeneralAdviceQueue,
+            trendsAndSignalsFrequency /* We only acquire this info once a minute */,
+            49000
+        );
+
+        this.coinAdviceGenerationQueuer.enqueueQueue(
+            this.GeneralAdviceQueue,
+            trendsAndSignalsFrequency /* We only acquire this info once a minute */,
+            59000
         );
 
         /* Plotting graphs to compare calculations with online */
         this.PlotlyGraphingQueue = new Queue();
         this.setupTrendsAndSignalsGraphingQueue();
 
-        /* Add Plotly processing */
-        this.enqueueQueue(
-            11000,
-            processingInterval,
-            this.coinTrendsAndSignalsGraphingQueuer,
+        this.coinTrendsAndSignalsGraphingQueuer.enqueueQueue(
             this.PlotlyGraphingQueue,
-            trendsAndSignalsFrequency
+            trendsAndSignalsFrequency /* We only acquire this info once a minute */,
+            11000
+        );
+
+        this.coinTrendsAndSignalsGraphingQueuer.enqueueQueue(
+            this.PlotlyGraphingQueue,
+            trendsAndSignalsFrequency /* We only acquire this info once a minute */,
+            21000
+        );
+
+        this.coinTrendsAndSignalsGraphingQueuer.enqueueQueue(
+            this.PlotlyGraphingQueue,
+            trendsAndSignalsFrequency /* We only acquire this info once a minute */,
+            31000
+        );
+
+        this.coinTrendsAndSignalsGraphingQueuer.enqueueQueue(
+            this.PlotlyGraphingQueue,
+            trendsAndSignalsFrequency /* We only acquire this info once a minute */,
+            41000
+        );
+
+        this.coinTrendsAndSignalsGraphingQueuer.enqueueQueue(
+            this.PlotlyGraphingQueue,
+            trendsAndSignalsFrequency /* We only acquire this info once a minute */,
+            51000
         );
 
         this.queueSetupComplete = true;
 
         /* If we're simulating a run, we start here */
         TimeNow.startIterate();
-    }
-
-    enqueueQueue(
-        startingSecsPerMin,
-        processingInterval,
-        queuer,
-        queue,
-        frequency
-    ) {
-        for (
-            let lockedInterval = startingSecsPerMin;
-            lockedInterval < 60000;
-            lockedInterval += processingInterval
-        ) {
-            queuer.enqueueQueue(
-                queue,
-                frequency /* We only acquire this info once a minute */,
-                lockedInterval
-            );
-        }
     }
 
     processQueues() {
@@ -676,7 +880,6 @@ class MainLogic {
         }
     }
 
-    /* TODO: Create a seperate class that handles this functionality for us - we need to shrink this file size down and make more modular */
     setupPlotlyGraphingQueue() {
         this.coinConfigArr.forEach((coin) => {
             let trend = 'Plotly';

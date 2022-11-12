@@ -13,10 +13,10 @@ class Mysql {
             queueLimit: 0,
         });
 
-        /*this.connection.connect((err) => {
+        this.connection.connect((err) => {
             if (err) throw err;
-            console.log("Mysql connection established on 192.168.1.104.");
-        });*/
+            console.log('Mysql connection established on 192.168.1.104.');
+        });
     }
 
     async getBotInformation(botId, exchangeId) {
@@ -243,6 +243,10 @@ class Mysql {
         do {
             try {
                 queryDeadlock = false;
+
+                /*console.log(
+                    `INSERT INTO coin_ohlc VALUES (${coin_id}, '${stampFullTime}', '${stampFullDate}','${timestamp}',${results[1]},${results[2]},${results[3]},${results[4]},${results[5]},${results[6]},${results[7]}) ON DUPLICATE KEY UPDATE open=${results[1]}, high=${results[2]}, low=${results[3]}, close=${results[4]}, vwap=${results[5]}, volume=${results[6]}, count=${results[7]}`
+                );*/
 
                 const [rows, fields] = await this.connection.query(
                     `INSERT INTO coin_ohlc VALUES (${coin_id}, '${stampFullTime}', '${stampFullDate}','${timestamp}',${results[1]},${results[2]},${results[3]},${results[4]},${results[5]},${results[6]},${results[7]}) ON DUPLICATE KEY UPDATE open=${results[1]}, high=${results[2]}, low=${results[3]}, close=${results[4]}, vwap=${results[5]}, volume=${results[6]}, count=${results[7]}`

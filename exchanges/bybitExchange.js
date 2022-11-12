@@ -8,7 +8,7 @@ class BybitExchange {
     /* Make sure every exchange class has the same interface */
     initApi(apiKey, privApiKey, twoFaPass) {
         /* Test or live */
-        let useLivenet = false;
+        let useLivenet = true;
 
         /* Initialise Kraken API */
         this.api = new SpotClient(
@@ -26,15 +26,15 @@ class BybitExchange {
     }
 
     OHLC(coinPair, interval, cb) {
-        console.log(coinPair, interval);
+        interval = `${interval}m`;
         this.api
             .getCandles(coinPair, interval)
             .then((result) => {
-                console.log('OHLC result: ', result);
+                //console.log(`OHLC result: ${coinPair}:`, result);
                 cb(result);
             })
             .catch((err) => {
-                console.error('OHLC error: ', err);
+                console.error(`OHLC error: ${coinPair}:`, err);
             });
     }
 

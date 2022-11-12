@@ -15,6 +15,9 @@ class Queuer {
     enqueueQueue(
         queue,
         interval,
+        repeat = false,
+        runParallel = false,
+        lockToMinute = false,
         /* Always push running after minute is up */
         lockOffset = 1000
     ) {
@@ -22,14 +25,15 @@ class Queuer {
 
         this.queueArr[this.queueArr.length] = {
             queue: queue,
-            repeat: true,
+            repeat: repeat,
             interval: interval /* In MS, as is Date.now() */,
-            runParallel: true /* This allows us to run the queue every in parallel  interval MS */,
+            runParallel:
+                runParallel /* This allows us to run the queue every in parallel  interval MS */,
             lastParallelElapsed: lockToMinute
                 ? now + (60000 - (now % 60000)) + lockOffset
                 : now,
             lockOffset: lockOffset,
-            lockToMinute: true,
+            lockToMinute: lockToMinute,
         };
     }
 
